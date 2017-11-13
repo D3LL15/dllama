@@ -17,8 +17,8 @@
  * 
  */
 int main(int argc, char** argv) {
-	dllama x = dllama();
-	x.full_test();
-	return 0;
+    dllama x = dllama();
+    x.full_test();
+    return 0;
 }
 

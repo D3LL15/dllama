@@ -3,7 +3,7 @@
 #
 
 CC         := g++
-CFLAGS     := -Wall -fopenmp -std=c++0x -DLL_PERSISTENCE -I. -I../llama/include
+CFLAGS     := -Wall -fopenmp -std=gnu++11 -DLL_PERSISTENCE -I. -I../llama/include
 LFLAGS     := 
 
 ifeq ($(VIMRUNTIME),)
@@ -16,12 +16,12 @@ CFLAGS_D   := -ggdb -O0 -D_DEBUG ${CFLAGS}
 CFLAGS     := -g -O3 -DNDEBUG ${CFLAGS}
 
 DIR        := ../bin
-SOURCES    := $(wildcard *.cc)
+SOURCES    := $(wildcard *.cc) 
 TARGETS    := $(patsubst %.cc,$(DIR)/%,$(SOURCES)) 
 
 .PHONY: all clean
 
-all: $(TARGETS) 
+all: $(TARGETS)  dllama.exe
 
 clean:
 	rm -f $(TARGETS)
@@ -29,4 +29,5 @@ clean:
 $(DIR)/%: %.cc
 	@echo CC $@ >&2
 	$(CC) $(CFLAGS) -o $@ $< $(LFLAGS)
-
+dllama.exe : main.cpp dllama.cpp dllama.h 	
+	$(CC) $(CFLAGS) main.cpp dllama.cpp $(LFLAGS) -o dllama.exe

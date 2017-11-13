@@ -14,19 +14,19 @@
 #ifndef DLLAMA_H
 #define DLLAMA_H
 
-#include "include/llama.h"
+#include "llama.h"
 
 class dllama {
 public:
-	dllama();
-	virtual ~dllama();
-	void test_llama_init();
-	void test_llama_interact();
-	void full_test();
+    dllama();
+    virtual ~dllama();
+    void test_llama_init();
+    void test_llama_interact();
+    void full_test();
 private:
 protected:
-	ll_writable_graph* graph;
-	ll_database database;
+    ll_writable_graph* graph;
+    ll_database database;
 };
 
 #endif /* DLLAMA_H */

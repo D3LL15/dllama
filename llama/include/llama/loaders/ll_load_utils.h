@@ -42,6 +42,7 @@
 #include <cstring>
 #include <unistd.h>
 
+#include <deque>
 #include <string>
 #include <vector>
 
@@ -149,6 +150,7 @@ class ll_edge_list_loader : public ll_data_source {
 	struct xs_edge {
 		NodeType tail;
 		NodeType head;
+		WeightType weight[HasWeight ? 1 : 0];
 	};
 
 	/**
@@ -156,27 +158,6 @@ class ll_edge_list_loader : public ll_data_source {
 	 */
 	struct xs_edge_comparator {
 		bool operator() (const xs_edge& a, const xs_edge& b) {
-			if (a.tail != b.tail)
-				return a.tail < b.tail;
-			else
-				return a.head < b.head;
-		}
-	};
-
-	/**
-	 * Item format for external sort - for out-edges
-	 */
-	struct xs_w_edge {
-		NodeType tail;
-		NodeType head;
-		WeightType weight;
-	};
-
-	/**
-	 * Comparator for xs_w_edge
-	 */
-	struct xs_w_edge_comparator {
-		bool operator() (const xs_w_edge& a, const xs_w_edge& b) {
 			if (a.tail != b.tail)
 				return a.tail < b.tail;
 			else
@@ -269,6 +250,37 @@ protected:
 
 public:
 
+
+	/**
+	 * Is this a simple data source?
+	 */
+	virtual bool simple() {
+		return true;
+	}
+
+
+	/**
+	 * Get the next edge
+	 *
+	 * @param o_tail the output for tail
+	 * @param o_head the output for head
+	 * @return true if the edge was loaded, false if EOF or error
+	 */
+	virtual bool next_edge(node_t* o_tail, node_t* o_head) {
+
+		NodeType t = 0;
+		NodeType h = 0;
+		WeightType w;
+
+		bool r = next_edge(&t, &h, &w);
+
+		*o_tail = t;
+		*o_head = h;
+
+		return r;
+	}
+
+
 	/**
 	 * Return true if the data file has potentially more data in it
 	 *
@@ -288,11 +300,6 @@ public:
 	 */
 	bool load_direct(ll_mlcsr_ro_graph* graph,
 			const ll_loader_config* config) {
-
-#ifdef LL_S_WEIGHTS_INSTEAD_OF_DUPLICATE_EDGES
-		LL_E_PRINT("LL_S_WEIGHTS_INSTEAD_OF_DUPLICATE_EDGES not supported");
-		abort();
-#endif
 
 
 		// Check if we have stat and if we can load the data just using the
@@ -338,7 +345,8 @@ public:
 		bool reverse = config->lc_reverse_edges;
 		bool load_weight = !config->lc_no_properties;
 
-		xs_w_edge e;
+		xs_edge e;
+		WeightType _w; (void) _w;	// Unused, here for memory safety
 
 		if (new_level > 0) {
 			if (max_nodes < (size_t) graph->out().max_nodes()) {
@@ -349,7 +357,7 @@ public:
 
 		// Initialize external sort
 
-		ll_external_sort<xs_w_edge, xs_w_edge_comparator>* out_sort = NULL;
+		ll_external_sort<xs_edge, xs_edge_comparator>* out_sort = NULL;
 
 
 		// Get the degrees
@@ -380,8 +388,8 @@ public:
 		bool out_called_sort = false;
 		if (config->lc_direction == LL_L_UNDIRECTED_DOUBLE) {
 			already_sorted = false;
-			out_sort = new ll_external_sort<xs_w_edge,
-					 xs_w_edge_comparator>(config);
+			out_sort = new ll_external_sort<xs_edge,
+					 xs_edge_comparator>(config);
 		}
 
 		size_t step = 10 * 1000 * 1000ul;
@@ -400,11 +408,11 @@ public:
 
 			if (already_sorted) {
 				already_sorted = false;
-				out_sort = new ll_external_sort<xs_w_edge,
-						 xs_w_edge_comparator>(config);
+				out_sort = new ll_external_sort<xs_edge,
+						 xs_edge_comparator>(config);
 			}
 
-			while (next_edge(&e.tail, &e.head, &e.weight)) {
+			while (next_edge(&e.tail, &e.head, &e.weight[0])) {
 				max_edges++;
 
 				if (config->lc_direction == LL_L_UNDIRECTED_ORDERED) {
@@ -412,9 +420,13 @@ public:
 						unsigned x = e.tail; e.tail = e.head; e.head = x;
 					}
 				}
+
+#ifndef LL_S_WEIGHTS_INSTEAD_OF_DUPLICATE_EDGES
+				// Need to preserve count if LL_S_WEIGHTS_INSTEAD_OF_DUPLICATE_EDGES
 				if (last_head == e.head && last_tail == e.tail) {
 					continue;
 				}
+#endif
 
 				last_head = e.head;
 				last_tail = e.tail;
@@ -464,7 +476,7 @@ public:
 			out_sort->sort();
 			out_called_sort = true;
 
-			xs_w_edge* buffer;
+			xs_edge* buffer;
 			size_t length;
 			size_t index = 0;
 
@@ -477,19 +489,28 @@ public:
 
 			while (out_sort->next_block(&buffer, &length)) {
 				while (length --> 0) {
+
+#ifndef LL_S_WEIGHTS_INSTEAD_OF_DUPLICATE_EDGES
 					if (last_head == buffer->head
 							&& last_tail == buffer->tail) {
 						buffer++;
 						continue;
 					}
 
+					degrees_out[buffer->tail]++;
+					if (reverse) degrees_in[buffer->head]++;
+#else
+					if (last_head != buffer->head
+							|| last_tail != buffer->tail) {
+						degrees_out[buffer->tail]++;
+						if (reverse) degrees_in[buffer->head]++;
+					}
+#endif
+
 					last_head = buffer->head;
 					last_tail = buffer->tail;
 
-					degrees_out[buffer->tail]++;
-					if (reverse) degrees_in[buffer->head]++;
 					buffer++;
-
 					index++;
 
 					if (print_progress) {
@@ -507,7 +528,7 @@ public:
 
 			size_t loaded_edges = 0;
 
-			while (next_edge(&e.tail, &e.head, &e.weight)) {
+			while (next_edge(&e.tail, &e.head, &e.weight[0])) {
 				max_edges++;
 				loaded_edges++;
 
@@ -533,8 +554,8 @@ public:
 									* degrees_capacity);
 						}
 
-						out_sort = new ll_external_sort<xs_w_edge,
-								 xs_w_edge_comparator>(config);
+						out_sort = new ll_external_sort<xs_edge,
+								 xs_edge_comparator>(config);
 						continue;
 					}
 				}
@@ -631,6 +652,38 @@ public:
 		if (load_weight) prop_weight = init_prop_weight(graph);
 
 
+		// Initialize all other edge properties
+
+		ll_with(auto p = graph->get_all_edge_properties_32()) {
+			for (auto it = p.begin(); it != p.end(); it++) {
+				if ((void*) it->second == (void*) prop_weight) continue;
+				it->second->cow_init_level(out.max_edges(new_level));
+			}
+		}
+		ll_with(auto p = graph->get_all_edge_properties_64()) {
+			for (auto it = p.begin(); it != p.end(); it++) {
+				if ((void*) it->second == (void*) prop_weight) continue;
+				it->second->cow_init_level(out.max_edges(new_level));
+			}
+		}
+
+
+		// Initialize streaming weights
+
+#ifdef LL_S_WEIGHTS_INSTEAD_OF_DUPLICATE_EDGES
+
+		ll_mlcsr_edge_property<uint32_t>* streaming_weight
+			= graph->get_edge_weights_streaming();
+		assert(streaming_weight != NULL);
+
+#ifndef LL_S_SINGLE_SNAPSHOT
+		ll_mlcsr_edge_property<edge_t>* streaming_forward
+			= graph->get_edge_forward_streaming();
+		assert(streaming_forward != NULL);
+#endif
+#endif
+
+
 		// Initialize the external sort for the in-edges
 
 		ll_external_sort<xs_in_edge, xs_in_edge_comparator>* in_sort = NULL;
@@ -648,13 +701,14 @@ public:
 
 		if (already_sorted) {
 			assert(config->lc_direction != LL_L_UNDIRECTED_DOUBLE);
+			assert(!config->lc_deduplicate);	// XXX
 			rewind();
 
 			last_head = LL_NIL_NODE;
 			last_tail = LL_NIL_NODE;
 
 			size_t index = 0;
-			while (next_edge(&e.tail, &e.head, &e.weight)) {
+			while (next_edge(&e.tail, &e.head, &e.weight[0])) {
 
 				if (config->lc_direction == LL_L_UNDIRECTED_ORDERED) {
 					if (e.tail > e.head) {
@@ -683,7 +737,7 @@ public:
 
 				if (HasWeight && load_weight) {
 					edge_t edge = LL_EDGE_CREATE(new_level, index);
-					prop_weight->cow_write(edge, e.weight);
+					prop_weight->cow_write(edge, e.weight[0]);
 				}
 
 				if (reverse) {
@@ -719,9 +773,10 @@ public:
 			else
 				out_sort->sort();
 
-			xs_w_edge* buffer;
+			xs_edge* buffer;
 			size_t length;
 			size_t index = 0;
+			size_t num_duplicates = 0;
 
 			last_tail = LL_NIL_NODE;
 			last_head = LL_NIL_NODE;
@@ -732,6 +787,19 @@ public:
 					if (config->lc_deduplicate && last_head == buffer->head
 							&& last_tail == buffer->tail) {
 						buffer++;
+						num_duplicates++;
+#ifdef LL_S_WEIGHTS_INSTEAD_OF_DUPLICATE_EDGES
+						edge_t edge = LL_EDGE_CREATE(new_level, index-1);
+						uint32_t old_weight = (*streaming_weight)[edge];
+						streaming_weight->cow_write(edge, old_weight + 1);
+						LL_D_NODE2_PRINT(buffer->tail, buffer->head,
+								"Update duplicate edge %lx: %lu --> %lu, "
+								"weight %u ==> %u\n",
+								edge, (size_t) buffer->tail,
+								(size_t) buffer->head,
+								old_weight,
+								old_weight + 1);
+#endif
 						continue;
 					}
 
@@ -749,9 +817,63 @@ public:
 
 					(*et)[index] = LL_VALUE_CREATE((node_t) buffer->head);
 
+#ifdef LL_STREAMING
+					// Deal with duplicates
+
+					if (config->lc_deduplicate) {
+						edge_t old = new_level == 0 ? LL_NIL_EDGE
+							: out.find(buffer->tail, buffer->head,
+									new_level-1, new_level-1);
+						if (old != LL_NIL_EDGE) {
+							graph->update_max_visible_level_lower_only(old,
+									new_level);
+#	ifdef LL_S_WEIGHTS_INSTEAD_OF_DUPLICATE_EDGES
+							uint32_t old_weight = (*streaming_weight)[old];
+							edge_t edge = LL_EDGE_CREATE(new_level, index);
+							streaming_weight->cow_write(edge,
+									old_weight + (uint32_t) num_duplicates + 1);
+#		ifndef LL_S_SINGLE_SNAPSHOT
+							streaming_forward->cow_write(old, edge);
+#		endif
+							LL_D_NODE2_PRINT(buffer->tail, buffer->head,
+									"Found a duplicate of %lx: %lu --> %lu, "
+									"weight %u ==> %u\n",
+									old, (size_t) buffer->tail,
+									(size_t) buffer->head,
+									old_weight,
+									old_weight + (uint32_t) num_duplicates + 1);
+#	else
+							LL_D_NODE2_PRINT(buffer->tail, buffer->head,
+									"Found a duplicate of %lx: %lu --> %lu\n",
+									old, (size_t) buffer->tail,
+									(size_t) buffer->head);
+#	endif
+						}
+						else {
+#	ifdef LL_S_WEIGHTS_INSTEAD_OF_DUPLICATE_EDGES
+							edge_t edge = LL_EDGE_CREATE(new_level, index);
+							streaming_weight->cow_write(edge,
+									(uint32_t) num_duplicates + 1);
+							LL_D_NODE2_PRINT(buffer->tail, buffer->head,
+									"Add %llx: %lu --> %lu, weight = %u\n",
+									LL_EDGE_CREATE(new_level, index),
+									(size_t) buffer->tail,
+									(size_t) buffer->head,
+									(uint32_t) num_duplicates + 1);
+#	endif
+						}
+					}
+#endif
+
+					LL_D_NODE2_PRINT(buffer->tail, buffer->head,
+							"Add %llx: %lu --> %lu\n",
+							LL_EDGE_CREATE(new_level, index),
+							(size_t) buffer->tail,
+							(size_t) buffer->head);
+
 					if (HasWeight && load_weight) {
 						edge_t edge = LL_EDGE_CREATE(new_level, index);
-						prop_weight->cow_write(edge, e.weight);
+						prop_weight->cow_write(edge, e.weight[0]);
 					}
 
 					if (reverse) {
@@ -766,6 +888,7 @@ public:
 
 					index++;
 					buffer++;
+					num_duplicates = 0;
 
 					if (print_progress) {
 						if (index % step == 0) {
@@ -876,6 +999,68 @@ public:
 		_last_has_more = _has_more;
 		_has_more = false;
 
+
+		// Finish node properties
+
+		{
+			auto p = graph->get_all_node_properties_32();
+			for (auto it = p.begin(); it != p.end(); it++) {
+				if (!it->second->writable())
+					it->second->writable_init(max_nodes);
+				it->second->freeze(max_nodes);
+				if (it->second->max_level() != out.max_level()) {
+					fflush(stdout);
+					fprintf(stderr, "\nASSERT FAILED: Node property checkpoint "
+							"for '%s': %d level(s), %d expected\n",
+							it->first.c_str(), it->second->max_level(),
+							out.max_level());
+					exit(1);
+				}
+				assert(it->second->max_level() == out.max_level());
+			}
+		}
+		{
+			auto p = graph->get_all_node_properties_64();
+			for (auto it = p.begin(); it != p.end(); it++) {
+				if (!it->second->writable())
+					it->second->writable_init(max_nodes);
+				it->second->freeze(max_nodes);
+				assert(it->second->max_level() == out.max_level());
+			}
+		}
+
+
+		// Finish edge properties - finish the levels
+
+		{
+			auto p = graph->get_all_edge_properties_32();
+			for (auto it = p.begin(); it != p.end(); it++) {
+				if (it->second->writable())
+					it->second->freeze();
+				else
+					it->second->cow_finish_level();
+				if (it->second->max_level() != out.max_level()) {
+					fflush(stdout);
+					fprintf(stderr, "\nASSERT FAILED: Edge property checkpoint "
+							"for '%s': %d level(s), %d expected\n",
+							it->first.c_str(), it->second->max_level(),
+							out.max_level());
+					exit(1);
+				}
+				assert(it->second->max_level() == out.max_level());
+			}
+		}
+		{
+			auto p = graph->get_all_edge_properties_64();
+			for (auto it = p.begin(); it != p.end(); it++) {
+				if (it->second->writable())
+					it->second->freeze();
+				else
+					it->second->cow_finish_level();
+				assert(it->second->max_level() == out.max_level());
+			}
+		}
+
 		return true;
 	}
 
@@ -907,10 +1092,11 @@ public:
 		size_t chunk_size = config->lc_max_edges;
 		bool load_weight = !config->lc_no_properties;
 
-		xs_w_edge e;
+		xs_edge e;
+		WeightType _w; (void) _w;	// Unused, here for memory safety
 		bool has_more;
 
-		while ((has_more = next_edge(&e.tail, &e.head, &e.weight))) {
+		while ((has_more = next_edge(&e.tail, &e.head, &e.weight[0]))) {
 			max_edges++;
 
 			LL_D_NODE2_PRINT(e.tail, e.head, "%u --> %u\n", (unsigned) e.tail,
@@ -1216,7 +1402,8 @@ private:
 		size_t max_nodes = 0;
 		size_t max_edges = 0;
 
-		xs_w_edge e;
+		xs_edge e;
+		WeightType _w; (void) _w;	// Unused, here for memory safety
 		
 		if (!stat(&max_nodes, &max_edges)) {
 			LL_E_PRINT("The graph stat call failed\n");
@@ -1295,7 +1482,7 @@ private:
 
 			was_sorted = true;
 
-			while (next_edge(&e.tail, &e.head, &e.weight)) {
+			while (next_edge(&e.tail, &e.head, &e.weight[0])) {
 				loaded_edges++;
 
 				if (config->lc_max_edges > 0
@@ -1349,7 +1536,7 @@ private:
 				// Load the edge into the buffer
 
 				adj_list_buffer.push_back(e.head);
-				if (HasWeight && load_weight) weight_buffer.push_back(e.weight);
+				if (HasWeight && load_weight) weight_buffer.push_back(e.weight[0]);
 
 
 				// Progress
@@ -1384,15 +1571,23 @@ private:
 
 		if (!was_sorted) {
 
-			ll_external_sort<xs_w_edge, xs_w_edge_comparator>* out_sort
-				= new ll_external_sort<xs_w_edge, xs_w_edge_comparator>(config);
+
+			// Temporarily free some memory to make space for sort
+
+			graph->out().et_free();
+
+
+			// Load into external sort
+
+			ll_external_sort<xs_edge, xs_edge_comparator>* out_sort
+				= new ll_external_sort<xs_edge, xs_edge_comparator>(config);
 
 			NodeType last_tail = (NodeType) LL_NIL_NODE;
 			NodeType last_head = (NodeType) LL_NIL_NODE;
 
 			size_t read_edges = 0;
 
-			while (next_edge(&e.tail, &e.head, &e.weight)) {
+			while (next_edge(&e.tail, &e.head, &e.weight[0])) {
 				loaded_edges++;
 				read_edges++;
 
@@ -1439,7 +1634,12 @@ private:
 
 			out_sort->sort();
 
-			xs_w_edge* buffer;
+			et = graph->out().et_reinit();
+
+
+			// Now load the CSR
+
+			xs_edge* buffer;
 			size_t length;
 
 			std::vector<NodeType> adj_list_buffer;
@@ -1482,7 +1682,7 @@ private:
 
 					adj_list_buffer.push_back(buffer->head);
 					if (HasWeight && load_weight)
-						weight_buffer.push_back(e.weight);
+						weight_buffer.push_back(e.weight[0]);
 
 					buffer++;
 
@@ -1507,6 +1707,11 @@ private:
 				load_node_out(graph, et, new_level, last_tail, adj_list_buffer,
 						weight_buffer, prop_weight, in_sort);
 			}
+
+
+			// Clean-up
+
+			delete out_sort;
 		}
 
 
@@ -1610,6 +1815,156 @@ private:
 		_has_more = false;
 
 		return true;
+	}
+};
+
+
+/**
+ * The direct loader for node_pair_t buffers
+ */
+class ll_node_pair_loader : public ll_edge_list_loader<node_t, false>
+{	
+
+	std::vector<node_pair_t>* _buffer;
+	size_t _index;
+	bool _own;
+
+
+public:
+
+	/**
+	 * Create an instance of class ll_node_pair_loader
+	 *
+	 * @param buffer the buffer
+	 * @param own true to transfer ownership of the buffer to this object
+	 */
+	ll_node_pair_loader(std::vector<node_pair_t>* buffer, bool own = false)
+		: ll_edge_list_loader<node_t, false>() {
+		_buffer = buffer;
+		_index = 0;
+		_own = own;
+	}
+
+
+	/**
+	 * Destroy the loader
+	 */
+	virtual ~ll_node_pair_loader() {
+		if (_own) delete _buffer;
+	}
+
+
+protected:
+
+	/**
+	 * Read the next edge
+	 *
+	 * @param o_tail the output for tail
+	 * @param o_head the output for head
+	 * @param o_weight the output for weight (ignore if HasWeight is false)
+	 * @return true if the edge was loaded, false if EOF or error
+	 */
+	virtual bool next_edge(node_t* o_tail, node_t* o_head,
+			float* o_weight) {
+
+		if (_index >= _buffer->size()) return false;
+
+		*o_tail = (*_buffer)[_index].tail;
+		*o_head = (*_buffer)[_index].head;
+		_index++;
+
+		return true;
+	}
+
+
+	/**
+	 * Rewind the input file
+	 */
+	virtual void rewind() {
+		_index = 0;
+	}
+
+
+public:
+
+	/**
+	 * Get the size
+	 *
+	 * @return size
+	 */
+	inline size_t size() const {
+		return _buffer->size();
+	}
+};
+
+
+/**
+ * Loader for a queue of node_pair_t buffers
+ */
+class ll_node_pair_queue_loader : public ll_edge_list_loader<node_t, false> {
+
+	std::deque<std::vector<node_pair_t>*>* _buffer_queue;
+	std::deque<std::vector<node_pair_t>*>::iterator _buffer_queue_iterator;
+	size_t _inner_index;
+
+
+public:
+
+	/**
+	 * Create an instance of class ll_node_pair_queue_loader
+	 *
+	 * @param buffer_queue the buffer queue
+	 */
+	ll_node_pair_queue_loader(std::deque<std::vector<node_pair_t>*>* buffer_queue)
+		: ll_edge_list_loader<node_t, false>() {
+		_buffer_queue = buffer_queue;
+		rewind();
+	}
+
+
+	/**
+	 * Destroy the loader
+	 */
+	virtual ~ll_node_pair_queue_loader() {
+	}
+
+
+protected:
+
+	/**
+	 * Read the next edge
+	 *
+	 * @param o_tail the output for tail
+	 * @param o_head the output for head
+	 * @param o_weight the output for weight (ignore if HasWeight is false)
+	 * @return true if the edge was loaded, false if EOF or error
+	 */
+	virtual bool next_edge(node_t* o_tail, node_t* o_head,
+			float* o_weight) {
+
+		if (_buffer_queue_iterator == _buffer_queue->end()) return false;
+
+		std::vector<node_pair_t>* b = *_buffer_queue_iterator;
+		if (_inner_index >= b->size()) {
+			_buffer_queue_iterator++;
+			_inner_index = 0;
+			if (_buffer_queue_iterator == _buffer_queue->end()) return false;
+		}
+
+		*o_tail = (*b)[_inner_index].tail;
+		*o_head = (*b)[_inner_index].head;
+		_inner_index++;
+
+		return true;
+	}
+
+
+	/**
+	 * Rewind the input file
+	 */
+	virtual void rewind() {
+		_buffer_queue_iterator = _buffer_queue->begin();
+		_inner_index = 0;
 	}
 };
 

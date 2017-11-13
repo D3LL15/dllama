@@ -75,6 +75,7 @@
 #include "llama/ll_common.h"
 
 #include <sys/time.h>
+#include <sys/resource.h>
 #include <cmath>
 #include <cstdio>
 #include <cstdlib>
@@ -131,7 +132,7 @@
 
 
 //==========================================================================//
-// Helpers                                                                  //
+// Helper Macros                                                            //
 //==========================================================================//
 
 /**
@@ -139,6 +140,11 @@
  */
 #define __COMPILER_FENCE	asm volatile("":::"memory");
 
+
+
+//==========================================================================//
+// Benchmarking Helpers                                                     //
+//==========================================================================//
 
 /**
  * Get the time in ms
@@ -162,6 +168,49 @@ inline double ll_timeval_to_ms(struct timeval& t) {
 	return t.tv_sec*1000 + t.tv_usec*0.001;
 }
 
+
+/**
+ * Get RDTSC counter
+ *
+ * @return the current time in ms
+ */
+inline uint64_t ll_rdtsc() {
+	unsigned h, l;
+	asm volatile("rdtsc" : "=a" (l), "=d" (h));
+	return ((uint64_t) l) | (((uint64_t) h) << 32);
+}
+
+
+/**
+ * Get the number of RDTSC ticks per ms
+ *
+ * @param ms the number of ms used for calibration
+ * @return the number of ticks per ms
+ */
+inline double ll_rdtsc_per_ms(double ms = 100) {
+	double et, st = ll_get_time_ms();
+	uint64_t s = ll_rdtsc();
+	while (((et = ll_get_time_ms()) - st) < ms);
+	return (ll_rdtsc() - s) / (et - st);
+}
+
+
+/**
+ * Get the maximum resident set size of the current process
+ *
+ * @return the maximum RSS in KB
+ */
+inline long ll_get_maxrss_kb() {
+	struct rusage ru_start;
+	getrusage(RUSAGE_SELF, &ru_start);
+	return ru_start.ru_maxrss;
+}
+
+
+
+//==========================================================================//
+// Array and Collection Helpers                                             //
+//==========================================================================//
 
 /**
  * Get a sum
@@ -257,6 +306,11 @@ inline T ll_max(std::vector<T>& v) {
 }
 
 
+
+//==========================================================================//
+// Miscellaneous Helpers                                                    //
+//==========================================================================//
+
 /**
  * Get the file extension
  *
@@ -343,22 +397,48 @@ inline int64_t ll_rand64_positive_r(unsigned* seedp) {
 }
 
 
+/**
+ * Check whether the given level number is within the bounds
+ *
+ * @param level the level
+ * @param min the min level (inclusive)
+ * @param max the max level (inclusive)
+ * @return true if it is within the given bounds
+ */
+inline bool ll_level_within_bounds(int level, int min, int max) {
+	if (min <= max)
+		return min <= level && level <= max;
+	else
+		return (min <= level || level <= max) && max >= 0;
+}
+
+
 
 //==========================================================================//
-// Debugging and output                                                     //
+// Debugging and Output Helpers                                             //
 //==========================================================================//
 
 //#define D_DEBUG_NODE			0
+
+/**
+ * Determine if the given FILE is a TTY
+ *
+ * @param file the file
+ * @return true if it is a TTY
+ */
+inline bool ll_is_tty(FILE* file) {
+	return isatty(fileno(file));
+}
 
 #define LL_IS_STDERR_TTY (isatty(fileno(stderr)))
 
 #if (defined(_DEBUG) || defined(D_DEBUG_NODE)) && defined(D_EXTRA)
 #	define LL_XD_PRINT(format, ...) { \
 		fprintf(stderr, "%s[DEBUG] %s::%s %s" format, \
-				LL_IS_STDERR_TTY ? LL_AC_CYAN : "", \
+				LL_IS_STDERR_TTY ? LL_C_CYAN : "", \
 				ll_classname(__PRETTY_FUNCTION__).c_str(), \
 				__FUNCTION__, \
-				LL_IS_STDERR_TTY ? LL_AC_RESET : "", \
+				LL_IS_STDERR_TTY ? LL_C_RESET : "", \
 				## __VA_ARGS__); }
 #else
 #	define LL_XD_PRINT(format, ...)
@@ -367,10 +447,10 @@ inline int64_t ll_rand64_positive_r(unsigned* seedp) {
 #if defined(_DEBUG) || defined(D_DEBUG_NODE)
 #	define LL_D_PRINT(format, ...) { \
 		fprintf(stderr, "%s[DEBUG] %s::%s %s" format, \
-				LL_IS_STDERR_TTY ? LL_AC_CYAN : "", \
+				LL_IS_STDERR_TTY ? LL_C_CYAN : "", \
 				ll_classname(__PRETTY_FUNCTION__).c_str(), \
 				__FUNCTION__, \
-				LL_IS_STDERR_TTY ? LL_AC_RESET : "", \
+				LL_IS_STDERR_TTY ? LL_C_RESET : "", \
 				## __VA_ARGS__); }
 #else
 #	define LL_D_PRINT(format, ...)
@@ -379,9 +459,9 @@ inline int64_t ll_rand64_positive_r(unsigned* seedp) {
 #ifdef D_DEBUG_NODE
 #	define LL_D_NODE_PRINT(node, format, ...) \
 		if ((node) == D_DEBUG_NODE) { LL_D_PRINT("%s[node %ld]%s " format, \
-				LL_IS_STDERR_TTY ? LL_AC_CYAN : "", \
+				LL_IS_STDERR_TTY ? LL_C_CYAN : "", \
 				(long) (node), \
-				LL_IS_STDERR_TTY ? LL_AC_RESET : "", \
+				LL_IS_STDERR_TTY ? LL_C_RESET : "", \
 				## __VA_ARGS__); }
 #	define LL_D_NODE2_PRINT(node1, node2, format, ...) { \
 		LL_D_NODE_PRINT(node1, format, __VA_ARGS__) \
@@ -393,26 +473,26 @@ inline int64_t ll_rand64_positive_r(unsigned* seedp) {
 
 #define LL_E_PRINT(format, ...) { \
 	fprintf(stderr, "%s[ERROR] %s::%s %s" format, \
-			LL_IS_STDERR_TTY ? LL_AC_RED : "", \
+			LL_IS_STDERR_TTY ? LL_C_RED : "", \
 			ll_classname(__PRETTY_FUNCTION__).c_str(), \
 			__FUNCTION__, \
-			LL_IS_STDERR_TTY ? LL_AC_RESET : "", \
+			LL_IS_STDERR_TTY ? LL_C_RESET : "", \
 			## __VA_ARGS__); }
 
 #define LL_W_PRINT(format, ...) { \
 	fprintf(stderr, "%s[WARN ] %s::%s %s" format, \
-			LL_IS_STDERR_TTY ? LL_AC_YELLOW : "", \
+			LL_IS_STDERR_TTY ? LL_C_YELLOW : "", \
 			ll_classname(__PRETTY_FUNCTION__).c_str(), \
 			__FUNCTION__, \
-			LL_IS_STDERR_TTY ? LL_AC_RESET : "", \
+			LL_IS_STDERR_TTY ? LL_C_RESET : "", \
 			## __VA_ARGS__); }
 
 #define LL_I_PRINT(format, ...) { \
 	fprintf(stderr, "%s[INFO ] %s::%s %s" format, \
-			LL_IS_STDERR_TTY ? LL_AC_BLUE : "", \
+			LL_IS_STDERR_TTY ? LL_C_BLUE : "", \
 			ll_classname(__PRETTY_FUNCTION__).c_str(), \
 			__FUNCTION__, \
-			LL_IS_STDERR_TTY ? LL_AC_RESET : "", \
+			LL_IS_STDERR_TTY ? LL_C_RESET : "", \
 			## __VA_ARGS__); }
 
 #define LL_NOT_IMPLEMENTED { \
@@ -527,8 +607,18 @@ static inline bool _ll_atomic_compare_and_swap(long *dest, long old_val,
     return __sync_bool_compare_and_swap(dest, old_val, new_val);
 }
 
+static inline bool _ll_atomic_compare_and_swap(unsigned long *dest,
+		unsigned long old_val, unsigned long new_val) {
+    return __sync_bool_compare_and_swap(dest, old_val, new_val);
+}
+
 static inline bool _ll_atomic_compare_and_swap(long long* dest, long long old_val,
 		long long new_val) {
+    return __sync_bool_compare_and_swap(dest, old_val, new_val);
+}
+
+static inline bool _ll_atomic_compare_and_swap(unsigned long long *dest,
+		unsigned long long old_val, unsigned long long new_val) {
     return __sync_bool_compare_and_swap(dest, old_val, new_val);
 }
 

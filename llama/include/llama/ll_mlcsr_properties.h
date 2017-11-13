@@ -375,10 +375,14 @@ public:
 
 		auto* b = this->_properties.new_level(max_nodes);
 
-		if (this->_properties.count_existing_levels() <= 1)
+		// TODO Implement sparse properties
+
+		if (this->_properties.count_existing_levels() <= 1) {
 			b->dense_init();
-		else
+		}
+		else {
 			b->cow_init();
+		}
 
 		this->_latest_properties = b;
 		_last_write = -1;
@@ -989,10 +993,14 @@ public:
 #else
 		if (LL_EDGE_IS_WRITABLE(edge)) {
 			if (sizeof(T) == 4) {
-				return LL_EDGE_GET_WRITABLE(edge)->get_property_32<T>(_id);
+				uint32_t x = LL_EDGE_GET_WRITABLE(edge)->get_property_32<uint32_t>(_id);
+				void* p = (void*) &x;
+				return *((T*) p);
 			}
 			else {
-				return LL_EDGE_GET_WRITABLE(edge)->get_property_64<T>(_id);
+				uint64_t x = LL_EDGE_GET_WRITABLE(edge)->get_property_64<uint64_t>(_id);
+				void* p = (void*) &x;
+				return *((T*) p);
 			}
 		}
 
@@ -1365,7 +1373,7 @@ private:
 		int id = ((int) level) - 1;
 
 #ifdef LL_MIN_LEVEL
-		if (id == this->_min_level) return -1;
+		if (id < this->_min_level) return -1;
 #endif
 #ifdef LL_MLCSR_LEVEL_ID_WRAP
 		if (id < 0) id = LL_MAX_LEVEL;

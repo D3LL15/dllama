@@ -48,6 +48,7 @@
  *
  * Additional configuration:
  *   LL_DELETIONS
+ *   LL_NODE32
  */
 
 
@@ -106,8 +107,38 @@
 // Graph types and constants                                                //
 //==========================================================================//
 
+#if defined(LL_NODE32) && defined(LL_NODE64)
+#	error "Both LL_NODE32 and LL_NODE64 are defined at the same time"
+#elif !defined(LL_NODE32) && !defined(LL_NODE64)
+#	define LL_NODE64
+#endif
+
+#if defined(LL_EDGE32) && defined(LL_EDGE64)
+#	error "Both LL_EDGE32 and LL_EDGE64 are defined at the same time"
+#elif !defined(LL_EDGE32) && !defined(LL_EDGE64)
+#	define LL_EDGE64
+#endif
+
+#ifdef LL_EDGE32
+#	error "LL_EDGE32 is currently not supported"
+#endif
+
+#ifdef LL_NODE32
+#define LL_NODE_PRINTF_FORMAT		"%d"
+typedef int32_t node_t;
+#else
+#define LL_NODE_PRINTF_FORMAT		"%lld"
 typedef int64_t node_t;
+#endif
+
+#ifdef LL_EDGE32
+#define LL_EDGE_PRINTF_FORMAT		"%d"
+typedef int32_t edge_t;
+#else
+#define LL_EDGE_PRINTF_FORMAT		"%lld"
 typedef int64_t edge_t;
+#endif
+
 typedef uint32_t degree_t;
 
 typedef struct {
@@ -140,6 +171,19 @@ struct ll_edge_comparator {
 };
 
 
+/**
+ * Compare two instances of node_pair_t
+ *
+ * @param a the first object
+ * @param b the first object
+ * @return true if a < b
+ */
+inline bool operator< (const node_pair_t& a, const node_pair_t& b) {
+	if (a.tail != b.tail) return a.tail < b.tail;
+	return a.head < b.head;
+}
+
+
 
 //==========================================================================//
 // Advice constants                                                         //
@@ -159,16 +203,25 @@ struct ll_edge_comparator {
  */
 #define GCC_VERSION (__GNUC__*10000 + __GNUC_MINOR__*100 + __GNUC_PATCHLEVEL__)
 
+
 /*
  * Color strings
  */
-#define LL_AC_RED     		"\x1b[31m"
-#define LL_AC_GREEN   		"\x1b[32m"
-#define LL_AC_YELLOW  		"\x1b[33m"
-#define LL_AC_BLUE    		"\x1b[34m"
-#define LL_AC_MAGENTA 		"\x1b[35m"
-#define LL_AC_CYAN    		"\x1b[36m"
-#define LL_AC_RESET   		"\x1b[0m"
+#define LL_C_RESET   		"\x1b[0m"
+#define LL_C_RED     		"\x1b[31m"
+#define LL_C_GREEN   		"\x1b[32m"
+#define LL_C_YELLOW  		"\x1b[33m"
+#define LL_C_BLUE    		"\x1b[34m"
+#define LL_C_MAGENTA 		"\x1b[35m"
+#define LL_C_CYAN    		"\x1b[36m"
+#define LL_C_WHITE   		"\x1b[37m"
+#define LL_C_B_RED     		"\x1b[1;31m"
+#define LL_C_B_GREEN   		"\x1b[1;32m"
+#define LL_C_B_YELLOW  		"\x1b[1;33m"
+#define LL_C_B_BLUE    		"\x1b[1;34m"
+#define LL_C_B_MAGENTA 		"\x1b[1;35m"
+#define LL_C_B_CYAN    		"\x1b[1;36m"
+#define LL_C_B_WHITE   		"\x1b[1;37m"
 
 
 
@@ -264,11 +317,23 @@ inline bool ll_is_type_floating_point(short t) {
 #endif
 
 #ifdef LL_STREAMING
-#	define LL_MIN_LEVEL
-#	define LL_S_WEIGHTS_INSTEAD_OF_DUPLICATE_EDGES
-#	define LL_S_UPDATE_PRECOMPUTED_DEGREES
-#	ifndef DEL_PRESET
-#		define LL_DELETIONS
+#	define LL_S_DIRECT
+//#	define LL_S_SINGLE_SNAPSHOT
+//#	define LL_S_WEIGHTS_INSTEAD_OF_DUPLICATE_EDGES
+#endif
+
+#ifdef LL_STREAMING
+#	ifdef LL_S_SINGLE_SNAPSHOT
+#		ifndef LL_S_DIRECT
+#			error "LL_S_SINGLE_SNAPSHOT requires LL_S_DIRECT"
+#		endif
+#	else
+#		define LL_MIN_LEVEL
+//#		define LL_MLCSR_LEVEL_ID_WRAP
+#		define LL_S_UPDATE_PRECOMPUTED_DEGREES
+#		ifndef DEL_PRESET
+#			define LL_DELETIONS
+#		endif
 #	endif
 #endif
 

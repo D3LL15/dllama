@@ -158,6 +158,9 @@ public:
 
 		if (xs_buffer_size > 0) {
 			_buffer_capacity = std::max(1048576ul, xs_buffer_size) / sizeof(T);
+#ifdef LL_XS_MULTICORE_SORT
+			_buffer_capacity /= 2;
+#endif
 		}
 		else {
 

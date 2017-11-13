@@ -54,18 +54,21 @@
 //==========================================================================//
 
 #ifdef LL_COUNTERS
+
 std::atomic<size_t> g_iter_begin;
 std::atomic<size_t> g_iter_descend;
 std::atomic<size_t> g_iter_next;
 
+
 /**
  * Clear the counters
  */
-void ll_clear_counters() {
+inline void ll_clear_counters() {
 	g_iter_begin = 0;
 	g_iter_descend = 0;
 	g_iter_next = 0;
 }
+
 
 /**
  * Print the counters
@@ -73,11 +76,23 @@ void ll_clear_counters() {
  * @param f the output file
  * @param sep the separator
  */
-void ll_print_counters(FILE* f = stderr, const char* sep = ":\t") {
+inline void ll_print_counters(FILE* f = stderr, const char* sep = ":\t") {
 	fprintf(f, "iter_begin%s%lu\n", sep, g_iter_begin.load());
 	fprintf(f, "iter_descend%s%lu\n", sep, g_iter_descend.load());
 	fprintf(f, "iter_next%s%lu\n", sep, g_iter_next.load());
 }
+
+
+#else
+
+
+/**
+ * Clear the counters
+ */
+inline void ll_clear_counters() {
+	// Nothing to do
+}
+
 #endif
 
 
@@ -735,6 +750,53 @@ public:
 
 
 	/**
+	 * Temporarily deinitialize the edge table to free memory if possible
+	 * (useful when loading).
+	 *
+	 * Use this only if you know what you are doing and only if you use
+	 * init_level() directly without using init_level_from_degrees().
+	 */
+	void et_free() {
+#ifndef LL_PERSISTENCE
+		if (this->_latest_values == NULL) return;
+		assert(this->_latest_values == this->_values[this->_maxLevel]);
+
+		DELETE_LL_ET<T>(this->_latest_values);
+
+		this->_latest_values = NULL;
+		this->_values[this->_maxLevel] = NULL;
+#endif
+	}
+
+
+	/**
+	 * Recreate the edge table after et_free() (useful when loading).
+	 *
+	 * Use this only if you know what you are doing.
+	 *
+	 * @return the edge table
+	 */
+	LL_ET<T>* et_reinit() {
+
+#ifndef LL_PERSISTENCE
+		int level = this->_maxLevel;
+		size_t max_nodes = this->_perLevelNodes[level];
+		size_t max_adj_lists = this->_perLevelAdjLists[level];
+		size_t max_edges = this->_perLevelEdges[level];
+
+		size_t et_capacity = values_length(level, max_nodes + 4,
+				max_adj_lists + 4, max_edges);
+		auto et = NEW_LL_ET<T>(et_capacity, max_nodes);
+
+		this->_latest_values = et;
+		this->_values[level] = et;
+#endif
+
+		return this->_latest_values;
+	}
+
+
+	/**
 	 * Initialize a level from an array of node degrees. This creates a fully
 	 * initialized vertex table and a partially initialized edge table.
 	 *
@@ -1258,7 +1320,7 @@ public:
 	 * @param edge the edge ID
 	 * @param translation the edge ID translation
 	 */
-	inline ll_mlcsr_edge_property<node_t>& edge_translation() {
+	inline ll_mlcsr_edge_property<edge_t>& edge_translation() {
 		return _edge_translation;
 	}
 
@@ -1790,6 +1852,14 @@ private:
 								< LL_EDGE_LEVEL(forward));
 						streaming_weights->cow_write_add(forward,
 								-weight);
+#			ifdef _DEBUG
+						if ((*streaming_weights)[forward] <= 0) {
+							LL_E_PRINT("Weight dropped to zero: "
+									"edge=%lx %ld --> %ld: forward=%lx "
+									"w=%d\n",
+									e, n, t, forward, (int) weight);
+						}
+#			endif
 					}
 				}
 			}
@@ -2093,7 +2163,10 @@ private:
 
 		int level = LL_EDGE_LEVEL(iter.edge);
 		if (level == 0 
-				|| iter.node >= (node_t) this->_begin[level-1]->size()) {
+#ifndef LL_MLCSR_CONTINUATIONS
+				|| iter.node >= (node_t) this->_begin[level-1]->size()
+#endif
+		   ) {
 			iter.edge = LL_NIL_EDGE;
 		}
 		else {
@@ -2256,8 +2329,8 @@ public:
 				IF_LL_PRECOMPUTED_DEGREE(", degree=%ld")
 				IF_LL_DELETIONS(", max_level=%d")
 				", this=%p, begin=%p]\n", (int) level, (long) iter.left
-				IF_LL_PRECOMPUTED_DEGREE(, (long) b.degree)
-				IF_LL_DELETIONS(, (int) iter.max_level)
+				IF_LL_PRECOMPUTED_DEGREE(, (long) b->degree)
+				IF_LL_DELETIONS(, (int) iter.max_level),
 				this, this->_begin[level]);
 	}
 

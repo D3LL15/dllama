@@ -43,8 +43,8 @@
 ORG_PWD="`pwd`"
 ROOT_TESTS="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 ROOT_LLAMA="$( cd "$ROOT_TESTS/.." && pwd )"
-ROOT_RESULTS=/var/www/llama-tests
-ROOT_SCRATCH=/var/www/llama-tests/scratch
+ROOT_RESULTS=llama-tests
+ROOT_SCRATCH=llama-tests/scratch
 
 CHECKOUT_CLEAN=0
 CHECKOUT_SOURCE="$ROOT_LLAMA"
@@ -126,14 +126,14 @@ REPORT_FILE="$RESULTS_DIR/report.txt"
 #
 
 if [ -t 1 ] ; then
-	
+
 	C_RESET="\e[0m"
 	C_BOLD="\e[1m"
 	C_RED="\e[91m"
 	C_BLUE="\e[94m"
 	C_YELLOW="\e[93m"
 	C_GREEN="\e[92m"
-	
+
 	C_H1=$C_BOLD$C_BLUE
 	C_H2=$C_BOLD
 	C_ERROR=$C_BOLD$C_RED
@@ -190,7 +190,7 @@ die() {
 mkdir -p "$RESULTS_DIR" \
 	|| die "Cannot create the results directory:\n       $RESULTS_DIR"
 
-heading1 LLAMA Test Suite
+heading1 "LLAMA Test Suite"
 p
 
 mkdir -p "$SCRATCH_DIR" \
@@ -301,7 +301,7 @@ for BP in $BENCHMARK_PROGRAMS; do
 
 			# Warm up the cache for the data file
 			cat $DF > /dev/null
-			
+
 			BDF="`basename $DF`"
 			OUT_BASE_FILE="`echo ${BP}__${BDF}__$BBT | tr '.' '_'`"
 			OUT_BASE="$RESULTS_DIR/$OUT_BASE_FILE"
@@ -314,7 +314,7 @@ for BP in $BENCHMARK_PROGRAMS; do
 			mkdir -p "$RUN_DIR" \
 				|| die "Cannot recreate the scratch context directory:\n" \
 				"      $RUN_DIR"
-			
+
 			cd "$RUN_DIR"
 			(time "$BUILD_DIR/bin/$BP" $BENCHMARK_ARGS -vSL "$DF" \
 				-r $RBT -o "$OUT_RESULTS") \
@@ -348,7 +348,7 @@ for BP in $BENCHMARK_PROGRAMS; do
 				EXPECTED_RESULTS="$EXPECTED_DIRECTORY/`basename $OUT_RESULTS`"
 				if [ -f $EXPECTED_RESULTS ]; then
 					DIFF="`diff $EXPECTED_RESULTS $OUT_RESULTS`"
-					if [ "x$DIFF" != "x" ]; then 
+					if [ "x$DIFF" != "x" ]; then
 						NUM_ERRORS=$[$NUM_ERRORS + 1]
 						p
 						error "Task failed because it outputted wrong results"
