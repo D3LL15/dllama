@@ -21,12 +21,14 @@ public:
     dllama();
     virtual ~dllama();
     void test_llama_init();
-    void test_llama_interact();
+    void test_llama_add_edges();
+    void test_llama_print_neighbours();
     void full_test();
+    void read_db();
 private:
 protected:
     ll_writable_graph* graph;
-    ll_database database;
+    ll_database* database;
 };
 
 #endif /* DLLAMA_H */

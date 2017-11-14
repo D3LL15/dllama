@@ -65,6 +65,7 @@ void dllama::full_test() {
     }
     
     cout << "num levels " << graph->num_levels() << "\n";
+
 }
 
 void dllama::test_llama_init() {
@@ -75,8 +76,8 @@ void dllama::test_llama_init() {
     char* database_directory = (char*) alloca(16);
     strcpy(database_directory, "db");
     
-    database = ll_database(database_directory);
-    graph = database.graph();
+    database = new ll_database(database_directory);
+    graph = database->graph();
     
     // Load the graph
 
@@ -90,9 +91,17 @@ void dllama::test_llama_init() {
     
     ll_loader_config loader_config;
     loader->load_direct(graph, graph_location, &loader_config);
+    
+    cout << "num levels " << graph->num_levels() << "\n";
 }
 
-void dllama::test_llama_interact() {
+void dllama::test_llama_add_edges() {
+    char* database_directory = (char*) alloca(16);
+    strcpy(database_directory, "db");
+    
+    database = new ll_database(database_directory);
+    graph = database->graph();
+    
     node_t src = graph->pick_random_node();
     node_t tgt = graph->pick_random_node();
     node_t temp = graph->pick_random_node();
@@ -110,5 +119,28 @@ void dllama::test_llama_interact() {
     }
     
     cout << "num levels " << graph->num_levels() << "\n";
+}
+
+void dllama::test_llama_print_neighbours() {
+    char* database_directory = (char*) alloca(16);
+    strcpy(database_directory, "db");
+    
+    database = new ll_database(database_directory);
+    graph = database->graph();
+    
+    node_t src = graph->pick_random_node();
+    node_t tgt = graph->pick_random_node();
+    
+    cout << "node: " << src << " out degree: " << graph->out_degree(src) << "\n";
+    
+    graph->add_edge(src,tgt);
+    
+    cout << "node: " << src << " out degree: " << graph->out_degree(src) << "\n";
+    
+    graph->checkpoint();
+}
+
+void dllama::read_db() {
+    
 }
 

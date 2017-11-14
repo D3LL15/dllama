@@ -18,7 +18,10 @@
  */
 int main(int argc, char** argv) {
     dllama x = dllama();
-    x.full_test();
+    //x.full_test();
+    //x.test_llama_init();
+    //x.test_llama_interact();
+    x.test_llama_print_neighbours();
     return 0;
 }
 
