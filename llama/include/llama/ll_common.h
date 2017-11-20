@@ -423,7 +423,7 @@ inline bool ll_is_type_floating_point(short t) {
 #endif
 
 #ifndef LL_ENTRIES_PER_PAGE_BITS
-#	define LL_ENTRIES_PER_PAGE_BITS		9
+#	define LL_ENTRIES_PER_PAGE_BITS		7
 #endif
 #define LL_ENTRIES_PER_PAGE				(1 << LL_ENTRIES_PER_PAGE_BITS)
 

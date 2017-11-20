@@ -1,30 +1,17 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
-
-/* 
- * File:   dllama.cpp
- * Author: dan
- * 
- * Created on 07 November 2017, 16:54
- */
-
 #include <cstdlib>
 #include <iostream>
 
-#include "dllama.h"
+#include "dllama_test.h"
 
 using namespace std;
 
-dllama::dllama() {
+dllama_test::dllama_test() {
 }
 
-dllama::~dllama() {
+dllama_test::~dllama_test() {
 }
 
-void dllama::full_test() {
+void dllama_test::full_test() {
     cout << "starting test\n";
     
     //open database
@@ -68,7 +55,7 @@ void dllama::full_test() {
 
 }
 
-void dllama::test_llama_init() {
+void dllama_test::test_llama_init() {
     cout << "starting test\n";
     
     //open database
@@ -95,7 +82,7 @@ void dllama::test_llama_init() {
     cout << "num levels " << graph->num_levels() << "\n";
 }
 
-void dllama::test_llama_add_edges() {
+void dllama_test::test_llama_add_edges() {
     char* database_directory = (char*) alloca(16);
     strcpy(database_directory, "db");
     
@@ -121,7 +108,7 @@ void dllama::test_llama_add_edges() {
     cout << "num levels " << graph->num_levels() << "\n";
 }
 
-void dllama::test_llama_print_neighbours() {
+void dllama_test::test_llama_print_neighbours() {
     char* database_directory = (char*) alloca(16);
     strcpy(database_directory, "db");
     
@@ -140,7 +127,7 @@ void dllama::test_llama_print_neighbours() {
     graph->checkpoint();
 }
 
-void dllama::read_db() {
+void dllama_test::read_db() {
     
 }
 
