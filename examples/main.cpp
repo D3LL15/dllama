@@ -1,4 +1,5 @@
 #include "dllama_test.h"
+#include "dllama.h"
 
 int main(int argc, char** argv) {
     dllama_test x = dllama_test();
@@ -12,6 +13,10 @@ int main(int argc, char** argv) {
                 break;
             case '3':
                 x.test_llama_print_neighbours();
+                break;
+            case '4':
+                dllama y = dllama();
+                y.load_SNAP_graph();
                 break;
         }
     }
