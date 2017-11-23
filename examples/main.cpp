@@ -1,8 +1,11 @@
 #include "dllama_test.h"
 #include "dllama.h"
+#include "snapshot_merger.h"
 
 int main(int argc, char** argv) {
     dllama_test x = dllama_test();
+    //dllama y = dllama();
+    //y.load_SNAP_graph();
     if (argc == 2) {
         switch (*argv[1]) {
             case '1':

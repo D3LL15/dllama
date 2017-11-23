@@ -6,7 +6,7 @@
 using namespace std;
 
 dllama::dllama() {
-	char* database_directory = (char*) alloca(16);
+    char* database_directory = (char*) alloca(16);
     strcpy(database_directory, "db");
     
     database = new ll_database(database_directory);
@@ -21,8 +21,8 @@ void dllama::load_SNAP_graph() {
     char graph_location[] = "/home/dan/NetBeansProjects/Part2Project/graph.net";
     ll_file_loader* loader = loaders.loader_for(graph_location);
     if (loader == NULL) {
-            fprintf(stderr, "Error: Unsupported input file type\n");
-            return;
+        fprintf(stderr, "Error: Unsupported input file type\n");
+        return;
     }
     
     ll_loader_config loader_config;
@@ -50,13 +50,13 @@ void dllama::auto_checkpoint() {
 }
 
 void dllama::out_iter_begin(ll_edge_iterator& iter, node_t node) {
-    graph->out_iter_begin(&iter, node);
+    graph->out_iter_begin(iter, node);
 }
 
 ITERATOR_DECL bool dllama::out_iter_has_next(ll_edge_iterator& iter) {
-    return graph->out_iter_has_next(&iter);
+    return graph->out_iter_has_next(iter);
 }
 
 ITERATOR_DECL edge_t dllama::out_iter_next(ll_edge_iterator& iter) {
-    return graph->out_iter_next(&iter);
+    return graph->out_iter_next(iter);
 }

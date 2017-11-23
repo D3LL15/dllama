@@ -29,5 +29,5 @@ clean:
 $(DIR)/%: %.cc
 	@echo CC $@ >&2
 	$(CC) $(CFLAGS) -o $@ $< $(LFLAGS)
-dllama.exe : main.cpp dllama_test.cpp dllama_test.h dllama.cpp dllama.h	
-	$(CC) $(CFLAGS) main.cpp dllama_test.cpp dllama.cpp $(LFLAGS) -o dllama.exe
+dllama.exe : main.cpp dllama_test.cpp dllama_test.h dllama.cpp dllama.h	snapshot_merger.cpp snapshot_merger.h
+	$(CC) $(CFLAGS) main.cpp dllama_test.cpp dllama.cpp snapshot_merger.cpp $(LFLAGS) -o dllama.exe

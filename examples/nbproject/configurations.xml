@@ -6,6 +6,7 @@
       <in>dllama_test.cpp</in>
       <in>llama-pagerank.cc</in>
       <in>main.cpp</in>
+      <in>snapshot_merger.cpp</in>
     </df>
     <logicalFolder name="ExternalFiles"
                    displayName="Important Files"
@@ -37,7 +38,7 @@
           <buildCommandWorkingDir>.</buildCommandWorkingDir>
           <buildCommand>${MAKE} -f Makefile</buildCommand>
           <cleanCommand>${MAKE} -f Makefile clean</cleanCommand>
-          <executablePath></executablePath>
+          <executablePath>dllama.exe</executablePath>
           <ccTool>
             <incDir>
               <pElem>.</pElem>
@@ -69,6 +70,8 @@
       <item path="main.cpp" ex="false" tool="1" flavor2="8">
         <ccTool flags="0">
         </ccTool>
+      </item>
+      <item path="snapshot_merger.cpp" ex="false" tool="1" flavor2="0">
       </item>
     </conf>
   </confs>
