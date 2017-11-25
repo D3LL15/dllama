@@ -1,6 +1,8 @@
 #ifndef DLLAMA_H
 #define DLLAMA_H
 
+#include <pthread.h>
+
 #include "llama.h"
 
 class dllama {

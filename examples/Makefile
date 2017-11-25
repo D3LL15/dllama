@@ -2,7 +2,7 @@
 # LLAMA Examples
 #
 
-CC         := g++
+CC         := mpicxx
 CFLAGS     := -Wall -fopenmp -std=gnu++11 -DLL_PERSISTENCE -I. -I../llama/include
 LFLAGS     := 
 

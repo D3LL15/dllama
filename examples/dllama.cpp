@@ -6,6 +6,7 @@
 using namespace std;
 
 dllama::dllama() {
+    //initialise llama
     char* database_directory = (char*) alloca(16);
     strcpy(database_directory, "db");
     
@@ -44,7 +45,7 @@ size_t dllama::out_degree(node_t node) {
     return graph->out_degree(node);
 }
 
-//call after a certain amount of updates / time (if updates have been made, to ensure system as a whole remains somewhat consistent if few updates)
+//call after a certain amount of updates
 void dllama::auto_checkpoint() {
     graph->checkpoint();
 }
