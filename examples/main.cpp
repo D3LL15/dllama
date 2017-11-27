@@ -13,17 +13,24 @@ int world_rank;
 
 void mpi_listener() {
     cout << "mpi_listener running\n";
+    MPI_Status status;
+    int bytes_received;
+    //while (true) {
     if (world_rank == 1) {
-        MPI_Status status;
         MPI_Probe(0, 0, MPI_COMM_WORLD, &status);
-        int number_amount;
-        MPI_Get_count(&status, MPI_BYTE, &number_amount);
-        cout << "number being received: " << number_amount << "\n";
-        char* memblock = new char [number_amount];
-        MPI_Recv(memblock, number_amount, MPI_BYTE, 0, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+        MPI_Get_count(&status, MPI_BYTE, &bytes_received);
+        cout << "number being received: " << bytes_received << "\n";
+        char* memblock = new char [bytes_received];
+        MPI_Recv(memblock, bytes_received, MPI_BYTE, 0, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 
         cout << "received file\n";
-
+        ofstream file("/home/dan/project/current/dllama/examples/db/rank0/csr__out__0.dat", ios::out | ios::binary | ios::trunc);
+        if (file.is_open())
+        {
+            file.write(memblock, bytes_received);
+            file.close();
+        }
+        else cout << "Unable to open file\n";
         delete[] memblock;
     }
 }
