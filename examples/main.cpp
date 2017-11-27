@@ -1,37 +1,71 @@
 #include "dllama_test.h"
 #include "dllama.h"
 #include "snapshot_merger.h"
+
 #include <thread>
 #include <iostream>
 #include <mpi.h>
 #include <fstream>
+#include <string>
+#include <sstream>
+
+#define SNAPSHOT_MESSAGE 0
+#define START_MERGE_REQUEST 1
 
 using namespace std;
 
 int world_size;
 int world_rank;
 
-void mpi_listener() {
-    cout << "mpi_listener running\n";
-    MPI_Status status;
+void handle_snapshot_message(MPI_Status status) {
     int bytes_received;
-    //while (true) {
-    if (world_rank == 1) {
-        MPI_Probe(0, 0, MPI_COMM_WORLD, &status);
-        MPI_Get_count(&status, MPI_BYTE, &bytes_received);
-        cout << "number being received: " << bytes_received << "\n";
-        char* memblock = new char [bytes_received];
-        MPI_Recv(memblock, bytes_received, MPI_BYTE, 0, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+    MPI_Get_count(&status, MPI_BYTE, &bytes_received);
+    cout << "Rank " << world_rank << " number of bytes being received: " << bytes_received << "\n";
+    char* memblock = new char [bytes_received];
+    MPI_Recv(memblock, bytes_received, MPI_BYTE, MPI_ANY_SOURCE, SNAPSHOT_MESSAGE, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+    cout << "Rank " << world_rank << " received file\n";
 
-        cout << "received file\n";
-        ofstream file("/home/dan/project/current/dllama/examples/db/rank0/csr__out__0.dat", ios::out | ios::binary | ios::trunc);
-        if (file.is_open())
-        {
-            file.write(memblock, bytes_received);
-            file.close();
+    uint32_t file_number = 0;
+    file_number += memblock[0] << 24;
+    file_number += memblock[1] << 16;
+    file_number += memblock[2] << 8;
+    file_number += memblock[3];
+    cout << "Rank " << world_rank << " file number: " << file_number << "\n";
+
+    ostringstream oss;
+    oss << "/home/dan/project/current/dllama/examples/db/rank" << status.MPI_SOURCE << "/csr__out__" << file_number << ".dat";
+    string output_file_name = oss.str();
+
+    ofstream file(output_file_name, ios::out | ios::binary | ios::trunc);
+    if (file.is_open())
+    {
+        file.write(memblock + 4, bytes_received - 4);
+        file.close();
+    }
+    else cout << "Rank " << world_rank << " unable to open output file\n";
+    delete[] memblock;
+}
+
+void start_mpi_listener() {
+    cout << "Rank " << world_rank << " mpi_listener running\n";
+    MPI_Status status;
+    while (true) {
+        MPI_Probe(MPI_ANY_SOURCE, SNAPSHOT_MESSAGE, MPI_COMM_WORLD, &status);
+        switch (status.MPI_TAG) {
+            case SNAPSHOT_MESSAGE:
+                handle_snapshot_message(status);
+                break;
+            case START_MERGE_REQUEST:
+                //TODO: alert main thread to stop writing snapshots
+                //TODO: broadcast start merge request (if not waiting on acks for snapshot broadcasts?)
+                //TODO: set sender's position in merge request vector to 1
+                //TODO: if vector all 1 (apart from us) then merge
+                //TODO: set merge request vector to all 0s
+                //TODO: allow main thread to continue writing snapshots
+                break;
+            default:
+                cout << "Rank " << world_rank << " received message with unknown tag\n";
         }
-        else cout << "Unable to open file\n";
-        delete[] memblock;
     }
 }
 
@@ -41,51 +75,10 @@ int main(int argc, char** argv) {
     MPI_Comm_size(MPI_COMM_WORLD, &world_size);
     MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
     
-    thread first (mpi_listener);
-    cout << "main, mpi_listener now execute concurrently...\n";
-    
-    
-    if (world_rank == 0) {
-        streampos size;
-        char * memblock;
+    //start MPI listener thread
+    thread mpi_listener (start_mpi_listener);
+    cout << "Rank " << world_rank << " main and mpi_listener threads now execute concurrently...\n";
 
-        ifstream file ("/home/dan/project/current/dllama/examples/db/csr__out__0.dat", ios::in|ios::binary|ios::ate);
-        if (file.is_open())
-        {
-            size = file.tellg();
-            memblock = new char [size];
-            file.seekg (0, ios::beg);
-            file.read (memblock, size);
-            file.close();
-
-            cout << "the entire file content is in memory\n";
-            for (int i = 0; i < world_size; i++) {
-                if (i != world_rank) {
-                    MPI_Send(memblock, size, MPI_BYTE, i, 0, MPI_COMM_WORLD);
-                }
-            }
-
-            delete[] memblock;
-        }
-        else cout << "Unable to open file\n";
-    } else {
-        /*MPI_Status status;
-        MPI_Probe(0, 0, MPI_COMM_WORLD, &status);
-        int number_amount;
-        MPI_Get_count(&status, MPI_BYTE, &number_amount);
-        cout << "number being received: " << number_amount << "\n";
-        char* memblock = new char [number_amount];
-        MPI_Recv(memblock, number_amount, MPI_BYTE, 0, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-
-        cout << "received file\n";
-
-        delete[] memblock;*/
-    }
-
-    first.join();
-    cout << "mpi_listener completed.\n";
-    MPI_Finalize();
-    
     if (argc == 2) {
         dllama_test x = dllama_test();
         switch (*argv[1]) {
@@ -102,8 +95,44 @@ int main(int argc, char** argv) {
                 dllama y = dllama();
                 //y.load_SNAP_graph();
                 break;
+            case '5':
+                if (world_rank == 0) {
+                    streampos file_size;
+                    char * memblock;
+                    uint32_t file_number = 5;
+
+                    ifstream file ("/home/dan/project/current/dllama/examples/db/csr__out__0.dat", ios::in|ios::binary|ios::ate);
+                    if (file.is_open())
+                    {
+                        file_size = file.tellg();
+                        int memblock_size = file_size;
+                        memblock_size += 4;
+                        memblock = new char [memblock_size];
+                        memblock[0] = (file_number >> 24) & 0xFF;
+                        memblock[1] = (file_number >> 16) & 0xFF;
+                        memblock[2] = (file_number >> 8) & 0xFF;
+                        memblock[3] = file_number & 0xFF;
+                        file.seekg (0, ios::beg);
+                        file.read (memblock + 4, memblock_size);
+                        file.close();
+
+                        for (int i = 0; i < world_size; i++) {
+                            if (i != world_rank) {
+                                MPI_Send(memblock, memblock_size, MPI_BYTE, i, SNAPSHOT_MESSAGE, MPI_COMM_WORLD);
+                            }
+                        }
+
+                        delete[] memblock;
+                    }
+                    else cout << "Rank " << world_rank << " unable to open input file\n";
+                }
+                break;
         }
     }
+    
+    mpi_listener.join();
+    cout << "Rank " << world_rank << " mpi_listener thread terminated.\n";
+    MPI_Finalize();
     return 0;
 }
 
