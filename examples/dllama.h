@@ -5,6 +5,8 @@
 
 #include "llama.h"
 
+#define SNAPSHOT_MESSAGE 0
+
 class dllama {
 public:
     dllama();
@@ -16,10 +18,12 @@ public:
     void out_iter_begin(ll_edge_iterator& iter, node_t node);
     ITERATOR_DECL bool out_iter_has_next(ll_edge_iterator& iter);
     ITERATOR_DECL edge_t out_iter_next(ll_edge_iterator& iter);
+    void add_random_edge();
+    void auto_checkpoint();
     //void add_property();
     //std::string get_property();
 private:
-    void auto_checkpoint();
+    
 protected:
     ll_writable_graph* graph;
     ll_database* database;

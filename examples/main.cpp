@@ -1,7 +1,3 @@
-#include "dllama_test.h"
-#include "dllama.h"
-#include "snapshot_merger.h"
-
 #include <thread>
 #include <iostream>
 #include <mpi.h>
@@ -9,8 +5,10 @@
 #include <string>
 #include <sstream>
 
-#define SNAPSHOT_MESSAGE 0
-#define START_MERGE_REQUEST 1
+#include "dllama_test.h"
+#include "dllama.h"
+#include "snapshot_merger.h"
+#include "shared_thread_state.h"
 
 using namespace std;
 
@@ -33,7 +31,7 @@ void handle_snapshot_message(MPI_Status status) {
     cout << "Rank " << world_rank << " file number: " << file_number << "\n";
 
     ostringstream oss;
-    oss << "/home/dan/project/current/dllama/examples/db/rank" << status.MPI_SOURCE << "/csr__out__" << file_number << ".dat";
+    oss << "/home/dan/project/current/dllama/examples/db" << world_rank << "/rank" << status.MPI_SOURCE << "/csr__out__" << file_number << ".dat";
     string output_file_name = oss.str();
 
     ofstream file(output_file_name, ios::out | ios::binary | ios::trunc);
@@ -57,6 +55,7 @@ void start_mpi_listener() {
                 break;
             case START_MERGE_REQUEST:
                 //TODO: alert main thread to stop writing snapshots
+                //TODO: send latest snapshot file if incomplete
                 //TODO: broadcast start merge request (if not waiting on acks for snapshot broadcasts?)
                 //TODO: set sender's position in merge request vector to 1
                 //TODO: if vector all 1 (apart from us) then merge
@@ -81,6 +80,7 @@ int main(int argc, char** argv) {
 
     if (argc == 2) {
         dllama_test x = dllama_test();
+        dllama y = dllama();
         switch (*argv[1]) {
             case '1':
                 x.full_test();
@@ -92,8 +92,7 @@ int main(int argc, char** argv) {
                 x.test_llama_print_neighbours();
                 break;
             case '4':
-                dllama y = dllama();
-                //y.load_SNAP_graph();
+                y.load_SNAP_graph();
                 break;
             case '5':
                 if (world_rank == 0) {
@@ -125,6 +124,12 @@ int main(int argc, char** argv) {
                         delete[] memblock;
                     }
                     else cout << "Rank " << world_rank << " unable to open input file\n";
+                }
+                break;
+            case '6':
+                if (world_rank == 0) {
+                    y.add_random_edge();
+                    y.auto_checkpoint();
                 }
                 break;
         }
