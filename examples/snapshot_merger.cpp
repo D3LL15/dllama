@@ -21,7 +21,7 @@ void snapshot_merger::handle_snapshot_message(MPI_Status status) {
     MPI_Get_count(&status, MPI_BYTE, &bytes_received);
     cout << "Rank " << world_rank << " number of bytes being received: " << bytes_received << "\n";
     char* memblock = new char [bytes_received];
-    MPI_Recv(memblock, bytes_received, MPI_BYTE, MPI_ANY_SOURCE, SNAPSHOT_MESSAGE, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+    MPI_Recv(memblock, bytes_received, MPI_BYTE, status.MPI_SOURCE, SNAPSHOT_MESSAGE, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
     cout << "Rank " << world_rank << " received file\n";
 
     uint32_t file_number = 0;
@@ -31,6 +31,9 @@ void snapshot_merger::handle_snapshot_message(MPI_Status status) {
     file_number += memblock[3];
     cout << "Rank " << world_rank << " file number: " << file_number << "\n";
 
+    //we can get away with this for single level files
+    received_snapshot_levels[status.MPI_SOURCE] = file_number;
+    
     ostringstream oss;
     oss << "db" << world_rank << "/rank" << status.MPI_SOURCE << "/csr__out__" << file_number << ".dat";
     string output_file_name = oss.str();
@@ -48,26 +51,63 @@ void snapshot_merger::handle_snapshot_message(MPI_Status status) {
 void snapshot_merger::handle_merge_request(MPI_Status status) {
     //stop main thread writing snapshots
     merge_starting_lock.lock();
+    bool merge_had_started = merge_starting;
     merge_starting = 1;
     merge_starting_lock.unlock();
-    //TODO: send latest snapshot file if incomplete, only applies with multiple levels per file
-    //TODO: broadcast start merge request
-    //TODO: set sender's position in merge request vector to received latest snapshot number (from merge request message)
-    //TODO: if vector numbers correspond to currently held latest snapshots (apart from us) then merge, else listen for snapshots until they are equal
-    //TODO: set merge request vector to all 0s
-    //TODO: reset main thread llama to use new level 0 snapshot, while retaining in memory deltas, then flush deltas to new snapshot
-
-    //allow main thread to continue writing snapshots
-    merge_starting_lock.lock();
-    merge_starting = 0;
-    merge_starting_lock.unlock();
+    int expected_level;
+    MPI_Recv(&expected_level, 1, MPI_INT, status.MPI_SOURCE, START_MERGE_REQUEST, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+    
+    //TODO: send latest snapshot file if incomplete (only applies with multiple levels per file) may also require modifying snapshot level vectors
+    
+    //broadcast start merge request if this is the first merge request you have heard
+    if (!merge_had_started) {
+        for (int i = 0; i < world_size; i++) {
+            if (i != world_rank) {
+                MPI_Send(&current_snapshot_level, 1, MPI_INT, i, START_MERGE_REQUEST, MPI_COMM_WORLD);
+            }
+        }
+    }
+    
+    //set sender's value in expected snapshot vector to the snapshot number they sent in merge request (the last snapshot they sent)
+    expected_snapshot_levels[status.MPI_SOURCE] = expected_level;
+    //if expected snapshot numbers correspond to currently held latest snapshots (the last snapshots we received from those hosts) then merge, else listen for snapshots until they are equal
+    bool received_all_snapshots = 1;
+    for (int i = 0; i < world_size; i++) {
+        if (received_snapshot_levels[i] != expected_snapshot_levels[i]) {
+            received_all_snapshots = 0;
+        }
+    }
+    if (received_all_snapshots) {
+        cout << "Rank " << world_rank << " received merge requests from all other hosts\n";
+        
+        //TODO: merge
+        
+        //TODO: reset main thread llama to use new level 0 snapshot, while retaining in memory deltas, then flush deltas to new snapshot
+        
+        //clean up after merge
+        //setting expected snapshot level to -1 means we have to hear from that host before merging
+        for (int i = 0; i < world_size; i++) {
+            received_snapshot_levels[i] = 0;
+            expected_snapshot_levels[i] = -1;
+        }
+        //don't need to hear from yourself
+        expected_snapshot_levels[world_rank] = 0;
+        
+        //allow main thread to continue writing snapshots
+        merge_starting_lock.lock();
+        merge_starting = 0;
+        merge_starting_lock.unlock();
+    }
 }
 
 void snapshot_merger::start_snapshot_listener() {
     cout << "Rank " << world_rank << " mpi_listener running\n";
     
     received_snapshot_levels = new int[world_size]();
-    expected_snapshot_levels = new int[world_size]();
+    expected_snapshot_levels = new int[world_size];
+    for (int i = 0; i < world_size; i++) {
+        expected_snapshot_levels[i] = -1;
+    }
     
     MPI_Status status;
     while (true) {
