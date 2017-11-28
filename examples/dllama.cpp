@@ -12,13 +12,18 @@ using namespace std;
 
 dllama::dllama() {
     //initialise llama
-    char* database_directory = (char*) alloca(16);
-    if (world_rank == 0) {
-        strcpy(database_directory, "db0");
-    } else {
-        strcpy(database_directory, "db1");
-    }
+    char* database_directory = (char*) alloca(20);
     
+    //this only applies if we are simulating on a single machine
+    if (SINGLE_MACHINE) {
+        if (world_rank == 0) {
+            strcpy(database_directory, "db0");
+        } else {
+            strcpy(database_directory, "db1");
+        }
+    } else {
+        strcpy(database_directory, "db");
+    }
     
     database = new ll_database(database_directory);
     graph = database->graph();
@@ -61,14 +66,19 @@ void dllama::auto_checkpoint() {
     //TODO: check if merge occurring before writing new file
     graph->checkpoint();
     
-    uint32_t file_number = (graph->num_levels() - 1) / LL_LEVELS_PER_ML_FILE;
-    if (graph->num_levels() % LL_LEVELS_PER_ML_FILE == 0) { //if we have written to the snapshot file for the final time
+    uint32_t file_number = (graph->num_levels() - 2) / LL_LEVELS_PER_ML_FILE;
+    if ((graph->num_levels() - 1) % LL_LEVELS_PER_ML_FILE == 0) { 
+        //if we have written to the snapshot file for the final time then send it, only applies if you have multiple levels per file
         cout << "Rank " << world_rank << " sending snapshot file\n"; 
         streampos file_size;
         char * memblock;
-    
+
         ostringstream oss;
-        oss << "/home/dan/project/current/dllama/examples/db" << world_rank << "/csr__out__" << file_number << ".dat";
+        if (SINGLE_MACHINE) {
+            oss << "db" << world_rank << "/csr__out__" << file_number << ".dat";
+        } else {
+            oss << "db/csr__out__" << file_number << ".dat";
+        }
         string input_file_name = oss.str();
 
         ifstream file (input_file_name, ios::in|ios::binary|ios::ate);

@@ -31,7 +31,7 @@ void handle_snapshot_message(MPI_Status status) {
     cout << "Rank " << world_rank << " file number: " << file_number << "\n";
 
     ostringstream oss;
-    oss << "/home/dan/project/current/dllama/examples/db" << world_rank << "/rank" << status.MPI_SOURCE << "/csr__out__" << file_number << ".dat";
+    oss << "db" << world_rank << "/rank" << status.MPI_SOURCE << "/csr__out__" << file_number << ".dat";
     string output_file_name = oss.str();
 
     ofstream file(output_file_name, ios::out | ios::binary | ios::trunc);
@@ -68,6 +68,7 @@ void start_mpi_listener() {
     }
 }
 
+//usage: mpirun -n 2 ./dllama.exe 4
 int main(int argc, char** argv) {
     //initialise MPI
     MPI_Init(NULL, NULL);
@@ -100,7 +101,7 @@ int main(int argc, char** argv) {
                     char * memblock;
                     uint32_t file_number = 5;
 
-                    ifstream file ("/home/dan/project/current/dllama/examples/db/csr__out__0.dat", ios::in|ios::binary|ios::ate);
+                    ifstream file ("db/csr__out__0.dat", ios::in|ios::binary|ios::ate);
                     if (file.is_open())
                     {
                         file_size = file.tellg();
@@ -127,10 +128,8 @@ int main(int argc, char** argv) {
                 }
                 break;
             case '6':
-                if (world_rank == 0) {
-                    y.add_random_edge();
-                    y.auto_checkpoint();
-                }
+                y.add_random_edge();
+                y.auto_checkpoint();
                 break;
         }
     }
