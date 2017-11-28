@@ -27,6 +27,8 @@ dllama::dllama() {
     }
     
     database = new ll_database(database_directory);
+    //one thread for now
+    database->set_num_threads(1);
     graph = database->graph();
 }
 
