@@ -57,10 +57,16 @@
       </makefileType>
       <item path="dllama.cpp" ex="false" tool="1" flavor2="8">
         <ccTool flags="0">
+          <incDir>
+            <pElem>/usr/local/include</pElem>
+          </incDir>
         </ccTool>
       </item>
       <item path="dllama_test.cpp" ex="false" tool="1" flavor2="8">
         <ccTool flags="0">
+          <incDir>
+            <pElem>/usr/local/include</pElem>
+          </incDir>
         </ccTool>
       </item>
       <item path="llama-pagerank.cc" ex="false" tool="1" flavor2="8">
@@ -69,9 +75,17 @@
       </item>
       <item path="main.cpp" ex="false" tool="1" flavor2="8">
         <ccTool flags="0">
+          <incDir>
+            <pElem>/usr/local/include</pElem>
+          </incDir>
         </ccTool>
       </item>
-      <item path="snapshot_merger.cpp" ex="false" tool="1" flavor2="0">
+      <item path="snapshot_merger.cpp" ex="false" tool="1" flavor2="8">
+        <ccTool flags="0">
+          <incDir>
+            <pElem>/usr/local/include</pElem>
+          </incDir>
+        </ccTool>
       </item>
     </conf>
   </confs>

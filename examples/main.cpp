@@ -4,6 +4,7 @@
 #include <fstream>
 #include <string>
 #include <sstream>
+#include <mutex>
 
 #include "dllama_test.h"
 #include "dllama.h"
@@ -14,58 +15,13 @@ using namespace std;
 
 int world_size;
 int world_rank;
-
-void handle_snapshot_message(MPI_Status status) {
-    int bytes_received;
-    MPI_Get_count(&status, MPI_BYTE, &bytes_received);
-    cout << "Rank " << world_rank << " number of bytes being received: " << bytes_received << "\n";
-    char* memblock = new char [bytes_received];
-    MPI_Recv(memblock, bytes_received, MPI_BYTE, MPI_ANY_SOURCE, SNAPSHOT_MESSAGE, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-    cout << "Rank " << world_rank << " received file\n";
-
-    uint32_t file_number = 0;
-    file_number += memblock[0] << 24;
-    file_number += memblock[1] << 16;
-    file_number += memblock[2] << 8;
-    file_number += memblock[3];
-    cout << "Rank " << world_rank << " file number: " << file_number << "\n";
-
-    ostringstream oss;
-    oss << "db" << world_rank << "/rank" << status.MPI_SOURCE << "/csr__out__" << file_number << ".dat";
-    string output_file_name = oss.str();
-
-    ofstream file(output_file_name, ios::out | ios::binary | ios::trunc);
-    if (file.is_open())
-    {
-        file.write(memblock + 4, bytes_received - 4);
-        file.close();
-    }
-    else cout << "Rank " << world_rank << " unable to open output file\n";
-    delete[] memblock;
-}
+bool merge_starting;
+mutex merge_starting_lock;
+int current_snapshot_level;
 
 void start_mpi_listener() {
-    cout << "Rank " << world_rank << " mpi_listener running\n";
-    MPI_Status status;
-    while (true) {
-        MPI_Probe(MPI_ANY_SOURCE, SNAPSHOT_MESSAGE, MPI_COMM_WORLD, &status);
-        switch (status.MPI_TAG) {
-            case SNAPSHOT_MESSAGE:
-                handle_snapshot_message(status);
-                break;
-            case START_MERGE_REQUEST:
-                //TODO: alert main thread to stop writing snapshots
-                //TODO: send latest snapshot file if incomplete
-                //TODO: broadcast start merge request (if not waiting on acks for snapshot broadcasts?)
-                //TODO: set sender's position in merge request vector to 1
-                //TODO: if vector all 1 (apart from us) then merge
-                //TODO: set merge request vector to all 0s
-                //TODO: allow main thread to continue writing snapshots
-                break;
-            default:
-                cout << "Rank " << world_rank << " received message with unknown tag\n";
-        }
-    }
+    snapshot_merger sm = snapshot_merger();
+    sm.start_snapshot_listener();
 }
 
 //usage: mpirun -n 2 ./dllama.exe 4
@@ -74,6 +30,8 @@ int main(int argc, char** argv) {
     MPI_Init(NULL, NULL);
     MPI_Comm_size(MPI_COMM_WORLD, &world_size);
     MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
+    merge_starting = 0;
+    current_snapshot_level = 0;
     
     //start MPI listener thread
     thread mpi_listener (start_mpi_listener);
