@@ -38,20 +38,20 @@ int main(int argc, char** argv) {
     cout << "Rank " << world_rank << " main and mpi_listener threads now execute concurrently...\n";
 
     if (argc == 2) {
-        dllama_test x = dllama_test();
-        dllama y = dllama();
+        dllama_test test_instance = dllama_test();
+        dllama dllama_instance = dllama();
         switch (*argv[1]) {
             case '1':
-                x.full_test();
+                test_instance.full_test();
                 break;
             case '2':
-                x.test_llama_init();
+                test_instance.test_llama_init();
                 break;
             case '3':
-                x.test_llama_print_neighbours();
+                test_instance.test_llama_print_neighbours();
                 break;
             case '4':
-                y.load_SNAP_graph();
+                dllama_instance.load_net_graph("/home/dan/NetBeansProjects/Part2Project/graph.net");
                 break;
             case '5':
                 if (world_rank == 0) {
@@ -86,8 +86,11 @@ int main(int argc, char** argv) {
                 }
                 break;
             case '6':
-                y.add_random_edge();
-                y.auto_checkpoint();
+                dllama_instance.add_random_edge();
+                dllama_instance.auto_checkpoint();
+                break;
+            case '7':
+                dllama_instance.load_net_graph("simple_graph.net");
                 break;
         }
     }

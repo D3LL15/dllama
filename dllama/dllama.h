@@ -7,11 +7,13 @@
 
 #define SNAPSHOT_MESSAGE 0
 
+using namespace std;
+
 class dllama {
 public:
     dllama();
     virtual ~dllama();
-    void load_SNAP_graph();
+    void load_net_graph(string net_graph);
     edge_t add_edge(node_t src, node_t tgt);
     node_t add_node();
     size_t out_degree(node_t node);

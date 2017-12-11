@@ -4,6 +4,8 @@
 #include <sstream>
 #include <iostream>
 #include <mutex>
+#include <sys/stat.h>
+#include <sys/types.h>
 
 #include "snapshot_merger.h"
 #include "shared_thread_state.h"
@@ -35,7 +37,11 @@ void snapshot_merger::handle_snapshot_message(MPI_Status status) {
     received_snapshot_levels[status.MPI_SOURCE] = file_number;
     
     ostringstream oss;
-    oss << "db" << world_rank << "/rank" << status.MPI_SOURCE << "/csr__out__" << file_number << ".dat";
+    oss << "db" << world_rank << "/rank" << status.MPI_SOURCE;
+    //create receipt directory if it doesn't already exist
+    mkdir(oss.str().c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IWOTH | S_IXOTH);
+    oss << "/csr__out__" << file_number << ".dat";
+    
     string output_file_name = oss.str();
 
     ofstream file(output_file_name, ios::out | ios::binary | ios::trunc);

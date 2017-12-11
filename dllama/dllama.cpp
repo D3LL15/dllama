@@ -16,15 +16,13 @@ dllama::dllama() {
     char* database_directory = (char*) alloca(20);
     
     //this only applies if we are simulating on a single machine
+    ostringstream oss;
     if (SINGLE_MACHINE) {
-        if (world_rank == 0) {
-            strcpy(database_directory, "db0");
-        } else {
-            strcpy(database_directory, "db1");
-        }
+        oss << "db" << world_rank;
     } else {
-        strcpy(database_directory, "db");
+        oss << "db";
     }
+    strcpy(database_directory, oss.str().c_str());
     
     database = new ll_database(database_directory);
     //one thread for now
@@ -35,17 +33,16 @@ dllama::dllama() {
 dllama::~dllama() {
 }
 
-void dllama::load_SNAP_graph() {
+void dllama::load_net_graph(string net_graph) {
     ll_file_loaders loaders;
-    char graph_location[] = "/home/dan/NetBeansProjects/Part2Project/graph.net";
-    ll_file_loader* loader = loaders.loader_for(graph_location);
+    ll_file_loader* loader = loaders.loader_for(net_graph.c_str());
     if (loader == NULL) {
         fprintf(stderr, "Error: Unsupported input file type\n");
         return;
     }
     
     ll_loader_config loader_config;
-    loader->load_direct(graph, graph_location, &loader_config);
+    loader->load_direct(graph, net_graph.c_str(), &loader_config);
     
     cout << "num levels " << graph->num_levels() << "\n";
 }
