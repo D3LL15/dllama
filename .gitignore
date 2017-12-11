@@ -1,0 +1,5 @@
+#ignore llama data
+*.dat
+
+#ignore executables
+*.exe
