@@ -1,0 +1,3 @@
+CC ../bin/llama-pagerank
+g++ -g -O3 -DNDEBUG -Wall -fopenmp -std=gnu++11 -DLL_PERSISTENCE -I. -I../llama/include -o ../bin/llama-pagerank llama-pagerank.cc 
+g++ -g -O3 -DNDEBUG -Wall -fopenmp -std=gnu++11 -DLL_PERSISTENCE -I. -I../llama/include main.cpp dllama_test.cpp dllama.cpp  -o dllama.exe
