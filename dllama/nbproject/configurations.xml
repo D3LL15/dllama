@@ -6,6 +6,8 @@
       <in>dllama_test.cpp</in>
       <in>llama-pagerank.cc</in>
       <in>main.cpp</in>
+      <in>snapshot_manager.cpp</in>
+      <in>snapshot_manager.h</in>
       <in>snapshot_merger.cpp</in>
     </df>
     <logicalFolder name="ExternalFiles"
@@ -79,6 +81,10 @@
             <pElem>/usr/local/include</pElem>
           </incDir>
         </ccTool>
+      </item>
+      <item path="snapshot_manager.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="snapshot_manager.h" ex="false" tool="3" flavor2="0">
       </item>
       <item path="snapshot_merger.cpp" ex="false" tool="1" flavor2="8">
         <ccTool flags="0">

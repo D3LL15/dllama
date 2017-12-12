@@ -6,8 +6,6 @@
 #include <mutex>
 #include <sys/stat.h>
 #include <sys/types.h>
-#include <stdio.h>
-#include <stdlib.h>
 
 #include "snapshot_merger.h"
 #include "shared_thread_state.h"
@@ -138,13 +136,13 @@ void snapshot_merger::read_snapshots() {
 		if (file.is_open()) {
 			int file_size = file.tellg();
 			char* memblock = new char [file_size];
-			level_meta* meta;
+			dll_level_meta* meta;
 
 			file.seekg(0, ios::beg);
 			file.read(memblock, file_size);
 			file.close();
 
-			meta = (level_meta*) memblock;
+			meta = (dll_level_meta*) memblock;
 			cout << meta->lm_level << "\n";
 			cout << meta->lm_header_offset << "\n";
 			cout << meta->lm_header_size << "\n";
@@ -155,4 +153,83 @@ void snapshot_merger::read_snapshots() {
 			delete[] memblock;
 		} else cout << "Rank " << world_rank << " unable to open snapshot file\n";
 	}
+}
+
+void snapshot_merger::merge_snapshots() {
+	int num_vertices = 4;
+	
+	string output_file_name = "new_level0.dat";
+
+	ofstream file(output_file_name, ios::out | ios::binary | ios::trunc);
+	if (file.is_open()) {
+		//metadata
+		dll_level_meta new_meta();
+		new_meta.lm_level = 0;
+		new_meta.lm_sub_level = 0;
+		new_meta.lm_header_size = 32;
+		new_meta.lm_base_level = 0;
+		//TODO: must be finished later
+		
+		//edge table
+		for (int vertex = 0; vertex < num_vertices; vertex++) {
+			vector<size_t> neighbours();
+			for (int r = 0; r < world_size; r++) {
+				//load last snapshot
+				ostringstream oss;
+				if (r == world_rank) {
+					oss << "csr__out__" << current_snapshot_level << ".dat";
+				} else {
+					oss << "db" << world_rank << "/rank" << r << "/csr_out__" << 1 << ".dat"; //TODO: need to know latest snapshot numbers
+				}
+				
+				string input_file_name = oss.str().c_str();
+				ifstream file(input_file_name, ios::in | ios::binary | ios::ate);
+				if (file.is_open()) {
+					int file_size = file.tellg();
+					char* memblock = new char [file_size];
+					dll_level_meta* meta;
+
+					file.seekg(0, ios::beg);
+					file.read(memblock, file_size);
+					file.close();
+
+					meta = (dll_level_meta*) memblock;
+					
+					//while vertex chunk not level 0 find last vertex chunk
+					int vt_offset = meta->lm_vt_offset;
+					int page_number = vertex/LL_ENTRIES_PER_PAGE;
+					int indirection_offset = page_number*sizeof(ll_persistent_chunk);
+					ll_persistent_chunk* indirection_entry = (ll_persistent_chunk*) (memblock + indirection_offset);
+					
+					int page_level = indirection_entry->pc_level;
+					if (page_level == 0) {
+						continue; //to avoid repeatedly adding level 0
+					} else if (page_level != 1) { //TODO: need to know latest snapshot numbers
+						//load the other snapshot instead
+					}
+					
+					
+					
+					cout << meta->lm_level << "\n";
+					cout << meta->lm_header_offset << "\n";
+					cout << meta->lm_header_size << "\n";
+					cout << meta->lm_vt_offset << "\n";
+					cout << meta->lm_vt_partitions << "\n";
+					cout << meta->lm_vt_size << "\n";
+
+					delete[] memblock;
+				} else cout << "Rank " << world_rank << " unable to open snapshot file\n";
+				
+				//find vertex in chunk
+				//add all neighbours in edge table pointed to by chunk
+			}
+			//add edges from level 0
+		}
+		
+		//header
+		
+		//vertex table
+		
+		file.close();
+	} else cout << "Rank " << world_rank << " unable to open output file\n";
 }

@@ -95,6 +95,10 @@ int main(int argc, char** argv) {
 				snapshot_merger sm = snapshot_merger();
 				sm.read_snapshots();
 				break;
+			case '9':
+				snapshot_merger sm = snapshot_merger();
+				sm.merge_snapshots();
+				break;
 		}
 	}
 
