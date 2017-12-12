@@ -25,7 +25,7 @@ public:
     //void add_property();
     //std::string get_property();
 private:
-    
+
 protected:
     ll_writable_graph* graph;
     ll_database* database;

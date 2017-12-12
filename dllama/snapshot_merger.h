@@ -33,13 +33,14 @@ protected:
         size_t lm_vt_offset; // VT offset within the level file
         size_t lm_header_offset; // The header offset
     };
-    
+
     /// The header for the level
+
     typedef struct {
-            ll_large_persistent_chunk h_et_chunk;
-            size_t h_et_size;
+        ll_large_persistent_chunk h_et_chunk;
+        size_t h_et_size;
     } header_t;
-    
+
     //we also use ll_persistent_chunk for each item in indirection table
 };
 
