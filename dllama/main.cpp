@@ -92,6 +92,10 @@ int main(int argc, char** argv) {
             case '7':
                 dllama_instance.load_net_graph("simple_graph.net");
                 break;
+            case '8':
+                snapshot_merger sm = snapshot_merger();
+                sm.read_snapshots();
+                break;
         }
     }
     

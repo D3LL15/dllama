@@ -6,6 +6,8 @@
 #include <mutex>
 #include <sys/stat.h>
 #include <sys/types.h>
+#include <stdio.h>
+#include <stdlib.h>
 
 #include "snapshot_merger.h"
 #include "shared_thread_state.h"
@@ -132,7 +134,29 @@ void snapshot_merger::start_snapshot_listener() {
 }
 
 void snapshot_merger::read_snapshots() {
-    //std::string dir = "db";
-    //ll_persistent_storage* storage = new ll_persistent_storage(dir.c_str());
-    //std::vector<std::string> csrs = storage->list_context_names("csr");
+    if (world_rank == 0) {
+        string input_file_name = "db0/csr__out__0.dat";
+        ifstream file (input_file_name, ios::in|ios::binary|ios::ate);
+        if (file.is_open())
+        {
+            int file_size = file.tellg();
+            char* memblock = new char [file_size];
+            level_meta* meta;
+            
+            file.seekg (0, ios::beg);
+            file.read (memblock, file_size);
+            file.close();
+            
+            meta = (level_meta*) memblock;
+            cout << meta->lm_level << "\n";
+            cout << meta->lm_header_offset << "\n";
+            cout << meta->lm_header_size << "\n";
+            cout << meta->lm_vt_offset << "\n";
+            cout << meta->lm_vt_partitions << "\n";
+            cout << meta->lm_vt_size << "\n";
+            
+            delete[] memblock;
+        }
+        else cout << "Rank " << world_rank << " unable to open snapshot file\n";
+    }
 }
