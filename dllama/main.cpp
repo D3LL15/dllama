@@ -41,6 +41,7 @@ int main(int argc, char** argv) {
 	if (argc == 2) {
 		dllama_test test_instance = dllama_test();
 		dllama dllama_instance = dllama();
+		snapshot_merger sm = snapshot_merger();
 		switch (*argv[1]) {
 			case '1':
 				test_instance.full_test();
@@ -92,12 +93,12 @@ int main(int argc, char** argv) {
 				dllama_instance.load_net_graph("simple_graph.net");
 				break;
 			case '8':
-				snapshot_merger sm = snapshot_merger();
 				sm.read_snapshots();
 				break;
 			case '9':
-				snapshot_merger sm = snapshot_merger();
-				sm.merge_snapshots();
+				if (world_rank == 0) {
+					sm.merge_snapshots();
+				}
 				break;
 		}
 	}
