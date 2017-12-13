@@ -71,7 +71,7 @@ vector<node_t> snapshot_manager::get_neighbours_of_vertex(int rank, node_t verte
 		if (page_level == 0) {
 			//continue; //to avoid repeatedly adding level 0
 		} 
-		cout << "snapshots[rank][page_level - 1]" << snapshots[rank][0] << "\n"; //snapshots[rank][page_level - 1]
+		cout << "snapshots[rank][page_level - 1]" << (size_t)snapshots[rank][0] << "\n"; //snapshots[rank][page_level - 1]
 		
 		//vertex 0
 		//size_t edges_offset = (size_t) (snapshots[rank][page_level - 1] + vt_offset + indirection_entry->pc_offset);

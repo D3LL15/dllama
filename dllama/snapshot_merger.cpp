@@ -160,12 +160,14 @@ void snapshot_merger::read_snapshots() {
 			cout << "et length " << et_chunk.pc_length << "\n";
 			cout << "et offset " << et_chunk.pc_offset << "\n\n";
 			
-			ll_persistent_chunk* indirection_entry = (ll_persistent_chunk*) (memblock + meta->lm_vt_offset);
+			ll_persistent_chunk* indirection_entry = (ll_persistent_chunk*) (memblock + meta->lm_vt_offset + sizeof(ll_persistent_chunk));
 			cout << "vertex table chunk level " << indirection_entry->pc_level << "\n";
 			cout << "vertex table chunk length " << indirection_entry->pc_length << "\n";
 			cout << "vertex table chunk offset " << indirection_entry->pc_offset << "\n";
 			
-			
+			//NB. the edge list offset is based off the start of the edge table, unlike the rest of the offsets
+			size_t* edge_list_offset = (size_t*) (memblock + indirection_entry->pc_offset);
+			cout << "edge list offset " << *edge_list_offset << "\n";
 
 			delete[] memblock;
 		} else cout << "Rank " << world_rank << " unable to open snapshot file\n";
