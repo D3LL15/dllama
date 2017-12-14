@@ -264,8 +264,10 @@ void snapshot_merger::merge_snapshots() {
 		//TODO: must be finished later
 		
 		//edge table
-		int rank_snapshots[2] = {1, 1};
+		int rank_snapshots[2] = {2, 2}; //TODO: this cannot be hardcoded
+		
 		snapshot_manager snapshots(rank_snapshots);
+		
 		for (int vertex = 0; vertex < num_vertices; vertex++) {
 			vector<node_t> neighbours;
 			for (int r = 0; r < world_size; r++) {

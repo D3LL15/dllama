@@ -101,9 +101,13 @@ int main(int argc, char** argv) {
 				}
 				break;
 			case 'a':
+				dllama_instance.load_net_graph("simple_graph.net");
 				dllama_instance.add_edge(1, 0);
 				dllama_instance.add_edge(2, 1);
 				dllama_instance.auto_checkpoint();
+				dllama_instance.add_edge(2, 0);
+				dllama_instance.auto_checkpoint();
+				sm.read_snapshots();
 				break;
 		}
 	}
