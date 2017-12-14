@@ -9,6 +9,7 @@ public:
     snapshot_merger();
     virtual ~snapshot_merger();
     void read_snapshots();
+    void read_second_snapshot();
     void start_snapshot_listener();
     void merge_snapshots();
 

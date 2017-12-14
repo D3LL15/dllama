@@ -100,6 +100,11 @@ int main(int argc, char** argv) {
 					sm.merge_snapshots();
 				}
 				break;
+			case 'a':
+				dllama_instance.add_edge(1, 0);
+				dllama_instance.add_edge(2, 1);
+				dllama_instance.auto_checkpoint();
+				break;
 		}
 	}
 
