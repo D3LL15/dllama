@@ -11,6 +11,7 @@
 #include "snapshot_merger.h"
 #include "shared_thread_state.h"
 #include "snapshot_manager.h"
+#include "llama/ll_mlcsr_helpers.h"
 
 using namespace std;
 
@@ -145,6 +146,7 @@ void snapshot_merger::read_snapshots() {
 			file.close();
 
 			meta = (dll_level_meta*) memblock;
+			cout << "size of level meta " << sizeof(dll_level_meta) << "\n";
 			cout << "level " << meta->lm_level << "\n";
 			cout << "header offset " << meta->lm_header_offset << "\n";
 			cout << "header size " << meta->lm_header_size << "\n";
@@ -160,14 +162,27 @@ void snapshot_merger::read_snapshots() {
 			cout << "et length " << et_chunk.pc_length << "\n";
 			cout << "et offset " << et_chunk.pc_offset << "\n\n";
 			
-			ll_persistent_chunk* indirection_entry = (ll_persistent_chunk*) (memblock + meta->lm_vt_offset + sizeof(ll_persistent_chunk));
+			ll_persistent_chunk* indirection_entry = (ll_persistent_chunk*) (memblock + meta->lm_vt_offset /*+ sizeof(ll_persistent_chunk)*/);
 			cout << "vertex table chunk level " << indirection_entry->pc_level << "\n";
 			cout << "vertex table chunk length " << indirection_entry->pc_length << "\n";
-			cout << "vertex table chunk offset " << indirection_entry->pc_offset << "\n";
+			cout << "vertex table chunk offset " << indirection_entry->pc_offset << "\n\n";
 			
 			//NB. the edge list offset is based off the start of the edge table, unlike the rest of the offsets
-			size_t* edge_list_offset = (size_t*) (memblock + indirection_entry->pc_offset);
-			cout << "edge list offset " << *edge_list_offset << "\n";
+			ll_mlcsr_core__begin_t* vertex_table_entry = (ll_mlcsr_core__begin_t*) (memblock + indirection_entry->pc_offset);
+			cout << "edge list level length " << vertex_table_entry->level_length << "\n";
+			cout << "edge list start " << vertex_table_entry->adj_list_start << "\n";
+			cout << "vertex degree " << vertex_table_entry->degree << "\n\n";
+			
+			cout << "size of char " << sizeof(char) << "\n";
+			cout << "size of unsigned " << sizeof(unsigned) << "\n";
+			cout << "size of LL_DATA_TYPE " << sizeof(unsigned long long) << "\n";
+			
+			
+			LL_DATA_TYPE* neighbour;
+			for (unsigned i = 0; i < vertex_table_entry->level_length; i++) {
+				neighbour = (LL_DATA_TYPE*) (memblock + et_chunk.pc_offset + vertex_table_entry->adj_list_start + (i * sizeof(LL_DATA_TYPE)));
+				cout << "neighbour " << i << " is " << *neighbour << "\n";
+			}
 
 			delete[] memblock;
 		} else cout << "Rank " << world_rank << " unable to open snapshot file\n";
