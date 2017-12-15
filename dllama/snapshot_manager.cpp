@@ -78,14 +78,53 @@ dll_header_t* snapshot_manager::get_header(int rank, int level, int offset) {
 	return (dll_header_t*) (snapshots[rank][level - 1] + offset);
 }
 
-vector<node_t> snapshot_manager::get_neighbours_of_vertex(int rank, node_t vertex) {
+vector<LL_DATA_TYPE> snapshot_manager::get_level_0_neighbours_of_vertex(node_t vertex) {
+	cout << "\n\ngetting level 0 neighbours of vertex " << vertex << "\n";
+	vector<LL_DATA_TYPE> neighbours;
+	dll_level_meta* meta = (dll_level_meta*) (level_0_snapshot);
+
+	int vt_offset = meta->lm_vt_offset;
+	cout << "vt offset " << vt_offset << "\n";
+
+	dll_header_t* header = (dll_header_t*) (level_0_snapshot + meta->lm_header_offset);
+	ll_large_persistent_chunk et_chunk = header->h_et_chunk;
+
+	int page_number = vertex / LL_ENTRIES_PER_PAGE;
+	cout << "page number " << page_number << "\n";
+	int indirection_offset = page_number * sizeof (ll_persistent_chunk);
+	ll_persistent_chunk* indirection_entry = (ll_persistent_chunk*) (level_0_snapshot + vt_offset + indirection_offset);
+
+	unsigned page_level = indirection_entry->pc_level;
+	cout << "vertex table chunk level " << page_level << "\n";
+	cout << "vertex table chunk length " << indirection_entry->pc_length << "\n";
+	cout << "vertex table chunk offset " << indirection_entry->pc_offset << "\n";
+	int vertex_offset = vertex % LL_ENTRIES_PER_PAGE;
+	ll_mlcsr_core__begin_t* vertex_table_entry = (ll_mlcsr_core__begin_t*) (level_0_snapshot + indirection_entry->pc_offset + vertex_offset * sizeof (ll_mlcsr_core__begin_t));
+	cout << "edge list level length " << vertex_table_entry->level_length << "\n";
+	cout << "edge list start " << LL_EDGE_INDEX(vertex_table_entry->adj_list_start) << "\n";
+	cout << "edge list level " << LL_EDGE_LEVEL(vertex_table_entry->adj_list_start) << "\n";
+	cout << "vertex degree " << vertex_table_entry->degree << "\n\n";
+
+	LL_DATA_TYPE* neighbour;
+	for (unsigned i = 0; i < vertex_table_entry->level_length; i++) {
+		neighbour = (LL_DATA_TYPE*) (level_0_snapshot + et_chunk.pc_offset + ((LL_EDGE_INDEX(vertex_table_entry->adj_list_start) + i) * sizeof (LL_DATA_TYPE)));
+		cout << "vertex " << vertex << " neighbour " << i << " is " << *neighbour << "\n";
+		neighbours.push_back(*neighbour);
+	}
+
+	cout << "read all the edges\n";
+
+	return neighbours;
+}
+
+vector<LL_DATA_TYPE> snapshot_manager::get_neighbours_of_vertex(int rank, node_t vertex) {
 	cout << "\n\ngetting neighbours of vertex " << vertex << "\n";
 	int latest_snapshot_number = rank_num_snapshots[rank];
-	vector<node_t> neighbours;
+	vector<LL_DATA_TYPE> neighbours;
 	if (latest_snapshot_number != 0) {
 		dll_level_meta* meta = get_dll_level_meta(rank, latest_snapshot_number);
 	
-		int vt_offset = meta->lm_vt_offset;
+		int vt_offset = meta->lm_vt_offset; 
 		cout << "vt offset " << vt_offset << "\n";
 		
 		dll_header_t* header = get_header(rank, latest_snapshot_number, meta->lm_header_offset);
@@ -123,6 +162,7 @@ vector<node_t> snapshot_manager::get_neighbours_of_vertex(int rank, node_t verte
 					for (unsigned i = 0; i < vertex_table_entry->level_length; i++) {
 						neighbour = get_edge_table_entry(rank, edge_level, et_chunk.pc_offset + ((LL_EDGE_INDEX(vertex_table_entry->adj_list_start) + i) * sizeof(LL_DATA_TYPE)));
 						cout << "vertex " << vertex << " neighbour " << i << " is " << *neighbour << "\n";
+						neighbours.push_back(*neighbour);
 					}
 
 					vertex_degree -= vertex_table_entry->level_length;
@@ -141,6 +181,5 @@ vector<node_t> snapshot_manager::get_neighbours_of_vertex(int rank, node_t verte
 			}
 		}		
 	}
-	
 	return neighbours;
 }
