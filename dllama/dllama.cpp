@@ -5,6 +5,7 @@
 #include <string>
 #include <sstream>
 #include <mutex>
+#include <vector>
 
 #include "dllama.h"
 #include "shared_thread_state.h"
@@ -121,6 +122,17 @@ ITERATOR_DECL bool dllama::out_iter_has_next(ll_edge_iterator& iter) {
 
 ITERATOR_DECL edge_t dllama::out_iter_next(ll_edge_iterator& iter) {
 	return graph->out_iter_next(iter);
+}
+
+vector<node_t> dllama::get_neighbours_of_vertex(node_t vertex) {
+	ll_edge_iterator iter;
+	out_iter_begin(iter, vertex);
+	vector<node_t> result;
+	while (out_iter_has_next(iter)) {
+		out_iter_next(iter);
+		result.push_back(iter.last_node);
+	}
+	return result;
 }
 
 void dllama::add_random_edge() {

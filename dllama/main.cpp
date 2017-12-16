@@ -109,6 +109,21 @@ int main(int argc, char** argv) {
 				dllama_instance.auto_checkpoint();
 				sm.read_snapshots();
 				break;
+			case 'b':
+				cout << "degrees " << dllama_instance.out_degree(0) << dllama_instance.out_degree(1) << dllama_instance.out_degree(2) << dllama_instance.out_degree(3) << "\n";
+				ll_edge_iterator neighbours;
+				for (int i = 0; i < 4; i++) {
+					dllama_instance.out_iter_begin(neighbours, i);
+					cout << "neighbours of vertex " << i <<": ";
+					while (dllama_instance.out_iter_has_next(neighbours)) {
+						dllama_instance.out_iter_next(neighbours);
+						cout << neighbours.last_node;
+					}
+					cout << "\n";
+				}
+				
+				
+				break;
 		}
 	}
 

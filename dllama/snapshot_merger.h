@@ -2,13 +2,14 @@
 #define SNAPSHOT_MERGER_H
 
 #include <mpi.h>
+#include <string>
 #include "llama.h"
 
 class snapshot_merger {
 public:
     snapshot_merger();
     virtual ~snapshot_merger();
-    void read_snapshots();
+    void read_snapshots(std::string input_file_name = "db0/csr__out__0.dat");
     void read_second_snapshot();
     void start_snapshot_listener();
     void merge_snapshots();

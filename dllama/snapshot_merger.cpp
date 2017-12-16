@@ -8,6 +8,7 @@
 #include <sys/types.h>
 #include <set>
 #include <vector>
+#include <cstdio>
 
 #include "snapshot_merger.h"
 #include "shared_thread_state.h"
@@ -133,9 +134,9 @@ void snapshot_merger::start_snapshot_listener() {
 	}
 }
 
-void snapshot_merger::read_snapshots() {
+void snapshot_merger::read_snapshots(string input_file_name) {
 	if (world_rank == 0) {
-		string input_file_name = "db0/csr__out__0.dat";
+		//string input_file_name = "db0/csr__out__0.dat";
 		ifstream file(input_file_name, ios::in | ios::binary | ios::ate);
 		if (file.is_open()) {
 			int file_size = file.tellg();
@@ -186,7 +187,7 @@ void snapshot_merger::read_snapshots() {
 			delete[] memblock;
 		} else cout << "Rank " << world_rank << " unable to open snapshot file\n";
 		
-		read_second_snapshot();
+		//read_second_snapshot();
 		
 	}
 }
@@ -251,74 +252,114 @@ void snapshot_merger::read_second_snapshot() {
 
 std::ostream& operator<<(std::ostream& out, const ll_mlcsr_core__begin_t& h)
 {
-     return out << h.adj_list_start << h.level_length << h.degree;
+	cout << "mlcsrcorebegin" << h.adj_list_start << h.level_length << h.degree << "\n";
+    return out.write((char*) (&h), sizeof(ll_mlcsr_core__begin_t));
+    //return out << h.adj_list_start << h.level_length << h.degree;
 }
 
 std::ostream& operator<<(std::ostream& out, const ll_persistent_chunk& h)
 {
-     return out << h.pc_level << h.pc_length << h.pc_offset;
+	cout << "llpersistentchunk " << h.pc_level << h.pc_length << h.pc_offset << "\n";
+    return out.write((char*) (&h), sizeof(ll_persistent_chunk));
+    //return out << h.pc_level << h.pc_length << h.pc_offset;
 }
+
+/*std::ostream& operator<<(std::ostream& out, const LL_DATA_TYPE& h)
+{
+	cout << "LL_DATA_TYPE\n";
+    return out.write((char*) (&h), sizeof(LL_DATA_TYPE));
+    //return out << h.pc_level << h.pc_length << h.pc_offset;
+}*/
 
 void snapshot_merger::merge_snapshots() {
 	int num_vertices = 4; //TODO: cannot be hardcoded
 	
 	string output_file_name = "new_level0.dat";
+	
+	//metadata
+	dll_level_meta new_meta;
+	new_meta.lm_level = 0;
+	new_meta.lm_sub_level = 0;
+	new_meta.lm_header_size = 32;
+	new_meta.lm_base_level = 0;
+	new_meta.lm_vt_partitions = (num_vertices + LL_ENTRIES_PER_PAGE - 1) / LL_ENTRIES_PER_PAGE;
+	new_meta.lm_vt_size = num_vertices;
 
-	ofstream file(output_file_name, ios::out | ios::binary | ios::trunc);
-	if (file.is_open()) {
-		//metadata
-		dll_level_meta new_meta;
-		new_meta.lm_level = 0;
-		new_meta.lm_sub_level = 0;
-		new_meta.lm_header_size = 32;
-		new_meta.lm_base_level = 0;
-		//new_meta.lm_header_offset = ;
-		new_meta.lm_vt_partitions = (num_vertices + LL_ENTRIES_PER_PAGE - 1) / LL_ENTRIES_PER_PAGE;
-		new_meta.lm_vt_size = num_vertices;
-		//TODO: must be finished later
-		
-		//edge table
-		int rank_snapshots[2] = {2, 2}; //TODO: this cannot be hardcoded
-		
-		snapshot_manager snapshots(rank_snapshots);
-		
-		vector<LL_DATA_TYPE> edge_table;
-		vector<ll_mlcsr_core__begin_t> vertex_table;
-		for (int vertex = 0; vertex < num_vertices; vertex++) {
-			set<LL_DATA_TYPE> neighbours;
-			for (int r = 0; r < world_size; r++) {
-				//add all neighbours in edge table pointed to by chunk
-				vector<LL_DATA_TYPE> new_neighbours = snapshots.get_neighbours_of_vertex(r, vertex);
-				neighbours.insert(new_neighbours.begin(), new_neighbours.end());
-			}
-			//add edges from level 0
-			vector<LL_DATA_TYPE> new_neighbours = snapshots.get_level_0_neighbours_of_vertex(vertex);
+	//edge table
+	int rank_snapshots[2] = {2, 2}; //TODO: this cannot be hardcoded
+
+	snapshot_manager snapshots(rank_snapshots);
+
+	vector<LL_DATA_TYPE> edge_table;
+	vector<ll_mlcsr_core__begin_t> vertex_table;
+	for (int vertex = 0; vertex < num_vertices; vertex++) {
+		set<LL_DATA_TYPE> neighbours;
+		for (int r = 0; r < world_size; r++) {
+			//add all neighbours in edge table pointed to by chunk
+			vector<LL_DATA_TYPE> new_neighbours = snapshots.get_neighbours_of_vertex(r, vertex);
 			neighbours.insert(new_neighbours.begin(), new_neighbours.end());
-			
-			ll_mlcsr_core__begin_t vertex_table_entry;
-			vertex_table_entry.adj_list_start = edge_table.size();
-			
-			cout << "neighbours of vertex " << vertex << ": ";
-			for (set<LL_DATA_TYPE>::iterator neighbour = neighbours.begin(); neighbour != neighbours.end(); ++neighbour) {
-				cout << *neighbour;
-			}
-			edge_table.insert(edge_table.end(), neighbours.begin(), neighbours.end()); //TODO: could just write this directly to file
-			vertex_table_entry.degree = neighbours.size();
-			vertex_table_entry.level_length = vertex_table_entry.degree; // level is 0 anyway
-			vertex_table.push_back(vertex_table_entry);
-			cout << "\n";
 		}
+		//add edges from level 0
+		vector<LL_DATA_TYPE> new_neighbours = snapshots.get_level_0_neighbours_of_vertex(vertex);
+		neighbours.insert(new_neighbours.begin(), new_neighbours.end());
+
+		ll_mlcsr_core__begin_t vertex_table_entry;
+		vertex_table_entry.adj_list_start = edge_table.size();
+
+		/*cout << "neighbours of vertex " << vertex << ": ";
+		for (set<LL_DATA_TYPE>::iterator neighbour = neighbours.begin(); neighbour != neighbours.end(); ++neighbour) {
+			cout << *neighbour;
+		}*/
+		edge_table.insert(edge_table.end(), neighbours.begin(), neighbours.end()); //TODO: could just write this directly to file
+		vertex_table_entry.degree = neighbours.size();
+		vertex_table_entry.level_length = vertex_table_entry.degree; // level is 0 anyway
+		vertex_table.push_back(vertex_table_entry);
+		cout << "\n";
+	}
+	/*cout << "edge table: ";
+	for (vector<LL_DATA_TYPE>::iterator edges = edge_table.begin(); edges != edge_table.end(); ++edges) {
+		cout << *edges << " ";
+	}
+	cout << "\n";*/
+			
+	int num_edge_table_chunks = ((edge_table.size() * sizeof(LL_DATA_TYPE)) + LL_BLOCK_SIZE - 1) / LL_BLOCK_SIZE;
+	int num_vertex_chunks = (num_vertices * sizeof(ll_mlcsr_core__begin_t) + LL_BLOCK_SIZE - 1) / LL_BLOCK_SIZE;
+	int num_indirection_entries = (num_vertices + LL_ENTRIES_PER_PAGE - 1) / LL_ENTRIES_PER_PAGE;
+	int num_indirection_table_chunks = ((num_indirection_entries * sizeof(ll_persistent_chunk)) + sizeof(dll_header_t) + LL_BLOCK_SIZE - 1) / LL_BLOCK_SIZE;
+	int file_size = LL_BLOCK_SIZE + (num_edge_table_chunks + num_indirection_table_chunks + num_vertex_chunks) * LL_BLOCK_SIZE;
+	cout << "new output file size should be: " << file_size << "\n";
+	
+	//try and allocate file size
+	/*FILE* f = fopen(output_file_name.c_str(), "wb");
+	if (ftruncate(fileno(f), file_size) < 0 || f == NULL) {
+		cout << "error allocating file\n";
+	}
+	fclose(f);*/
+	
+	//write to file	
+	ofstream file(output_file_name, ios::out | ios::binary | ios::ate);
+	if (file.is_open()) {
+		
+		//int temp;
+		//cin >> temp;
 		
 		//edge table
 		file.seekp(LL_BLOCK_SIZE);
+		//LL_DATA_TYPE is being cast to char here
+		for (vector<LL_DATA_TYPE>::iterator edges = edge_table.begin(); edges != edge_table.end(); ++edges) {
+			file.write((char*) (&(*edges)), sizeof(LL_DATA_TYPE));
+		}
 		std::copy(edge_table.begin(), edge_table.end(), std::ostream_iterator<LL_DATA_TYPE>(file));
 		
 		//vertex chunks
 		int position = file.tellp();
+		cout << "edge table finished at: " << position << "\n";
 		if (position % LL_BLOCK_SIZE != 0) {
 			position = ((position / LL_BLOCK_SIZE) + 1) * LL_BLOCK_SIZE;
 			file.seekp(position);
 		}
+		cout << "writing the vertex chunks at position " << position << "\n";
+		int vertex_chunks_position = position;
 		std::copy(vertex_table.begin(), vertex_table.end(), std::ostream_iterator<ll_mlcsr_core__begin_t>(file));
 		
 		//header
@@ -344,14 +385,32 @@ void snapshot_merger::merge_snapshots() {
 			ll_persistent_chunk vertex_table_chunk;
 			vertex_table_chunk.pc_level = 0;
 			vertex_table_chunk.pc_length = LL_ENTRIES_PER_PAGE * sizeof(ll_mlcsr_core__begin_t);
-			vertex_table_chunk.pc_offset = new_meta.lm_vt_offset + i * vertex_table_chunk.pc_length;
+			vertex_table_chunk.pc_offset = vertex_chunks_position + i * vertex_table_chunk.pc_length;
+			indirection_table.push_back(vertex_table_chunk);
+			//cout << "before writing to file " << vertex_table_chunk << "\n";
+			//char* bytes_of_chunk = (char*) &(vertex_table_chunk.pc_level);
+			//ll_persistent_chunk* post_write_chunk = (ll_persistent_chunk*) bytes_of_chunk;
+			//cout << "after writing to file " <<  << " " << vertex_table_chunk.pc_length << " " << vertex_table_chunk.pc_offset << "\n";
 		}
 		std::copy(indirection_table.begin(), indirection_table.end(), std::ostream_iterator<ll_persistent_chunk>(file));
+		
+		position = file.tellp();
 		
 		//metadata
 		file.seekp(0);
 		file.write((char*)(&new_meta), sizeof(dll_level_meta));
 		
+		//may not be necessary
+		file.seekp(position);
+		char end_of_file_bytes[file_size - position];
+		file.write(end_of_file_bytes, file_size - position);
+		
+		cout << "written file size is " << file.tellp() << "\n";
+		
 		file.close();
+		
+	
+		read_snapshots("new_level0.dat");
 	} else cout << "Rank " << world_rank << " unable to open output file\n";
+	
 }

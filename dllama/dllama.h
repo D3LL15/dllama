@@ -2,6 +2,7 @@
 #define DLLAMA_H
 
 #include <pthread.h>
+#include <vector>
 
 #include "llama.h"
 
@@ -20,6 +21,7 @@ public:
     void out_iter_begin(ll_edge_iterator& iter, node_t node);
     ITERATOR_DECL bool out_iter_has_next(ll_edge_iterator& iter);
     ITERATOR_DECL edge_t out_iter_next(ll_edge_iterator& iter);
+    vector<node_t> get_neighbours_of_vertex(node_t vertex);
     void add_random_edge();
     void auto_checkpoint();
     //void add_property();

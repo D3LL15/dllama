@@ -2264,7 +2264,6 @@ public:
 			while (this->is_edge_deleted(iter));
 #endif
 		}
-
 		return r;
 	}
 
