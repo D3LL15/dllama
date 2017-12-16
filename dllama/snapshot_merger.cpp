@@ -66,7 +66,7 @@ void snapshot_merger::handle_merge_request(MPI_Status status) {
 	int expected_level;
 	MPI_Recv(&expected_level, 1, MPI_INT, status.MPI_SOURCE, START_MERGE_REQUEST, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 
-	//TODO: send latest snapshot file if incomplete (only applies with multiple levels per file) may also require modifying snapshot level vectors
+	//send latest snapshot file if incomplete (only applies with multiple levels per file) may also require modifying snapshot level vectors
 
 	//broadcast start merge request if this is the first merge request you have heard
 	if (!merge_had_started) {
@@ -89,9 +89,13 @@ void snapshot_merger::handle_merge_request(MPI_Status status) {
 	if (received_all_snapshots) {
 		cout << "Rank " << world_rank << " received merge requests from all other hosts\n";
 
-		//TODO: merge
+		received_snapshot_levels[world_rank] = current_snapshot_level; //TODO: current_snapshot_level needs to be set
+		merge_snapshots(received_snapshot_levels);
+		
+		//TODO: tell main thread to stop reading
 
 		//TODO: reset main thread llama to use new level 0 snapshot, while retaining in memory deltas, then flush deltas to new snapshot
+		
 
 		//clean up after merge
 		//setting expected snapshot level to -1 means we have to hear from that host before merging
@@ -254,27 +258,20 @@ std::ostream& operator<<(std::ostream& out, const ll_mlcsr_core__begin_t& h)
 {
 	cout << "mlcsrcorebegin" << h.adj_list_start << h.level_length << h.degree << "\n";
     return out.write((char*) (&h), sizeof(ll_mlcsr_core__begin_t));
-    //return out << h.adj_list_start << h.level_length << h.degree;
 }
 
 std::ostream& operator<<(std::ostream& out, const ll_persistent_chunk& h)
 {
 	cout << "llpersistentchunk " << h.pc_level << h.pc_length << h.pc_offset << "\n";
     return out.write((char*) (&h), sizeof(ll_persistent_chunk));
-    //return out << h.pc_level << h.pc_length << h.pc_offset;
 }
 
-/*std::ostream& operator<<(std::ostream& out, const LL_DATA_TYPE& h)
-{
-	cout << "LL_DATA_TYPE\n";
-    return out.write((char*) (&h), sizeof(LL_DATA_TYPE));
-    //return out << h.pc_level << h.pc_length << h.pc_offset;
-}*/
-
-void snapshot_merger::merge_snapshots() {
+void snapshot_merger::merge_snapshots(int* rank_snapshots) {
 	int num_vertices = 4; //TODO: cannot be hardcoded
 	
-	string output_file_name = "new_level0.dat";
+	ostringstream oss;
+	oss << "db" << world_rank << "new_level0.dat";
+	string output_file_name = oss.str();
 	
 	//metadata
 	dll_level_meta new_meta;
@@ -286,8 +283,6 @@ void snapshot_merger::merge_snapshots() {
 	new_meta.lm_vt_size = num_vertices;
 
 	//edge table
-	int rank_snapshots[2] = {2, 2}; //TODO: this cannot be hardcoded
-
 	snapshot_manager snapshots(rank_snapshots);
 
 	vector<LL_DATA_TYPE> edge_table;
@@ -329,23 +324,12 @@ void snapshot_merger::merge_snapshots() {
 	int file_size = LL_BLOCK_SIZE + (num_edge_table_chunks + num_indirection_table_chunks + num_vertex_chunks) * LL_BLOCK_SIZE;
 	cout << "new output file size should be: " << file_size << "\n";
 	
-	//try and allocate file size
-	/*FILE* f = fopen(output_file_name.c_str(), "wb");
-	if (ftruncate(fileno(f), file_size) < 0 || f == NULL) {
-		cout << "error allocating file\n";
-	}
-	fclose(f);*/
-	
 	//write to file	
 	ofstream file(output_file_name, ios::out | ios::binary | ios::ate);
 	if (file.is_open()) {
 		
-		//int temp;
-		//cin >> temp;
-		
 		//edge table
 		file.seekp(LL_BLOCK_SIZE);
-		//LL_DATA_TYPE is being cast to char here
 		for (vector<LL_DATA_TYPE>::iterator edges = edge_table.begin(); edges != edge_table.end(); ++edges) {
 			file.write((char*) (&(*edges)), sizeof(LL_DATA_TYPE));
 		}
@@ -387,10 +371,6 @@ void snapshot_merger::merge_snapshots() {
 			vertex_table_chunk.pc_length = LL_ENTRIES_PER_PAGE * sizeof(ll_mlcsr_core__begin_t);
 			vertex_table_chunk.pc_offset = vertex_chunks_position + i * vertex_table_chunk.pc_length;
 			indirection_table.push_back(vertex_table_chunk);
-			//cout << "before writing to file " << vertex_table_chunk << "\n";
-			//char* bytes_of_chunk = (char*) &(vertex_table_chunk.pc_level);
-			//ll_persistent_chunk* post_write_chunk = (ll_persistent_chunk*) bytes_of_chunk;
-			//cout << "after writing to file " <<  << " " << vertex_table_chunk.pc_length << " " << vertex_table_chunk.pc_offset << "\n";
 		}
 		std::copy(indirection_table.begin(), indirection_table.end(), std::ostream_iterator<ll_persistent_chunk>(file));
 		
@@ -408,9 +388,5 @@ void snapshot_merger::merge_snapshots() {
 		cout << "written file size is " << file.tellp() << "\n";
 		
 		file.close();
-		
-	
-		read_snapshots("new_level0.dat");
 	} else cout << "Rank " << world_rank << " unable to open output file\n";
-	
 }

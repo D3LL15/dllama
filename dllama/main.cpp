@@ -97,7 +97,8 @@ int main(int argc, char** argv) {
 				break;
 			case '9':
 				if (world_rank == 0) {
-					sm.merge_snapshots();
+					int rank_snapshots[2] = {2, 2};
+					sm.merge_snapshots(rank_snapshots);
 				}
 				break;
 			case 'a':

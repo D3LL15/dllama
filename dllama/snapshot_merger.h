@@ -12,7 +12,7 @@ public:
     void read_snapshots(std::string input_file_name = "db0/csr__out__0.dat");
     void read_second_snapshot();
     void start_snapshot_listener();
-    void merge_snapshots();
+    void merge_snapshots(int* rank_snapshots);
 
 private:
 protected:
