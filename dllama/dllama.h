@@ -24,6 +24,7 @@ public:
     vector<node_t> get_neighbours_of_vertex(node_t vertex);
     void add_random_edge();
     void auto_checkpoint();
+    void refresh_ro_graph();
     //void add_property();
     //std::string get_property();
 private:

@@ -270,7 +270,7 @@ void snapshot_merger::merge_snapshots(int* rank_snapshots) {
 	int num_vertices = 4; //TODO: cannot be hardcoded
 	
 	ostringstream oss;
-	oss << "db" << world_rank << "new_level0.dat";
+	oss << "db" << world_rank << "/new_level0.dat";
 	string output_file_name = oss.str();
 	
 	//metadata

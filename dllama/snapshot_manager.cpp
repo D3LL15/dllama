@@ -19,7 +19,7 @@ snapshot_manager::snapshot_manager(int* rank_snapshots) {
 			} else {
 				oss << "db" << world_rank << "/rank" << r << "/csr__out__" << f+1 << ".dat";
 			}
-			//oss << "db" << world_rank << "/csr__out__" << 0 << ".dat";
+
 			string input_file_name = oss.str().c_str();
 			ifstream file(input_file_name, ios::in | ios::binary | ios::ate);
 			if (file.is_open()) {
@@ -34,7 +34,7 @@ snapshot_manager::snapshot_manager(int* rank_snapshots) {
 		
 	}
 	ostringstream oss;
-	oss << "db" << world_rank << "/csr__out__" << 0 << ".dat"; //TODO: switch around comment
+	oss << "db" << world_rank << "/csr__out__" << 0 << ".dat";
 	string input_file_name = oss.str().c_str();
 	ifstream file(input_file_name, ios::in | ios::binary | ios::ate);
 	if (file.is_open()) {

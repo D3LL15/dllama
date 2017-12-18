@@ -42,6 +42,7 @@ int main(int argc, char** argv) {
 		dllama_test test_instance = dllama_test();
 		dllama dllama_instance = dllama();
 		snapshot_merger sm = snapshot_merger();
+		ll_edge_iterator neighbours;
 		switch (*argv[1]) {
 			case '1':
 				test_instance.full_test();
@@ -112,7 +113,7 @@ int main(int argc, char** argv) {
 				break;
 			case 'b':
 				cout << "degrees " << dllama_instance.out_degree(0) << dllama_instance.out_degree(1) << dllama_instance.out_degree(2) << dllama_instance.out_degree(3) << "\n";
-				ll_edge_iterator neighbours;
+				
 				for (int i = 0; i < 4; i++) {
 					dllama_instance.out_iter_begin(neighbours, i);
 					cout << "neighbours of vertex " << i <<": ";
@@ -124,6 +125,38 @@ int main(int argc, char** argv) {
 				}
 				
 				
+				break;
+			case 'c':
+				dllama_instance.load_net_graph("simple_graph.net");
+				dllama_instance.add_edge(1, 0);
+				dllama_instance.add_edge(2, 1);
+				dllama_instance.refresh_ro_graph();
+				dllama_instance.auto_checkpoint();
+				
+				for (int i = 0; i < 4; i++) {
+					dllama_instance.out_iter_begin(neighbours, i);
+					cout << "neighbours of vertex " << i <<": ";
+					while (dllama_instance.out_iter_has_next(neighbours)) {
+						dllama_instance.out_iter_next(neighbours);
+						cout << neighbours.last_node;
+					}
+					cout << "\n";
+				}
+				
+				break;
+			case 'd':
+				if (world_rank == 0) {
+					dllama_instance.refresh_ro_graph();
+					for (int i = 0; i < 4; i++) {
+						dllama_instance.out_iter_begin(neighbours, i);
+						cout << "neighbours of vertex " << i <<": ";
+						while (dllama_instance.out_iter_has_next(neighbours)) {
+							dllama_instance.out_iter_next(neighbours);
+							cout << neighbours.last_node;
+						}
+						cout << "\n";
+					}
+				}
 				break;
 		}
 	}

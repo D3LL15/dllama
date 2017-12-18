@@ -49,6 +49,10 @@
 #include <unordered_set>
 #include <vector>
 
+#include <sstream>
+#include <iostream>
+#include <stdio.h>
+
 #include "llama/ll_common.h"
 #include "llama/ll_mlcsr_graph.h"
 #include "llama/ll_writable_array.h"
@@ -2036,8 +2040,41 @@ public:
 		_ro_graph.delete_level(level);
 		callback_ro_changed();
 	}
+        
+        
+        void refresh_ro_graph(ll_database* database, ll_persistent_storage* storage, int world_rank) {
+            //_ro_graph.refresh_ro_graph(database, storage);
+            
+            int num_levels = _ro_graph.num_levels();
+            std::cout<< "num levels" << num_levels << "\n";
 
+            _ro_graph.~ll_mlcsr_ro_graph();
 
+            //TODO: maybe deleting the files before deleting _ro_graph causes errors
+            
+            //delete old snapshots
+            for (int i = 0; i < num_levels; i++) {
+                std::ostringstream oss;
+                oss << "db" << world_rank << "/csr__out__" << i << ".dat";
+                if (remove(oss.str().c_str()) != 0) {
+                    std::cout << "error removing old snapshots\n";
+                }
+            }
+            
+            //rename new level 0 snapshot
+            std::ostringstream oss1;
+            std::ostringstream oss2;
+            oss1 << "db" << world_rank << "/new_level0.dat";
+            oss2 << "db" << world_rank << "/csr__out__0.dat";
+            if (rename(oss1.str().c_str(), oss2.str().c_str()) != 0) {
+                std::cout << "error renaming new level 0 file\n";
+            }
+            
+            new(&_ro_graph) ll_mlcsr_ro_graph(database, storage);
+            _ro_graph.set_deletion_checkers(&_deletions_adapter_out, &_deletions_adapter_in);
+        }
+        
+        
 private:
 
 	/*

@@ -111,6 +111,12 @@ public:
 	inline ll_persistent_storage* storage() {
 		return _storage;
 	}
+        
+        ll_persistent_storage* reset_storage() {
+            delete _storage;
+            _storage = new ll_persistent_storage(_dir.c_str());
+            return _storage;
+        }
 #endif
 
 

@@ -174,6 +174,41 @@ class ll_mlcsr_ro_graph {
 
 public:
 
+    /*void refresh_ro_graph(ll_database* database, ll_persistent_storage* storage) {
+        for (auto it = _csrs.begin(); it != _csrs.end(); it++) {
+                if (it->second != NULL
+                                && it->second != &_out
+                                && it->second != &_in) delete it->second;
+        }
+
+        for (auto it = _node_properties_32.begin();
+                        it != _node_properties_32.end(); it++) {
+                if (it->second != NULL) delete it->second;
+        }
+
+        for (auto it = _node_properties_64.begin();
+                        it != _node_properties_64.end(); it++) {
+                if (it->second != NULL) delete it->second;
+        }
+
+        for (auto it = _edge_properties_32.begin();
+                        it != _edge_properties_32.end(); it++) {
+                if (it->second != NULL) delete it->second;
+        }
+
+        for (auto it = _edge_properties_64.begin();
+                        it != _edge_properties_64.end(); it++) {
+                if (it->second != NULL) delete it->second;
+        }
+
+        if (_master == NULL) {
+                _out.set_memory_pools_for_sparse_representaion(NULL, NULL);
+                _in.set_memory_pools_for_sparse_representaion(NULL, NULL);
+                delete _pool_for_sparse_node_ids;
+                delete _pool_for_sparse_node_data;
+        }
+    }*/
+    
 	/**
 	 * Create an instance of class ll_mlcsr_ro_graph
 	 *

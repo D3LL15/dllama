@@ -18,11 +18,7 @@ dllama::dllama() {
 
 	//this only applies if we are simulating on a single machine
 	ostringstream oss;
-	if (SINGLE_MACHINE) {
-		oss << "db" << world_rank;
-	} else {
-		oss << "db";
-	}
+	oss << "db" << world_rank;
 	strcpy(database_directory, oss.str().c_str());
 
 	database = new ll_database(database_directory);
@@ -67,6 +63,8 @@ void dllama::auto_checkpoint() {
 	//TODO: have this be called automatically
 	//check if merge occurring before writing new file, also prevent the other thread sending a merge request before we are done sending our snapshot
 	merge_starting_lock.lock();
+	//TODO: check if there has been a merge while we were waiting for the lock, may not be necessary
+	
 	if (!merge_starting) {
 		graph->checkpoint();
 
@@ -78,11 +76,8 @@ void dllama::auto_checkpoint() {
 			char * memblock;
 
 			ostringstream oss;
-			if (SINGLE_MACHINE) {
-				oss << "db" << world_rank << "/csr__out__" << file_number << ".dat";
-			} else {
-				oss << "db/csr__out__" << file_number << ".dat";
-			}
+			oss << "db" << world_rank << "/csr__out__" << file_number << ".dat";
+			
 			string input_file_name = oss.str();
 
 			ifstream file(input_file_name, ios::in | ios::binary | ios::ate);
@@ -140,4 +135,19 @@ void dllama::add_random_edge() {
 	node_t tgt = graph->pick_random_node();
 	graph->add_edge(src, tgt);
 	cout << "added edge from " << src << " to " << tgt << "\n";
+}
+
+void dllama::refresh_ro_graph() {
+	cout << "refreshing ro graph\n";
+	char* database_directory = (char*) alloca(20);
+	ostringstream oss;
+	oss << "db" << world_rank;
+	strcpy(database_directory, oss.str().c_str());
+	//ll_persistent_storage* new_storage = new ll_persistent_storage(database_directory);
+	//database->storage()->~ll_persistent_storage();
+	//ll_persistent_storage* old_storage = database->storage();
+	//old_storage = new_storage;
+	database->reset_storage();
+	ll_persistent_storage* new_storage = database->storage();
+	graph->refresh_ro_graph(database, new_storage, world_rank);
 }
