@@ -44,7 +44,9 @@ void snapshot_merger::handle_snapshot_message(MPI_Status status) {
 	ostringstream oss;
 	oss << "db" << world_rank << "/rank" << status.MPI_SOURCE;
 	//create receipt directory if it doesn't already exist
-	mkdir(oss.str().c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IWOTH | S_IXOTH);
+	if (mkdir(oss.str().c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IWOTH | S_IXOTH) != 0 ) {
+		cout << "Rank " << world_rank << " unable to create snapshot receipt rank folder\n";
+	}
 	oss << "/csr__out__" << file_number << ".dat";
 
 	string output_file_name = oss.str();

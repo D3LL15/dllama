@@ -130,19 +130,29 @@ int main(int argc, char** argv) {
 				dllama_instance.load_net_graph("simple_graph.net");
 				dllama_instance.add_edge(1, 0);
 				dllama_instance.add_edge(2, 1);
-				dllama_instance.refresh_ro_graph();
 				dllama_instance.auto_checkpoint();
 				
-				for (int i = 0; i < 4; i++) {
-					dllama_instance.out_iter_begin(neighbours, i);
-					cout << "neighbours of vertex " << i <<": ";
-					while (dllama_instance.out_iter_has_next(neighbours)) {
-						dllama_instance.out_iter_next(neighbours);
-						cout << neighbours.last_node;
-					}
-					cout << "\n";
-				}
 				
+				break;
+			case 'i':
+				if (world_rank == 0) {
+					int rank_snapshot_numbers[2] = {1, 1};
+					sm.merge_snapshots(rank_snapshot_numbers);
+					
+					dllama_instance.add_edge(2, 0);
+					dllama_instance.refresh_ro_graph();
+					dllama_instance.auto_checkpoint();
+
+					for (int i = 0; i < 4; i++) {
+						dllama_instance.out_iter_begin(neighbours, i);
+						cout << "neighbours of vertex " << i <<": ";
+						while (dllama_instance.out_iter_has_next(neighbours)) {
+							dllama_instance.out_iter_next(neighbours);
+							cout << neighbours.last_node;
+						}
+						cout << "\n";
+					}
+				}
 				break;
 			case 'd':
 				if (world_rank == 0) {
