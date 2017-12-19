@@ -25,12 +25,16 @@ dllama::dllama() {
 	//one thread for now
 	database->set_num_threads(1);
 	graph = database->graph();
+	
+	current_snapshot_level = graph->num_levels();
+	dllama_number_of_vertices = graph->max_nodes();
 }
 
 dllama::~dllama() {
 }
 
 void dllama::load_net_graph(string net_graph) {
+	merge_starting_lock.lock();
 	ll_file_loaders loaders;
 	ll_file_loader* loader = loaders.loader_for(net_graph.c_str());
 	if (loader == NULL) {
@@ -40,8 +44,12 @@ void dllama::load_net_graph(string net_graph) {
 
 	ll_loader_config loader_config;
 	loader->load_direct(graph, net_graph.c_str(), &loader_config);
-
+	
+	current_snapshot_level = graph->num_levels();
+	dllama_number_of_vertices = graph->max_nodes();
 	cout << "num levels " << graph->num_levels() << "\n";
+	cout << "num vertices " << graph->max_nodes() << "\n";
+	merge_starting_lock.unlock();
 }
 
 edge_t dllama::add_edge(node_t src, node_t tgt) {
@@ -54,19 +62,22 @@ node_t dllama::add_node() {
 }
 
 size_t dllama::out_degree(node_t node) {
-	return graph->out_degree(node);
+	ro_graph_lock.lock();
+	size_t result = graph->out_degree(node);
+	ro_graph_lock.unlock();
+	return result;
 }
 
 //call after a certain amount of updates
-
+//we can have a checkpoint request function as well that is guaranteed to checkpoint (by looping until merge_starting false)
 void dllama::auto_checkpoint() {
 	//TODO: have this be called automatically
 	//check if merge occurring before writing new file, also prevent the other thread sending a merge request before we are done sending our snapshot
 	merge_starting_lock.lock();
-	//TODO: check if there has been a merge while we were waiting for the lock, may not be necessary
 	
 	if (!merge_starting) {
 		graph->checkpoint();
+		current_snapshot_level = graph->num_levels();
 
 		uint32_t file_number = (graph->num_levels() - 2) / LL_LEVELS_PER_ML_FILE;
 		if ((graph->num_levels() - 1) % LL_LEVELS_PER_ML_FILE == 0) {
@@ -107,6 +118,15 @@ void dllama::auto_checkpoint() {
 	merge_starting_lock.unlock();
 }
 
+//asynchronous
+void dllama::start_merge() {
+	//MPI_Request mpi_req;
+	//MPI_Isend(&current_snapshot_level, 1, MPI_INT, world_rank, START_MERGE_REQUEST, MPI_COMM_WORLD, &mpi_req);
+	//MPI_Request_free(&mpi_req);
+	snapshot_merger_instance->begin_merge();
+}
+
+//TODO: make these private
 void dllama::out_iter_begin(ll_edge_iterator& iter, node_t node) {
 	graph->out_iter_begin(iter, node);
 }
@@ -120,6 +140,7 @@ ITERATOR_DECL edge_t dllama::out_iter_next(ll_edge_iterator& iter) {
 }
 
 vector<node_t> dllama::get_neighbours_of_vertex(node_t vertex) {
+	ro_graph_lock.lock();
 	ll_edge_iterator iter;
 	out_iter_begin(iter, vertex);
 	vector<node_t> result;
@@ -127,6 +148,7 @@ vector<node_t> dllama::get_neighbours_of_vertex(node_t vertex) {
 		out_iter_next(iter);
 		result.push_back(iter.last_node);
 	}
+	ro_graph_lock.unlock();
 	return result;
 }
 
@@ -143,10 +165,7 @@ void dllama::refresh_ro_graph() {
 	ostringstream oss;
 	oss << "db" << world_rank;
 	strcpy(database_directory, oss.str().c_str());
-	//ll_persistent_storage* new_storage = new ll_persistent_storage(database_directory);
-	//database->storage()->~ll_persistent_storage();
-	//ll_persistent_storage* old_storage = database->storage();
-	//old_storage = new_storage;
+
 	database->reset_storage();
 	ll_persistent_storage* new_storage = database->storage();
 	graph->refresh_ro_graph(database, new_storage, world_rank);

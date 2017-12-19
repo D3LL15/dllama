@@ -2043,14 +2043,13 @@ public:
         
         
         void refresh_ro_graph(ll_database* database, ll_persistent_storage* storage, int world_rank) {
-            //_ro_graph.refresh_ro_graph(database, storage);
             
             int num_levels = _ro_graph.num_levels();
             std::cout<< "num levels" << num_levels << "\n";
 
             _ro_graph.~ll_mlcsr_ro_graph();
 
-            //TODO: maybe deleting the files before deleting _ro_graph causes errors
+            //deleting the files before deleting _ro_graph causes errors
             
             //delete old snapshots
             for (int i = 0; i < num_levels; i++) {

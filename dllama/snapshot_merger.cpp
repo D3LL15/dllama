@@ -44,9 +44,7 @@ void snapshot_merger::handle_snapshot_message(MPI_Status status) {
 	ostringstream oss;
 	oss << "db" << world_rank << "/rank" << status.MPI_SOURCE;
 	//create receipt directory if it doesn't already exist
-	if (mkdir(oss.str().c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IWOTH | S_IXOTH) != 0 ) {
-		cout << "Rank " << world_rank << " unable to create snapshot receipt rank folder\n";
-	}
+	mkdir(oss.str().c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IWOTH | S_IXOTH);
 	oss << "/csr__out__" << file_number << ".dat";
 
 	string output_file_name = oss.str();
@@ -59,16 +57,20 @@ void snapshot_merger::handle_snapshot_message(MPI_Status status) {
 	delete[] memblock;
 }
 
-void snapshot_merger::handle_merge_request(MPI_Status status) {
+void snapshot_merger::handle_merge_request(int source) {
 	//stop main thread writing snapshots
 	merge_starting_lock.lock();
 	bool merge_had_started = merge_starting;
 	merge_starting = 1;
 	merge_starting_lock.unlock();
 	int expected_level;
-	MPI_Recv(&expected_level, 1, MPI_INT, status.MPI_SOURCE, START_MERGE_REQUEST, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+	if (source != world_rank) {
+		MPI_Recv(&expected_level, 1, MPI_INT, source, START_MERGE_REQUEST, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+	} else {
+		expected_level = 2;
+	}
 
-	//send latest snapshot file if incomplete (only applies with multiple levels per file) may also require modifying snapshot level vectors
+	//send latest snapshot file if incomplete (only applies with multiple levels per file) may also require modifying snapshot level arrays
 
 	//broadcast start merge request if this is the first merge request you have heard
 	if (!merge_had_started) {
@@ -80,24 +82,27 @@ void snapshot_merger::handle_merge_request(MPI_Status status) {
 	}
 
 	//set sender's value in expected snapshot vector to the snapshot number they sent in merge request (the last snapshot they sent)
-	expected_snapshot_levels[status.MPI_SOURCE] = expected_level;
+	expected_snapshot_levels[source] = expected_level - 2;
 	//if expected snapshot numbers correspond to currently held latest snapshots (the last snapshots we received from those hosts) then merge, else listen for snapshots until they are equal
 	bool received_all_snapshots = 1;
 	for (int i = 0; i < world_size; i++) {
 		if (received_snapshot_levels[i] != expected_snapshot_levels[i]) {
+			cout << "received " << received_snapshot_levels[i] << " expected " << expected_snapshot_levels[i] << "\n";
 			received_all_snapshots = 0;
 		}
 	}
 	if (received_all_snapshots) {
 		cout << "Rank " << world_rank << " received merge requests from all other hosts\n";
 
-		received_snapshot_levels[world_rank] = current_snapshot_level; //TODO: current_snapshot_level needs to be set
+		received_snapshot_levels[world_rank] = current_snapshot_level - 2;
 		merge_snapshots(received_snapshot_levels);
 		
-		//TODO: tell main thread to stop reading
-
-		//TODO: reset main thread llama to use new level 0 snapshot, while retaining in memory deltas, then flush deltas to new snapshot
+		//tell main thread to stop reading
+		ro_graph_lock.lock();
 		
+		//reset main thread llama to use new level 0 snapshot, while retaining in memory deltas, then flush deltas to new snapshot later
+		dllama_instance->refresh_ro_graph();
+		ro_graph_lock.unlock();
 
 		//clean up after merge
 		//setting expected snapshot level to -1 means we have to hear from that host before merging
@@ -115,6 +120,12 @@ void snapshot_merger::handle_merge_request(MPI_Status status) {
 	}
 }
 
+void snapshot_merger::begin_merge() {
+	listener_lock.lock();
+	handle_merge_request(world_rank);
+	listener_lock.unlock();
+}
+
 void snapshot_merger::start_snapshot_listener() {
 	cout << "Rank " << world_rank << " mpi_listener running\n";
 
@@ -123,20 +134,25 @@ void snapshot_merger::start_snapshot_listener() {
 	for (int i = 0; i < world_size; i++) {
 		expected_snapshot_levels[i] = -1;
 	}
+	//don't need to hear from yourself
+	expected_snapshot_levels[world_rank] = 0;
 
 	MPI_Status status;
 	while (true) {
-		MPI_Probe(MPI_ANY_SOURCE, SNAPSHOT_MESSAGE, MPI_COMM_WORLD, &status);
+		MPI_Probe(MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD, &status);
+		listener_lock.lock();
+		cout << "mpi tag " << status.MPI_TAG << "\n";
 		switch (status.MPI_TAG) {
 			case SNAPSHOT_MESSAGE:
 				handle_snapshot_message(status);
 				break;
 			case START_MERGE_REQUEST:
-				handle_merge_request(status);
+				handle_merge_request(status.MPI_SOURCE);
 				break;
 			default:
 				cout << "Rank " << world_rank << " received message with unknown tag\n";
 		}
+		listener_lock.unlock();
 	}
 }
 
@@ -269,7 +285,7 @@ std::ostream& operator<<(std::ostream& out, const ll_persistent_chunk& h)
 }
 
 void snapshot_merger::merge_snapshots(int* rank_snapshots) {
-	int num_vertices = 4; //TODO: cannot be hardcoded
+	//int num_vertices = 4; //TODO: cannot be hardcoded
 	
 	ostringstream oss;
 	oss << "db" << world_rank << "/new_level0.dat";
@@ -281,15 +297,15 @@ void snapshot_merger::merge_snapshots(int* rank_snapshots) {
 	new_meta.lm_sub_level = 0;
 	new_meta.lm_header_size = 32;
 	new_meta.lm_base_level = 0;
-	new_meta.lm_vt_partitions = (num_vertices + LL_ENTRIES_PER_PAGE - 1) / LL_ENTRIES_PER_PAGE;
-	new_meta.lm_vt_size = num_vertices;
+	new_meta.lm_vt_partitions = (dllama_number_of_vertices + LL_ENTRIES_PER_PAGE - 1) / LL_ENTRIES_PER_PAGE;
+	new_meta.lm_vt_size = dllama_number_of_vertices;
 
 	//edge table
 	snapshot_manager snapshots(rank_snapshots);
 
 	vector<LL_DATA_TYPE> edge_table;
 	vector<ll_mlcsr_core__begin_t> vertex_table;
-	for (int vertex = 0; vertex < num_vertices; vertex++) {
+	for (int vertex = 0; vertex < dllama_number_of_vertices; vertex++) {
 		set<LL_DATA_TYPE> neighbours;
 		for (int r = 0; r < world_size; r++) {
 			//add all neighbours in edge table pointed to by chunk
@@ -320,8 +336,8 @@ void snapshot_merger::merge_snapshots(int* rank_snapshots) {
 	cout << "\n";*/
 			
 	int num_edge_table_chunks = ((edge_table.size() * sizeof(LL_DATA_TYPE)) + LL_BLOCK_SIZE - 1) / LL_BLOCK_SIZE;
-	int num_vertex_chunks = (num_vertices * sizeof(ll_mlcsr_core__begin_t) + LL_BLOCK_SIZE - 1) / LL_BLOCK_SIZE;
-	int num_indirection_entries = (num_vertices + LL_ENTRIES_PER_PAGE - 1) / LL_ENTRIES_PER_PAGE;
+	int num_vertex_chunks = (dllama_number_of_vertices * sizeof(ll_mlcsr_core__begin_t) + LL_BLOCK_SIZE - 1) / LL_BLOCK_SIZE;
+	int num_indirection_entries = (dllama_number_of_vertices + LL_ENTRIES_PER_PAGE - 1) / LL_ENTRIES_PER_PAGE;
 	int num_indirection_table_chunks = ((num_indirection_entries * sizeof(ll_persistent_chunk)) + sizeof(dll_header_t) + LL_BLOCK_SIZE - 1) / LL_BLOCK_SIZE;
 	int file_size = LL_BLOCK_SIZE + (num_edge_table_chunks + num_indirection_table_chunks + num_vertex_chunks) * LL_BLOCK_SIZE;
 	cout << "new output file size should be: " << file_size << "\n";

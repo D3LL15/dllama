@@ -25,6 +25,7 @@ public:
     void add_random_edge();
     void auto_checkpoint();
     void refresh_ro_graph();
+    void start_merge();
     //void add_property();
     //std::string get_property();
 private:

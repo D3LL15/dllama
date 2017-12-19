@@ -3,6 +3,7 @@
 
 #include <mpi.h>
 #include <string>
+#include <mutex>
 #include "llama.h"
 
 class snapshot_merger {
@@ -13,14 +14,14 @@ public:
     void read_second_snapshot();
     void start_snapshot_listener();
     void merge_snapshots(int* rank_snapshots);
-
+    void begin_merge();
 private:
 protected:
     void handle_snapshot_message(MPI_Status status);
-    void handle_merge_request(MPI_Status status);
+    void handle_merge_request(int source);
     int* received_snapshot_levels;
     int* expected_snapshot_levels;
-
+    std::mutex listener_lock;
 
 };
 
