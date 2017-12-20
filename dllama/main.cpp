@@ -205,6 +205,26 @@ int main(int argc, char** argv) {
 				}
 				
 				break;
+			case 'f':
+				if (world_rank == 0) {
+					dllama_instance->load_net_graph("simple_graph.net");
+					dllama_instance->out_iter_begin(neighbours, 1);
+					dllama_instance->delete_edge(1, neighbours.edge);
+					dllama_instance->add_edge(1, 0);
+					dllama_instance->auto_checkpoint();
+					snapshot_merger_instance->read_snapshots();
+
+					for (int i = 0; i < 4; i++) {
+						dllama_instance->out_iter_begin(neighbours, i);
+						cout << "rank "<< world_rank << " neighbours of vertex " << i <<": ";
+						while (dllama_instance->out_iter_has_next(neighbours)) {
+							dllama_instance->out_iter_next(neighbours);
+							cout << neighbours.last_node;
+						}
+						cout << "\n";
+					}
+				}
+				break;
 		}
 	}
 

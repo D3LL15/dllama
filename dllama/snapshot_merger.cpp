@@ -201,7 +201,7 @@ void snapshot_merger::read_snapshots(string input_file_name) {
 			LL_DATA_TYPE* neighbour;
 			for (unsigned i = 0; i < vertex_table_entry->level_length; i++) {
 				neighbour = (LL_DATA_TYPE*) (memblock + et_chunk.pc_offset + vertex_table_entry->adj_list_start + (i * sizeof(LL_DATA_TYPE)));
-				cout << "neighbour " << i << " is " << *neighbour << "\n";
+				cout << "neighbour " << i << " is " << LL_VALUE_PAYLOAD(*neighbour) << "\n";
 			}
 			
 			
@@ -209,7 +209,7 @@ void snapshot_merger::read_snapshots(string input_file_name) {
 			delete[] memblock;
 		} else cout << "Rank " << world_rank << " unable to open snapshot file\n";
 		
-		//read_second_snapshot();
+		read_second_snapshot();
 		
 	}
 }
@@ -259,7 +259,7 @@ void snapshot_merger::read_second_snapshot() {
 		LL_DATA_TYPE* neighbour;
 		for (unsigned i = 0; i < vertex_table_entry->level_length; i++) {
 			neighbour = (LL_DATA_TYPE*) (memblock + et_chunk.pc_offset + LL_EDGE_INDEX(vertex_table_entry->adj_list_start) + (i * sizeof(LL_DATA_TYPE)));
-			cout << "neighbour " << i << " is " << *neighbour << "\n";
+			cout << "neighbour " << i << " is " << LL_VALUE_PAYLOAD(*neighbour) << "\n";
 		}
 		
 		cout << "ll_mlcsr_core__begin_t size " << sizeof(ll_mlcsr_core__begin_t) << "\n";

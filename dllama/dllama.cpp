@@ -56,6 +56,10 @@ edge_t dllama::add_edge(node_t src, node_t tgt) {
 	return graph->add_edge(src, tgt);
 }
 
+void dllama::delete_edge(node_t src, edge_t edge) {
+	graph->delete_edge(src, edge);
+}
+
 node_t dllama::add_node() {
 	//TODO: get vertex number from vertex allocator service
 	return graph->add_node();

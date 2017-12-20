@@ -16,6 +16,7 @@ public:
     virtual ~dllama();
     void load_net_graph(string net_graph);
     edge_t add_edge(node_t src, node_t tgt);
+    void delete_edge(node_t src, edge_t edge);
     node_t add_node();
     size_t out_degree(node_t node);
     void out_iter_begin(ll_edge_iterator& iter, node_t node);
