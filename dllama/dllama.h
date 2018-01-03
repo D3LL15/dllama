@@ -24,6 +24,7 @@ public:
     ITERATOR_DECL edge_t out_iter_next(ll_edge_iterator& iter);
     vector<node_t> get_neighbours_of_vertex(node_t vertex);
     void add_random_edge();
+    void request_checkpoint();
     void auto_checkpoint();
     void refresh_ro_graph();
     void start_merge();
@@ -32,6 +33,7 @@ public:
 private:
 
 protected:
+    void checkpoint();
     ll_writable_graph* graph;
     ll_database* database;
 };

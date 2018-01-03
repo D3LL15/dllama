@@ -72,54 +72,67 @@ size_t dllama::out_degree(node_t node) {
 	return result;
 }
 
+void dllama::request_checkpoint() {
+	while (true) {
+		merge_starting_lock.lock();
+		if (!merge_starting) {
+			checkpoint();
+			break;
+		}
+		merge_starting_lock.unlock();
+	}
+}
+
 //call after a certain amount of updates
-//we can have a checkpoint request function as well that is guaranteed to checkpoint (by looping until merge_starting false)
 void dllama::auto_checkpoint() {
 	//TODO: have this be called automatically
 	//check if merge occurring before writing new file, also prevent the other thread sending a merge request before we are done sending our snapshot
 	merge_starting_lock.lock();
-	
 	if (!merge_starting) {
-		graph->checkpoint();
-		current_snapshot_level = graph->num_levels();
-
-		uint32_t file_number = (graph->num_levels() - 2) / LL_LEVELS_PER_ML_FILE;
-		if ((graph->num_levels() - 1) % LL_LEVELS_PER_ML_FILE == 0) {
-			//if we have written to the snapshot file for the final time then send it, only applies if you have multiple levels per file
-			cout << "Rank " << world_rank << " sending snapshot file\n";
-			streampos file_size;
-			char * memblock;
-
-			ostringstream oss;
-			oss << "db" << world_rank << "/csr__out__" << file_number << ".dat";
-			
-			string input_file_name = oss.str();
-
-			ifstream file(input_file_name, ios::in | ios::binary | ios::ate);
-			if (file.is_open()) {
-				file_size = file.tellg();
-				int memblock_size = file_size;
-				memblock_size += 4;
-				memblock = new char [memblock_size];
-				memblock[0] = (file_number >> 24) & 0xFF;
-				memblock[1] = (file_number >> 16) & 0xFF;
-				memblock[2] = (file_number >> 8) & 0xFF;
-				memblock[3] = file_number & 0xFF;
-				file.seekg(0, ios::beg);
-				file.read(memblock + 4, memblock_size);
-				file.close();
-
-				for (int i = 0; i < world_size; i++) {
-					if (i != world_rank) {
-						MPI_Send(memblock, memblock_size, MPI_BYTE, i, SNAPSHOT_MESSAGE, MPI_COMM_WORLD);
-					}
-				}
-
-				delete[] memblock;
-			} else cout << "Rank " << world_rank << " unable to open input snapshot file\n";
-		}
+		checkpoint();
 	}
 	merge_starting_lock.unlock();
+}
+
+void dllama::checkpoint() {
+	graph->checkpoint();
+	current_snapshot_level = graph->num_levels();
+
+	uint32_t file_number = (graph->num_levels() - 2) / LL_LEVELS_PER_ML_FILE;
+	if ((graph->num_levels() - 1) % LL_LEVELS_PER_ML_FILE == 0) {
+		//if we have written to the snapshot file for the final time then send it, only applies if you have multiple levels per file
+		cout << "Rank " << world_rank << " sending snapshot file\n";
+		streampos file_size;
+		char * memblock;
+
+		ostringstream oss;
+		oss << "db" << world_rank << "/csr__out__" << file_number << ".dat";
+
+		string input_file_name = oss.str();
+
+		ifstream file(input_file_name, ios::in | ios::binary | ios::ate);
+		if (file.is_open()) {
+			file_size = file.tellg();
+			int memblock_size = file_size;
+			memblock_size += 4;
+			memblock = new char [memblock_size];
+			memblock[0] = (file_number >> 24) & 0xFF;
+			memblock[1] = (file_number >> 16) & 0xFF;
+			memblock[2] = (file_number >> 8) & 0xFF;
+			memblock[3] = file_number & 0xFF;
+			file.seekg(0, ios::beg);
+			file.read(memblock + 4, memblock_size);
+			file.close();
+
+			for (int i = 0; i < world_size; i++) {
+				if (i != world_rank) {
+					MPI_Send(memblock, memblock_size, MPI_BYTE, i, SNAPSHOT_MESSAGE, MPI_COMM_WORLD);
+				}
+			}
+
+			delete[] memblock;
+		} else cout << "Rank " << world_rank << " unable to open input snapshot file\n";
+	}
 }
 
 //asynchronous
