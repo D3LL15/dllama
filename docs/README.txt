@@ -1,3 +1,16 @@
+  DLLAMA
+==========
+
+DLLAMA is an extension to LLAMA (see below) that allows LLAMA to work when 
+distributed over a group of machines.
+
+In order to set DLLAMA up on a group of machines, follow the following steps:
+
+- ensure you have g++ installed on each of the machines
+- install MPICH2 3.2.1 on each of the machines
+- follow the following guide:
+http://mpitutorial.com/tutorials/running-an-mpi-cluster-within-a-lan/
+
   LLAMA
 =========
 
