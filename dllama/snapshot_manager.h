@@ -5,8 +5,6 @@
 #include "llama.h"
 #include "snapshot_merger.h"
 
-using namespace std;
-
 class snapshot_manager {
 public:
     snapshot_manager(int* rank_snapshots);
@@ -16,8 +14,8 @@ public:
     ll_mlcsr_core__begin_t* get_vertex_table_entry(int rank, int level, int offset);
     LL_DATA_TYPE* get_edge_table_entry(int rank, int level, int offset);
     dll_header_t* get_header(int rank, int level, int offset);
-    vector<LL_DATA_TYPE> get_neighbours_of_vertex(int rank, node_t vertex);
-    vector<LL_DATA_TYPE> get_level_0_neighbours_of_vertex(node_t vertex);
+    std::vector<LL_DATA_TYPE> get_neighbours_of_vertex(int rank, node_t vertex);
+    std::vector<LL_DATA_TYPE> get_level_0_neighbours_of_vertex(node_t vertex);
 protected:
     char*** snapshots;
     int* rank_num_snapshots;

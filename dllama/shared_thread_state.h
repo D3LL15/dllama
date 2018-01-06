@@ -10,14 +10,12 @@
 #define SNAPSHOT_MESSAGE 0
 #define START_MERGE_REQUEST 1
 
-using namespace std;
-
 extern int world_size;
 extern int world_rank;
 
 extern bool merge_starting;
-extern mutex merge_starting_lock;
-extern mutex ro_graph_lock;
+extern std::mutex merge_starting_lock;
+extern std::mutex ro_graph_lock;
 
 extern int current_snapshot_level;
 

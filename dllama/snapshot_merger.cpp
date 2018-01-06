@@ -274,13 +274,11 @@ void snapshot_merger::read_second_snapshot() {
 
 std::ostream& operator<<(std::ostream& out, const ll_mlcsr_core__begin_t& h)
 {
-	cout << "mlcsrcorebegin" << h.adj_list_start << h.level_length << h.degree << "\n";
     return out.write((char*) (&h), sizeof(ll_mlcsr_core__begin_t));
 }
 
 std::ostream& operator<<(std::ostream& out, const ll_persistent_chunk& h)
 {
-	cout << "llpersistentchunk " << h.pc_level << h.pc_length << h.pc_offset << "\n";
     return out.write((char*) (&h), sizeof(ll_persistent_chunk));
 }
 

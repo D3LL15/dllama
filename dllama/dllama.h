@@ -8,13 +8,11 @@
 
 #define SNAPSHOT_MESSAGE 0
 
-using namespace std;
-
 class dllama {
 public:
     dllama();
     virtual ~dllama();
-    void load_net_graph(string net_graph);
+    void load_net_graph(std::string net_graph);
     edge_t add_edge(node_t src, node_t tgt);
     void delete_edge(node_t src, edge_t edge);
     node_t add_node();
@@ -22,7 +20,7 @@ public:
     void out_iter_begin(ll_edge_iterator& iter, node_t node);
     ITERATOR_DECL bool out_iter_has_next(ll_edge_iterator& iter);
     ITERATOR_DECL edge_t out_iter_next(ll_edge_iterator& iter);
-    vector<node_t> get_neighbours_of_vertex(node_t vertex);
+    std::vector<node_t> get_neighbours_of_vertex(node_t vertex);
     void add_random_edge();
     void request_checkpoint();
     void auto_checkpoint();

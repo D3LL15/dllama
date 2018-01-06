@@ -56,6 +56,7 @@ edge_t dllama::add_edge(node_t src, node_t tgt) {
 	return graph->add_edge(src, tgt);
 }
 
+//currently LLAMA does not support deletions properly, so this method also does not
 void dllama::delete_edge(node_t src, edge_t edge) {
 	graph->delete_edge(src, edge);
 }
