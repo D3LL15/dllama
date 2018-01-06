@@ -74,6 +74,7 @@ void snapshot_merger::handle_merge_request(int source) {
 
 	//broadcast start merge request if this is the first merge request you have heard
 	if (!merge_had_started) {
+		merge_lock.lock();
 		for (int i = 0; i < world_size; i++) {
 			if (i != world_rank) {
 				MPI_Send(&current_snapshot_level, 1, MPI_INT, i, START_MERGE_REQUEST, MPI_COMM_WORLD);
@@ -114,6 +115,7 @@ void snapshot_merger::handle_merge_request(int source) {
 		expected_snapshot_levels[world_rank] = 0;
 
 		//allow main thread to continue writing snapshots
+		merge_lock.unlock();
 		merge_starting_lock.lock();
 		merge_starting = 0;
 		merge_starting_lock.unlock();
@@ -124,6 +126,25 @@ void snapshot_merger::begin_merge() {
 	listener_lock.lock();
 	handle_merge_request(world_rank);
 	listener_lock.unlock();
+}
+
+void snapshot_merger::handle_new_node_request(MPI_Status status) {
+	int node_id;
+	MPI_Recv(&node_id, 1, MPI_INT, status.MPI_SOURCE, NEW_NODE_REQUEST, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+	
+	if (we are personally adding a new node && status.MPI_SOURCE < world_rank) {
+		add to queue to ack later
+	} else {
+		int zero = 0;
+		MPI_Send(&zero, 1, MPI_INT, status.MPI_SOURCE, NEW_NODE_ACK, MPI_COMM_WORLD);
+	}
+}
+
+void snapshot_merger::handle_new_node_command(MPI_Status status) {
+	int node_id;
+	MPI_Recv(&node_id, 1, MPI_INT, status.MPI_SOURCE, NEW_NODE_COMMAND, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+	//TODO check we are not currently checkpointing
+	dllama_instance->add_node(node_id);
 }
 
 void snapshot_merger::start_snapshot_listener() {
@@ -148,6 +169,12 @@ void snapshot_merger::start_snapshot_listener() {
 				break;
 			case START_MERGE_REQUEST:
 				handle_merge_request(status.MPI_SOURCE);
+				break;
+			case NEW_NODE_REQUEST:
+				handle_new_node_request(status);
+				break;
+			case NEW_NODE_COMMAND:
+				handle_new_node_command(status);
 				break;
 			default:
 				cout << "Rank " << world_rank << " received message with unknown tag\n";

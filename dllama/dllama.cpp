@@ -17,6 +17,7 @@ int world_size;
 int world_rank;
 bool merge_starting;
 mutex merge_starting_lock;
+mutex merge_lock;
 mutex ro_graph_lock;
 int current_snapshot_level;
 int dllama_number_of_vertices;
@@ -65,7 +66,7 @@ dllama::~dllama() {
 }
 
 void dllama::load_net_graph(string net_graph) {
-	merge_starting_lock.lock();
+	merge_lock.lock();
 	ll_file_loaders loaders;
 	ll_file_loader* loader = loaders.loader_for(net_graph.c_str());
 	if (loader == NULL) {
@@ -80,7 +81,7 @@ void dllama::load_net_graph(string net_graph) {
 	dllama_number_of_vertices = graph->max_nodes();
 	cout << "num levels " << graph->num_levels() << "\n";
 	cout << "num vertices " << graph->max_nodes() << "\n";
-	merge_starting_lock.unlock();
+	merge_lock.unlock();
 }
 
 edge_t dllama::add_edge(node_t src, node_t tgt) {
@@ -93,8 +94,46 @@ void dllama::delete_edge(node_t src, edge_t edge) {
 }
 
 node_t dllama::add_node() {
-	//TODO: get vertex number from vertex allocator service
-	return graph->add_node();
+	//TODO: check that we are not already adding a node
+	int new_node_id = graph->max_nodes();
+	cout << "new node id: " << new_node_id << "\n";
+	//tell all the other machines you want to add a node
+	for (int i = 0; i < world_size; i++) {
+		if (i != world_rank) {
+			MPI_Send(&new_node_id, 1, MPI_INT, i, NEW_NODE_REQUEST, MPI_COMM_WORLD);
+		}
+	}
+
+	//wait for them to acknowledge that you can add a node
+	int ack;
+	for (int i = 0; i < world_size; i++) {
+		if (i != world_rank) {
+			MPI_Recv(&ack, 1, MPI_INT, MPI_ANY_SOURCE, NEW_NODE_ACK, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+		}
+	}
+
+	//adjust the new node id in case it changed in the previous phase
+	new_node_id = graph->max_nodes();
+	
+	//tell them all to add the node
+	for (int i = 0; i < world_size; i++) {
+		if (i != world_rank) {
+			MPI_Send(&new_node_id, 1, MPI_INT, i, NEW_NODE_COMMAND, MPI_COMM_WORLD);
+		}
+	}
+
+	//add the node yourself
+	graph->add_node(new_node_id);
+	
+	//TODO: ack all the requests in the queue
+	
+	return new_node_id;
+	break;
+}
+
+//not for manual use
+node_t dllama::add_node(node_t id) {
+	graph->add_node(id);
 }
 
 size_t dllama::out_degree(node_t node) {
@@ -105,14 +144,9 @@ size_t dllama::out_degree(node_t node) {
 }
 
 void dllama::request_checkpoint() {
-	while (true) {
-		merge_starting_lock.lock();
-		if (!merge_starting) {
-			checkpoint();
-			break;
-		}
-		merge_starting_lock.unlock();
-	}
+	merge_lock.lock();
+	checkpoint();
+	merge_lock.unlock();
 }
 
 //call after a certain amount of updates

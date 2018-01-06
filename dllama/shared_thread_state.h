@@ -9,12 +9,16 @@
 
 #define SNAPSHOT_MESSAGE 0
 #define START_MERGE_REQUEST 1
+#define NEW_NODE_REQUEST 2
+#define NEW_NODE_ACK 3
+#define NEW_NODE_COMMAND 4
 
 extern int world_size;
 extern int world_rank;
 
 extern bool merge_starting;
 extern std::mutex merge_starting_lock;
+extern std::mutex merge_lock;
 extern std::mutex ro_graph_lock;
 
 extern int current_snapshot_level;
