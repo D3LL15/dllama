@@ -1,12 +1,14 @@
 #ifndef DLLAMA_H
 #define DLLAMA_H
 
-#include <pthread.h>
+#include <thread>
 #include <vector>
 
 #include "llama.h"
 
 #define SNAPSHOT_MESSAGE 0
+
+void start_mpi_listener();
 
 class dllama {
 public:
@@ -29,7 +31,7 @@ public:
     //void add_property();
     //std::string get_property();
 private:
-
+    std::thread* mpi_listener;
 protected:
     void checkpoint();
     ll_writable_graph* graph;

@@ -6,13 +6,43 @@
 #include <sstream>
 #include <mutex>
 #include <vector>
+#include <thread>
 
 #include "dllama.h"
 #include "shared_thread_state.h"
 
 using namespace std;
 
+int world_size;
+int world_rank;
+bool merge_starting;
+mutex merge_starting_lock;
+mutex ro_graph_lock;
+int current_snapshot_level;
+int dllama_number_of_vertices;
+dllama* dllama_instance;
+snapshot_merger* snapshot_merger_instance;
+
+void start_mpi_listener() {
+	snapshot_merger_instance->start_snapshot_listener();
+}
+
 dllama::dllama() {
+	
+	MPI_Init(NULL, NULL);
+	MPI_Comm_size(MPI_COMM_WORLD, &world_size);
+	MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
+	
+	merge_starting = 0;
+	current_snapshot_level = 0;
+	dllama_number_of_vertices = 0;
+	
+	snapshot_merger_instance = new snapshot_merger(); //
+	mpi_listener = new thread(start_mpi_listener);
+	
+	cout << "Rank " << world_rank << " main and mpi_listener threads now execute concurrently...\n";
+	cout << "world size: " << world_size << "\n";
+	
 	//initialise llama
 	char* database_directory = (char*) alloca(20);
 
@@ -31,6 +61,7 @@ dllama::dllama() {
 }
 
 dllama::~dllama() {
+	MPI_Finalize();
 }
 
 void dllama::load_net_graph(string net_graph) {

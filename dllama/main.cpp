@@ -14,30 +14,38 @@
 
 using namespace std;
 
-int world_size;
-int world_rank;
-bool merge_starting;
-mutex merge_starting_lock;
-mutex ro_graph_lock;
-int current_snapshot_level;
-dllama* dllama_instance;
-snapshot_merger* snapshot_merger_instance;
-int dllama_number_of_vertices;
-
-void start_mpi_listener() {
-	//snapshot_merger sm = snapshot_merger();
-	//snapshot_merger_instance = new snapshot_merger();
-	snapshot_merger_instance->start_snapshot_listener();
-	//sm.start_snapshot_listener();
-}
-
 //usage: mpirun -n 2 ./dllama.exe 4
-
 int main(int argc, char** argv) {
+	dllama_instance = new dllama();
+	
+	dllama_instance->load_net_graph("simple_graph.net");
+	dllama_instance->add_edge(1, 0);
+	dllama_instance->add_edge(2, 1);
+	dllama_instance->auto_checkpoint();
+	dllama_instance->add_edge(2, 0);
+	dllama_instance->auto_checkpoint();
+
+	sleep(2);
+
+	if (world_rank == 0) {
+		dllama_instance->start_merge();
+	}
+
+	sleep(5);
+
+	ll_edge_iterator neighbours;
+	for (int i = 0; i < 4; i++) {
+		dllama_instance->out_iter_begin(neighbours, i);
+		cout << "rank "<< world_rank << " neighbours of vertex " << i <<": ";
+		while (dllama_instance->out_iter_has_next(neighbours)) {
+			dllama_instance->out_iter_next(neighbours);
+			cout << neighbours.last_node;
+		}
+		cout << "\n";
+	}
 	//initialise MPI
-	MPI_Init(NULL, NULL);
-	MPI_Comm_size(MPI_COMM_WORLD, &world_size);
-	MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
+	/*initialise_MPI();
+	
 	merge_starting = 0;
 	current_snapshot_level = 0;
 	dllama_number_of_vertices = 0;
@@ -47,6 +55,8 @@ int main(int argc, char** argv) {
 	thread mpi_listener(start_mpi_listener);
 	cout << "Rank " << world_rank << " main and mpi_listener threads now execute concurrently...\n";
 	cout << "world size: " << world_size << "\n";
+	*/
+	/*
 	if (argc == 2) {
 		dllama_test test_instance = dllama_test();
 		//dllama dllama_instance = dllama();
@@ -227,10 +237,11 @@ int main(int argc, char** argv) {
 				break;
 		}
 	}
-
-	mpi_listener.join();
+	*/
+	
+	/*mpi_listener.join();
 	cout << "Rank " << world_rank << " mpi_listener thread terminated.\n";
-	MPI_Finalize();
+	MPI_Finalize();*/
 	return 0;
 }
 
