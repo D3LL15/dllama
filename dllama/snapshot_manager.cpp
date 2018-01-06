@@ -7,6 +7,8 @@
 #include <iostream>
 #include <vector>
 
+using namespace std;
+
 snapshot_manager::snapshot_manager(int* rank_snapshots) {
 	rank_num_snapshots = rank_snapshots;
 	snapshots = new char** [world_size];

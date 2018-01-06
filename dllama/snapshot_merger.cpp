@@ -156,9 +156,9 @@ void snapshot_merger::start_snapshot_listener() {
 	}
 }
 
+//for debugging
 void snapshot_merger::read_snapshots(string input_file_name) {
 	if (world_rank == 0) {
-		//string input_file_name = "db0/csr__out__0.dat";
 		ifstream file(input_file_name, ios::in | ios::binary | ios::ate);
 		if (file.is_open()) {
 			int file_size = file.tellg();
@@ -197,23 +197,20 @@ void snapshot_merger::read_snapshots(string input_file_name) {
 			cout << "edge list start " << vertex_table_entry->adj_list_start << "\n";
 			cout << "vertex degree " << vertex_table_entry->degree << "\n\n";
 			
-			
 			LL_DATA_TYPE* neighbour;
 			for (unsigned i = 0; i < vertex_table_entry->level_length; i++) {
 				neighbour = (LL_DATA_TYPE*) (memblock + et_chunk.pc_offset + vertex_table_entry->adj_list_start + (i * sizeof(LL_DATA_TYPE)));
 				cout << "neighbour " << i << " is " << LL_VALUE_PAYLOAD(*neighbour) << "\n";
 			}
-			
-			
 
 			delete[] memblock;
 		} else cout << "Rank " << world_rank << " unable to open snapshot file\n";
 		
 		read_second_snapshot();
-		
 	}
 }
 
+//for debugging
 void snapshot_merger::read_second_snapshot() {
 	string input_file_name = "db0/csr__out__1.dat";
 	ifstream file(input_file_name, ios::in | ios::binary | ios::ate);
@@ -255,7 +252,6 @@ void snapshot_merger::read_second_snapshot() {
 		cout << "edge list start " << LL_EDGE_INDEX(vertex_table_entry->adj_list_start) << "\n";
 		cout << "vertex degree " << vertex_table_entry->degree << "\n\n";
 
-
 		LL_DATA_TYPE* neighbour;
 		for (unsigned i = 0; i < vertex_table_entry->level_length; i++) {
 			neighbour = (LL_DATA_TYPE*) (memblock + et_chunk.pc_offset + LL_EDGE_INDEX(vertex_table_entry->adj_list_start) + (i * sizeof(LL_DATA_TYPE)));
@@ -283,8 +279,6 @@ std::ostream& operator<<(std::ostream& out, const ll_persistent_chunk& h)
 }
 
 void snapshot_merger::merge_snapshots(int* rank_snapshots) {
-	//int num_vertices = 4; //TODO: cannot be hardcoded
-	
 	ostringstream oss;
 	oss << "db" << world_rank << "/new_level0.dat";
 	string output_file_name = oss.str();

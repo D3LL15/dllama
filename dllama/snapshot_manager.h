@@ -19,7 +19,7 @@ public:
 protected:
     char*** snapshots;
     int* rank_num_snapshots;
-    char* level_0_snapshot; //TODO: set this and use it
+    char* level_0_snapshot;
 };
 
 #endif /* SNAPSHOT_MANAGER_H */
