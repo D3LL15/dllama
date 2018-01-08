@@ -2,6 +2,7 @@
 #define SHARED_THREAD_STATE_H
 
 #include <mutex>
+#include <stack>
 #include "dllama.h"
 #include "snapshot_merger.h"
 
@@ -20,12 +21,20 @@ extern bool merge_starting;
 extern std::mutex merge_starting_lock;
 extern std::mutex merge_lock;
 extern std::mutex ro_graph_lock;
+extern std::mutex checkpoint_lock;
 
 extern int current_snapshot_level;
 
 extern dllama* dllama_instance;
 extern snapshot_merger* snapshot_merger_instance;
 
+//protected by merge lock and merge starting lock
 extern int dllama_number_of_vertices;
+
+extern std::stack<int> new_node_ack_stack;
+extern bool self_adding_node;
+extern std::mutex num_new_node_requests_lock;
+extern int num_new_node_requests;
+extern std::mutex new_node_ack_stack_lock;
 
 #endif /* SHARED_THREAD_STATE_H */

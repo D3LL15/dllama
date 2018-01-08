@@ -132,19 +132,32 @@ void snapshot_merger::handle_new_node_request(MPI_Status status) {
 	int node_id;
 	MPI_Recv(&node_id, 1, MPI_INT, status.MPI_SOURCE, NEW_NODE_REQUEST, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 	
-	if (we are personally adding a new node && status.MPI_SOURCE < world_rank) {
-		add to queue to ack later
+	if (num_new_node_requests == 0) {
+		num_new_node_requests_lock.lock();
+	}
+	num_new_node_requests++;
+	
+	new_node_ack_stack_lock.lock();
+	if (self_adding_node && status.MPI_SOURCE < world_rank) {
+		new_node_ack_stack.push(status.MPI_SOURCE);
 	} else {
 		int zero = 0;
 		MPI_Send(&zero, 1, MPI_INT, status.MPI_SOURCE, NEW_NODE_ACK, MPI_COMM_WORLD);
 	}
+	new_node_ack_stack_lock.unlock();
 }
 
 void snapshot_merger::handle_new_node_command(MPI_Status status) {
 	int node_id;
 	MPI_Recv(&node_id, 1, MPI_INT, status.MPI_SOURCE, NEW_NODE_COMMAND, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-	//TODO check we are not currently checkpointing
+	//check we are not currently checkpointing
+	checkpoint_lock.lock();
 	dllama_instance->add_node(node_id);
+	checkpoint_lock.unlock();
+	num_new_node_requests--;
+	if (num_new_node_requests == 0) {
+		num_new_node_requests_lock.unlock();
+	}
 }
 
 void snapshot_merger::start_snapshot_listener() {

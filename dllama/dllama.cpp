@@ -7,6 +7,7 @@
 #include <mutex>
 #include <vector>
 #include <thread>
+#include <stack>
 
 #include "dllama.h"
 #include "shared_thread_state.h"
@@ -19,10 +20,16 @@ bool merge_starting;
 mutex merge_starting_lock;
 mutex merge_lock;
 mutex ro_graph_lock;
+mutex checkpoint_lock;
 int current_snapshot_level;
 int dllama_number_of_vertices;
 dllama* dllama_instance;
 snapshot_merger* snapshot_merger_instance;
+stack<int> new_node_ack_stack;
+bool self_adding_node;
+mutex num_new_node_requests_lock;
+int num_new_node_requests;
+mutex new_node_ack_stack_lock;
 
 void start_mpi_listener() {
 	snapshot_merger_instance->start_snapshot_listener();
@@ -37,6 +44,8 @@ dllama::dllama() {
 	merge_starting = 0;
 	current_snapshot_level = 0;
 	dllama_number_of_vertices = 0;
+	self_adding_node = 0;
+	num_new_node_requests = 0;
 	
 	snapshot_merger_instance = new snapshot_merger(); //
 	mpi_listener = new thread(start_mpi_listener);
@@ -94,7 +103,11 @@ void dllama::delete_edge(node_t src, edge_t edge) {
 }
 
 node_t dllama::add_node() {
-	//TODO: check that we are not already adding a node
+	//check that we are not already adding a node
+	num_new_node_requests_lock.lock();
+	self_adding_node = 1;
+	num_new_node_requests_lock.unlock();
+	
 	int new_node_id = graph->max_nodes();
 	cout << "new node id: " << new_node_id << "\n";
 	//tell all the other machines you want to add a node
@@ -125,15 +138,25 @@ node_t dllama::add_node() {
 	//add the node yourself
 	graph->add_node(new_node_id);
 	
-	//TODO: ack all the requests in the queue
+	self_adding_node = 0;
+	
+	//ack all the requests on the stack
+	new_node_ack_stack_lock.lock();
+	int one = 1;
+	while (!new_node_ack_stack.empty()) {
+		MPI_Send(&one, 1, MPI_INT, new_node_ack_stack.top(), NEW_NODE_ACK, MPI_COMM_WORLD);
+		new_node_ack_stack.pop();
+	}
+	new_node_ack_stack_lock.unlock();
 	
 	return new_node_id;
-	break;
 }
 
 //not for manual use
-node_t dllama::add_node(node_t id) {
+void dllama::add_node(node_t id) {
+	checkpoint_lock.lock();
 	graph->add_node(id);
+	checkpoint_lock.unlock();
 }
 
 size_t dllama::out_degree(node_t node) {
@@ -161,12 +184,15 @@ void dllama::auto_checkpoint() {
 }
 
 void dllama::checkpoint() {
+	cout << "current number of levels before checkpoint: " << graph->num_levels() << "\n";
+	checkpoint_lock.lock();
 	graph->checkpoint();
+	dllama_number_of_vertices = graph->max_nodes();
+	checkpoint_lock.unlock();
 	current_snapshot_level = graph->num_levels();
 
 	uint32_t file_number = (graph->num_levels() - 2) / LL_LEVELS_PER_ML_FILE;
 	if ((graph->num_levels() - 1) % LL_LEVELS_PER_ML_FILE == 0) {
-		//if we have written to the snapshot file for the final time then send it, only applies if you have multiple levels per file
 		cout << "Rank " << world_rank << " sending snapshot file\n";
 		streampos file_size;
 		char * memblock;
