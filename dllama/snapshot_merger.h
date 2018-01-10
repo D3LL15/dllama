@@ -23,6 +23,7 @@ protected:
     void handle_new_node_command(MPI_Status status);
     int* received_snapshot_levels;
     int* expected_snapshot_levels;
+    int* received_num_vertices;
     std::mutex listener_lock;
 
 };

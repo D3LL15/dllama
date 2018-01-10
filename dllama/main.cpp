@@ -43,6 +43,10 @@ int main(int argc, char** argv) {
 		}
 		cout << "\n";
 	}
+	
+	
+	
+	
 	//initialise MPI
 	/*initialise_MPI();
 	
@@ -242,6 +246,7 @@ int main(int argc, char** argv) {
 	/*mpi_listener.join();
 	cout << "Rank " << world_rank << " mpi_listener thread terminated.\n";
 	MPI_Finalize();*/
+	sleep(4);
 	return 0;
 }
 

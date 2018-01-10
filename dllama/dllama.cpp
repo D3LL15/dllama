@@ -206,14 +206,18 @@ void dllama::checkpoint() {
 		if (file.is_open()) {
 			file_size = file.tellg();
 			int memblock_size = file_size;
-			memblock_size += 4;
+			memblock_size += 8;
 			memblock = new char [memblock_size];
 			memblock[0] = (file_number >> 24) & 0xFF;
 			memblock[1] = (file_number >> 16) & 0xFF;
 			memblock[2] = (file_number >> 8) & 0xFF;
 			memblock[3] = file_number & 0xFF;
+			memblock[4] = (dllama_number_of_vertices >> 24) & 0xFF;
+			memblock[5] = (dllama_number_of_vertices >> 16) & 0xFF;
+			memblock[6] = (dllama_number_of_vertices >> 8) & 0xFF;
+			memblock[7] = dllama_number_of_vertices & 0xFF;
 			file.seekg(0, ios::beg);
-			file.read(memblock + 4, memblock_size);
+			file.read(memblock + 8, memblock_size);
 			file.close();
 
 			for (int i = 0; i < world_size; i++) {

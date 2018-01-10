@@ -37,9 +37,16 @@ void snapshot_merger::handle_snapshot_message(MPI_Status status) {
 	file_number += memblock[2] << 8;
 	file_number += memblock[3];
 	cout << "Rank " << world_rank << " file number: " << file_number << "\n";
+	uint32_t num_vertices = 0;
+	num_vertices += memblock[4] << 24;
+	num_vertices += memblock[5] << 16;
+	num_vertices += memblock[6] << 8;
+	num_vertices += memblock[7];
+	cout << "Rank " << world_rank << " number of vertices from other machine: " << num_vertices << "\n";
 
 	//we can get away with this for single level files
 	received_snapshot_levels[status.MPI_SOURCE] = file_number;
+	received_num_vertices[status.MPI_SOURCE] = num_vertices;
 
 	ostringstream oss;
 	oss << "db" << world_rank << "/rank" << status.MPI_SOURCE;
@@ -51,7 +58,7 @@ void snapshot_merger::handle_snapshot_message(MPI_Status status) {
 
 	ofstream file(output_file_name, ios::out | ios::binary | ios::trunc);
 	if (file.is_open()) {
-		file.write(memblock + 4, bytes_received - 4);
+		file.write(memblock + 8, bytes_received - 8);
 		file.close();
 	} else cout << "Rank " << world_rank << " unable to open output file\n";
 	delete[] memblock;
@@ -165,6 +172,7 @@ void snapshot_merger::start_snapshot_listener() {
 
 	received_snapshot_levels = new int[world_size]();
 	expected_snapshot_levels = new int[world_size];
+	received_num_vertices = new int[world_size]();
 	for (int i = 0; i < world_size; i++) {
 		expected_snapshot_levels[i] = -1;
 	}
@@ -323,14 +331,16 @@ void snapshot_merger::merge_snapshots(int* rank_snapshots) {
 	oss << "db" << world_rank << "/new_level0.dat";
 	string output_file_name = oss.str();
 	
+	int number_of_vertices = max_element(received_num_vertices, received_num_vertices + world_size);
+	
 	//metadata
 	dll_level_meta new_meta;
 	new_meta.lm_level = 0;
 	new_meta.lm_sub_level = 0;
 	new_meta.lm_header_size = 32;
 	new_meta.lm_base_level = 0;
-	new_meta.lm_vt_partitions = (dllama_number_of_vertices + LL_ENTRIES_PER_PAGE - 1) / LL_ENTRIES_PER_PAGE;
-	new_meta.lm_vt_size = dllama_number_of_vertices;
+	new_meta.lm_vt_partitions = (number_of_vertices + LL_ENTRIES_PER_PAGE - 1) / LL_ENTRIES_PER_PAGE;
+	new_meta.lm_vt_size = number_of_vertices;
 
 	//edge table
 	snapshot_manager snapshots(rank_snapshots);
@@ -341,8 +351,10 @@ void snapshot_merger::merge_snapshots(int* rank_snapshots) {
 		set<LL_DATA_TYPE> neighbours;
 		for (int r = 0; r < world_size; r++) {
 			//add all neighbours in edge table pointed to by chunk
-			vector<LL_DATA_TYPE> new_neighbours = snapshots.get_neighbours_of_vertex(r, vertex);
-			neighbours.insert(new_neighbours.begin(), new_neighbours.end());
+			if (vertex < received_num_vertices[r]) {
+				vector<LL_DATA_TYPE> new_neighbours = snapshots.get_neighbours_of_vertex(r, vertex);
+				neighbours.insert(new_neighbours.begin(), new_neighbours.end());
+			}
 		}
 		//add edges from level 0
 		vector<LL_DATA_TYPE> new_neighbours = snapshots.get_level_0_neighbours_of_vertex(vertex);
@@ -368,8 +380,8 @@ void snapshot_merger::merge_snapshots(int* rank_snapshots) {
 	cout << "\n";*/
 			
 	int num_edge_table_chunks = ((edge_table.size() * sizeof(LL_DATA_TYPE)) + LL_BLOCK_SIZE - 1) / LL_BLOCK_SIZE;
-	int num_vertex_chunks = (dllama_number_of_vertices * sizeof(ll_mlcsr_core__begin_t) + LL_BLOCK_SIZE - 1) / LL_BLOCK_SIZE;
-	int num_indirection_entries = (dllama_number_of_vertices + LL_ENTRIES_PER_PAGE - 1) / LL_ENTRIES_PER_PAGE;
+	int num_vertex_chunks = (new_meta.lm_vt_size * sizeof(ll_mlcsr_core__begin_t) + LL_BLOCK_SIZE - 1) / LL_BLOCK_SIZE;
+	int num_indirection_entries = (new_meta.lm_vt_size + LL_ENTRIES_PER_PAGE - 1) / LL_ENTRIES_PER_PAGE;
 	int num_indirection_table_chunks = ((num_indirection_entries * sizeof(ll_persistent_chunk)) + sizeof(dll_header_t) + LL_BLOCK_SIZE - 1) / LL_BLOCK_SIZE;
 	int file_size = LL_BLOCK_SIZE + (num_edge_table_chunks + num_indirection_table_chunks + num_vertex_chunks) * LL_BLOCK_SIZE;
 	cout << "new output file size should be: " << file_size << "\n";
