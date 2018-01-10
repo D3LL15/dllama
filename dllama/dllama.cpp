@@ -223,6 +223,7 @@ void dllama::checkpoint() {
 			for (int i = 0; i < world_size; i++) {
 				if (i != world_rank) {
 					MPI_Send(memblock, memblock_size, MPI_BYTE, i, SNAPSHOT_MESSAGE, MPI_COMM_WORLD);
+					cout << "sent snapshot: " << file_number << "\n";
 				}
 			}
 
@@ -236,6 +237,7 @@ void dllama::start_merge() {
 	//MPI_Request mpi_req;
 	//MPI_Isend(&current_snapshot_level, 1, MPI_INT, world_rank, START_MERGE_REQUEST, MPI_COMM_WORLD, &mpi_req);
 	//MPI_Request_free(&mpi_req);
+	cout << "Rank " << world_rank << " manually starting merge\n";
 	snapshot_merger_instance->begin_merge();
 }
 

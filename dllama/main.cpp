@@ -19,22 +19,42 @@ int main(int argc, char** argv) {
 	dllama_instance = new dllama();
 	
 	dllama_instance->load_net_graph("simple_graph.net");
-	dllama_instance->add_edge(1, 0);
-	dllama_instance->add_edge(2, 1);
-	dllama_instance->auto_checkpoint();
-	dllama_instance->add_edge(2, 0);
-	dllama_instance->auto_checkpoint();
-
-	sleep(2);
-
-	if (world_rank == 0) {
-		dllama_instance->start_merge();
-	}
-
+	
 	sleep(5);
+	
+	if (world_rank == 0) {
+		dllama_instance->add_edge(1, 0);
+		dllama_instance->add_edge(2, 1);
+		dllama_instance->request_checkpoint();
+		dllama_instance->add_edge(2, 0);
+		dllama_instance->request_checkpoint();
+		node_t new_node = dllama_instance->add_node();
+		dllama_instance->add_edge(new_node, 0);
+		dllama_instance->request_checkpoint();
+		sleep(5);
+		dllama_instance->start_merge();
 
+		cout << "Rank " << world_rank << " trying to manually starting merge\n";
+		dllama_instance->start_merge();
+		
+		sleep(5);
+
+		ll_edge_iterator neighbours;
+		for (int i = 0; i < 5; i++) {
+			dllama_instance->out_iter_begin(neighbours, i);
+			cout << "rank "<< world_rank << " neighbours of vertex " << i <<": ";
+			while (dllama_instance->out_iter_has_next(neighbours)) {
+				dllama_instance->out_iter_next(neighbours);
+				cout << neighbours.last_node;
+			}
+			cout << "\n";
+		}
+	}
+	
+	sleep(20);
+	
 	ll_edge_iterator neighbours;
-	for (int i = 0; i < 4; i++) {
+	for (int i = 0; i < 5; i++) {
 		dllama_instance->out_iter_begin(neighbours, i);
 		cout << "rank "<< world_rank << " neighbours of vertex " << i <<": ";
 		while (dllama_instance->out_iter_has_next(neighbours)) {
@@ -45,6 +65,9 @@ int main(int argc, char** argv) {
 	}
 	
 	
+	while (true) {
+		//
+	}
 	
 	
 	//initialise MPI
@@ -246,7 +269,6 @@ int main(int argc, char** argv) {
 	/*mpi_listener.join();
 	cout << "Rank " << world_rank << " mpi_listener thread terminated.\n";
 	MPI_Finalize();*/
-	sleep(4);
 	return 0;
 }
 

@@ -36,7 +36,7 @@ void snapshot_merger::handle_snapshot_message(MPI_Status status) {
 	file_number += memblock[1] << 16;
 	file_number += memblock[2] << 8;
 	file_number += memblock[3];
-	cout << "Rank " << world_rank << " file number: " << file_number << "\n";
+	cout << "Rank " << world_rank << " received file number: " << file_number << "\n";
 	uint32_t num_vertices = 0;
 	num_vertices += memblock[4] << 24;
 	num_vertices += memblock[5] << 16;
@@ -70,6 +70,7 @@ void snapshot_merger::handle_merge_request(int source) {
 	bool merge_had_started = merge_starting;
 	merge_starting = 1;
 	merge_starting_lock.unlock();
+	cout << "Rank " << world_rank << " received merge request\n";
 	int expected_level;
 	if (source != world_rank) {
 		MPI_Recv(&expected_level, 1, MPI_INT, source, START_MERGE_REQUEST, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
@@ -117,6 +118,7 @@ void snapshot_merger::handle_merge_request(int source) {
 		for (int i = 0; i < world_size; i++) {
 			received_snapshot_levels[i] = 0;
 			expected_snapshot_levels[i] = -1;
+			received_num_vertices[i] = 0;
 		}
 		//don't need to hear from yourself
 		expected_snapshot_levels[world_rank] = 0;
@@ -155,12 +157,13 @@ void snapshot_merger::handle_new_node_request(MPI_Status status) {
 }
 
 void snapshot_merger::handle_new_node_command(MPI_Status status) {
+	cout << "Rank " << world_rank << " commanded to add node\n";
 	int node_id;
 	MPI_Recv(&node_id, 1, MPI_INT, status.MPI_SOURCE, NEW_NODE_COMMAND, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 	//check we are not currently checkpointing
-	checkpoint_lock.lock();
+	cout << "Rank " << world_rank << " about to add node\n";
 	dllama_instance->add_node(node_id);
-	checkpoint_lock.unlock();
+	cout << "Rank " << world_rank << " added node " << node_id << "\n";
 	num_new_node_requests--;
 	if (num_new_node_requests == 0) {
 		num_new_node_requests_lock.unlock();
@@ -331,7 +334,9 @@ void snapshot_merger::merge_snapshots(int* rank_snapshots) {
 	oss << "db" << world_rank << "/new_level0.dat";
 	string output_file_name = oss.str();
 	
+	received_num_vertices[world_rank] = dllama_number_of_vertices;
 	int number_of_vertices = *max_element(received_num_vertices, received_num_vertices + world_size);
+	cout << "num vertices for new level 0: " << number_of_vertices << "\n";
 	
 	//metadata
 	dll_level_meta new_meta;
@@ -347,7 +352,7 @@ void snapshot_merger::merge_snapshots(int* rank_snapshots) {
 
 	vector<LL_DATA_TYPE> edge_table;
 	vector<ll_mlcsr_core__begin_t> vertex_table;
-	for (int vertex = 0; vertex < dllama_number_of_vertices; vertex++) {
+	for (int vertex = 0; vertex < number_of_vertices; vertex++) {
 		set<LL_DATA_TYPE> neighbours;
 		for (int r = 0; r < world_size; r++) {
 			//add all neighbours in edge table pointed to by chunk
@@ -363,10 +368,10 @@ void snapshot_merger::merge_snapshots(int* rank_snapshots) {
 		ll_mlcsr_core__begin_t vertex_table_entry;
 		vertex_table_entry.adj_list_start = edge_table.size();
 
-		/*cout << "neighbours of vertex " << vertex << ": ";
+		cout << "neighbours of vertex " << vertex << ": ";
 		for (set<LL_DATA_TYPE>::iterator neighbour = neighbours.begin(); neighbour != neighbours.end(); ++neighbour) {
 			cout << *neighbour;
-		}*/
+		}
 		edge_table.insert(edge_table.end(), neighbours.begin(), neighbours.end()); //TODO: could just write this directly to file
 		vertex_table_entry.degree = neighbours.size();
 		vertex_table_entry.level_length = vertex_table_entry.degree; // level is 0 anyway
