@@ -331,7 +331,7 @@ void snapshot_merger::merge_snapshots(int* rank_snapshots) {
 	oss << "db" << world_rank << "/new_level0.dat";
 	string output_file_name = oss.str();
 	
-	int number_of_vertices = max_element(received_num_vertices, received_num_vertices + world_size);
+	int number_of_vertices = *max_element(received_num_vertices, received_num_vertices + world_size);
 	
 	//metadata
 	dll_level_meta new_meta;
