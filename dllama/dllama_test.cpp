@@ -4,6 +4,7 @@
 #include "dllama_test.h"
 
 using namespace std;
+using namespace dllama_ns;
 
 dllama_test::dllama_test() {
 }

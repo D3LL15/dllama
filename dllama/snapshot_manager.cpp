@@ -8,6 +8,7 @@
 #include <vector>
 
 using namespace std;
+using namespace dllama_ns;
 
 snapshot_manager::snapshot_manager(int* rank_snapshots) {
 	rank_num_snapshots = rank_snapshots;

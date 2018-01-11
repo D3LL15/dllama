@@ -16,6 +16,7 @@
 #include "llama/ll_mlcsr_helpers.h"
 
 using namespace std;
+using namespace dllama_ns;
 
 snapshot_merger::snapshot_merger() {
 }

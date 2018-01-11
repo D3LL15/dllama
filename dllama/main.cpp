@@ -13,6 +13,7 @@
 #include "shared_thread_state.h"
 
 using namespace std;
+using namespace dllama_ns;
 
 //usage: mpirun -n 2 ./dllama.exe 4
 int main(int argc, char** argv) {
