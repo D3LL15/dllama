@@ -13,7 +13,7 @@ namespace dllama_ns {
 
     class dllama {
     public:
-        dllama();
+        dllama(bool initialise_mpi = true);
         virtual ~dllama();
         void load_net_graph(std::string net_graph);
         edge_t add_edge(node_t src, node_t tgt);
@@ -36,6 +36,7 @@ namespace dllama_ns {
         void checkpoint();
         ll_writable_graph* graph;
         ll_database* database;
+        bool handling_mpi;
     };
 }
 

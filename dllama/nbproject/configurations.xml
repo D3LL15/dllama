@@ -4,6 +4,7 @@
     <df root="." name="0">
       <in>dllama.cpp</in>
       <in>dllama_test.cpp</in>
+      <in>dllamatest.cpp</in>
       <in>llama-pagerank.cc</in>
       <in>main.cpp</in>
       <in>snapshot_manager.cpp</in>
@@ -69,6 +70,8 @@
             <pElem>/usr/local/include</pElem>
           </incDir>
         </ccTool>
+      </item>
+      <item path="dllamatest.cpp" ex="false" tool="1" flavor2="0">
       </item>
       <item path="llama-pagerank.cc" ex="false" tool="1" flavor2="8">
         <ccTool flags="0">

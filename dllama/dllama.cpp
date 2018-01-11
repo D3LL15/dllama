@@ -39,11 +39,13 @@ namespace dllama_ns {
 
 using namespace dllama_ns;
 
-dllama::dllama() {
-	
-	MPI_Init(NULL, NULL);
-	MPI_Comm_size(MPI_COMM_WORLD, &world_size);
-	MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
+dllama::dllama(bool initialise_mpi) {
+	if (initialise_mpi) {
+		MPI_Init(NULL, NULL);
+		MPI_Comm_size(MPI_COMM_WORLD, &world_size);
+		MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
+	}
+	handling_mpi = initialise_mpi;
 	
 	merge_starting = 0;
 	current_snapshot_level = 0;
@@ -75,7 +77,9 @@ dllama::dllama() {
 }
 
 dllama::~dllama() {
-	MPI_Finalize();
+	if (handling_mpi) {
+		MPI_Finalize();
+	}
 }
 
 void dllama::load_net_graph(string net_graph) {
