@@ -51,6 +51,7 @@ namespace {
 	}
 	
 	TEST_F(FooTest, Dllamatest) {
+		MPI_Barrier(MPI_COMM_WORLD);
 		dllama_instance = new dllama(false);
 		dllama_instance->load_net_graph("simple_graph.net");
 		sleep(5);

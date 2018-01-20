@@ -171,6 +171,13 @@ void snapshot_merger::handle_new_node_command(MPI_Status status) {
 	}
 }
 
+void snapshot_merger::handle_new_edge(MPI_Status status) {
+	node_t edge[2];
+	MPI_Recv(&edge, 2, MPI_INT, status.MPI_SOURCE, NEW_EDGE, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+	dllama_instance->add_edge(edge[0], edge[1]);
+	cout << "Rank " << world_rank << " added edge " << edge[0] << " to " << edge[1] << "\n";
+}
+
 void snapshot_merger::start_snapshot_listener() {
 	cout << "Rank " << world_rank << " mpi_listener running\n";
 
@@ -200,6 +207,9 @@ void snapshot_merger::start_snapshot_listener() {
 				break;
 			case NEW_NODE_COMMAND:
 				handle_new_node_command(status);
+				break;
+			case NEW_EDGE:
+				handle_new_edge(status);
 				break;
 			default:
 				cout << "Rank " << world_rank << " received message with unknown tag\n";

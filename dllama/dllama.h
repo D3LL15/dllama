@@ -7,7 +7,6 @@
 #include "llama.h"
 
 namespace dllama_ns {
-    #define SNAPSHOT_MESSAGE 0
 
     void start_mpi_listener();
 

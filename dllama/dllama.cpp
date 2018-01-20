@@ -193,6 +193,7 @@ void dllama::auto_checkpoint() {
 
 void dllama::checkpoint() {
 	cout << "current number of levels before checkpoint: " << graph->num_levels() << "\n";
+	//the checkpoint lock ensures that dllama_number_of_vertices is only the number of vertices in snapshots, not in the writable llama
 	checkpoint_lock.lock();
 	graph->checkpoint();
 	dllama_number_of_vertices = graph->max_nodes();
@@ -278,7 +279,7 @@ vector<node_t> dllama::get_neighbours_of_vertex(node_t vertex) {
 void dllama::add_random_edge() {
 	node_t src = graph->pick_random_node();
 	node_t tgt = graph->pick_random_node();
-	graph->add_edge(src, tgt);
+	add_edge(src, tgt);
 	cout << "added edge from " << src << " to " << tgt << "\n";
 }
 

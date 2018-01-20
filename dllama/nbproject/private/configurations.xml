@@ -12,69 +12,65 @@
         <df name="rank0">
         </df>
       </df>
-      <df name="googletest-master">
+      <df name="googletestmaster">
         <df name="autom4te.cache">
         </df>
-        <df name="build">
-          <df name="CMakeFiles">
-            <df name="3.5.1">
-              <df name="CompilerIdC">
-                <in>CMakeCCompilerId.c</in>
-              </df>
-              <df name="CompilerIdCXX">
-                <in>CMakeCXXCompilerId.cpp</in>
-              </df>
-            </df>
-            <df name="CMakeTmp">
-            </df>
-            <in>feature_tests.c</in>
-            <in>feature_tests.cxx</in>
-          </df>
-          <df name="googlemock">
-            <df name="CMakeFiles">
-              <df name="gmock.dir">
-                <df name="__">
-                  <df name="googletest">
-                    <df name="src">
-                    </df>
-                  </df>
-                </df>
-                <df name="src">
-                </df>
-              </df>
-              <df name="gmock_main.dir">
-                <df name="__">
-                  <df name="googletest">
-                    <df name="src">
-                    </df>
-                  </df>
-                </df>
-                <df name="src">
-                </df>
-              </df>
-            </df>
-            <df name="gtest">
-              <df name="CMakeFiles">
-                <df name="gtest.dir">
-                  <df name="src">
-                  </df>
-                </df>
-                <df name="gtest_main.dir">
-                  <df name="src">
-                  </df>
-                </df>
-              </df>
-            </df>
-          </df>
-        </df>
         <df name="ci">
+        </df>
+        <df name="CMakeFiles">
+          <df name="3.5.1">
+            <df name="CompilerIdC">
+              <in>CMakeCCompilerId.c</in>
+            </df>
+            <df name="CompilerIdCXX">
+              <in>CMakeCXXCompilerId.cpp</in>
+            </df>
+          </df>
+          <df name="CMakeTmp">
+          </df>
+          <in>feature_tests.c</in>
+          <in>feature_tests.cxx</in>
         </df>
         <df name="googlemock">
           <df name="build-aux">
           </df>
           <df name="cmake">
           </df>
+          <df name="CMakeFiles">
+            <df name="gmock.dir">
+              <df name="__">
+                <df name="googletest">
+                  <df name="src">
+                  </df>
+                </df>
+              </df>
+              <df name="src">
+              </df>
+            </df>
+            <df name="gmock_main.dir">
+              <df name="__">
+                <df name="googletest">
+                  <df name="src">
+                  </df>
+                </df>
+              </df>
+              <df name="src">
+              </df>
+            </df>
+          </df>
           <df name="docs">
+          </df>
+          <df name="gtest">
+            <df name="CMakeFiles">
+              <df name="gtest.dir">
+                <df name="src">
+                </df>
+              </df>
+              <df name="gtest_main.dir">
+                <df name="src">
+                </df>
+              </df>
+            </df>
           </df>
           <df name="include">
             <df name="gmock">
@@ -315,6 +311,8 @@
       <in>llama-pagerank.cc</in>
       <in>main.cpp</in>
       <in>shared_thread_state.h</in>
+      <in>simple_dllama.cpp</in>
+      <in>simple_dllama.h</in>
       <in>snapshot_manager.cpp</in>
       <in>snapshot_manager.h</in>
       <in>snapshot_merger.cpp</in>
