@@ -71,7 +71,7 @@ namespace {
 			dllama_instance->request_checkpoint();
 			sleep(1);
 
-			cout << "Rank " << world_rank << " trying to manually start merge\n";
+			DEBUG("Rank " << world_rank << " trying to manually start merge");
 			dllama_instance->start_merge();
 
 			sleep(1);
@@ -84,12 +84,18 @@ namespace {
 		ll_edge_iterator neighbours;
 		for (int i = 0; i < 5; i++) {
 			dllama_instance->out_iter_begin(neighbours, i);
-			cout << "rank "<< world_rank << " neighbours of vertex " << i <<": ";
+			if (debug_enabled) {
+				cout << "rank "<< world_rank << " neighbours of vertex " << i <<": ";
+			}
 			while (dllama_instance->out_iter_has_next(neighbours)) {
 				dllama_instance->out_iter_next(neighbours);
-				cout << neighbours.last_node;
+				if (debug_enabled) {
+					cout << neighbours.last_node;
+				}
 			}
-			cout << "\n";
+			if (debug_enabled) {
+				cout << "\n";
+			}
 		}
 
 		dllama_instance->delete_db();

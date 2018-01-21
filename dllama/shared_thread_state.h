@@ -16,6 +16,15 @@ namespace dllama_ns {
     #define NEW_NODE_COMMAND 4
     #define NEW_EDGE 5
 
+#ifdef DEBUG_ENABLED
+    #define DEBUG(x) std::cout << x << std::endl;
+    #define debug_enabled 1
+#else
+    #define DEBUG(x) 
+    #define debug_enabled 0
+#endif
+    
+
     extern int world_size;
     extern int world_rank;
 

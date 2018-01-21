@@ -27,23 +27,23 @@ snapshot_merger::~snapshot_merger() {
 void snapshot_merger::handle_snapshot_message(MPI_Status status) {
 	int bytes_received;
 	MPI_Get_count(&status, MPI_BYTE, &bytes_received);
-	cout << "Rank " << world_rank << " number of bytes being received: " << bytes_received << "\n";
+	DEBUG("Rank " << world_rank << " number of bytes being received: " << bytes_received);
 	char* memblock = new char [bytes_received];
 	MPI_Recv(memblock, bytes_received, MPI_BYTE, status.MPI_SOURCE, SNAPSHOT_MESSAGE, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-	cout << "Rank " << world_rank << " received file\n";
+	DEBUG("Rank " << world_rank << " received file");
 
 	uint32_t file_number = 0;
 	file_number += memblock[0] << 24;
 	file_number += memblock[1] << 16;
 	file_number += memblock[2] << 8;
 	file_number += memblock[3];
-	cout << "Rank " << world_rank << " received file number: " << file_number << "\n";
+	DEBUG("Rank " << world_rank << " received file number: " << file_number);
 	uint32_t num_vertices = 0;
 	num_vertices += memblock[4] << 24;
 	num_vertices += memblock[5] << 16;
 	num_vertices += memblock[6] << 8;
 	num_vertices += memblock[7];
-	cout << "Rank " << world_rank << " number of vertices from other machine: " << num_vertices << "\n";
+	DEBUG("Rank " << world_rank << " number of vertices from other machine: " << num_vertices);
 
 	//we can get away with this for single level files
 	received_snapshot_levels[status.MPI_SOURCE] = file_number;
@@ -71,7 +71,7 @@ void snapshot_merger::handle_merge_request(int source) {
 	bool merge_had_started = merge_starting;
 	merge_starting = 1;
 	merge_starting_lock.unlock();
-	cout << "Rank " << world_rank << " received merge request\n";
+	DEBUG("Rank " << world_rank << " received merge request");
 	int expected_level;
 	if (source != world_rank) {
 		MPI_Recv(&expected_level, 1, MPI_INT, source, START_MERGE_REQUEST, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
@@ -97,12 +97,12 @@ void snapshot_merger::handle_merge_request(int source) {
 	bool received_all_snapshots = 1;
 	for (int i = 0; i < world_size; i++) {
 		if (received_snapshot_levels[i] != expected_snapshot_levels[i]) {
-			cout << "received " << received_snapshot_levels[i] << " expected " << expected_snapshot_levels[i] << "\n";
+			DEBUG("received " << received_snapshot_levels[i] << " expected " << expected_snapshot_levels[i]);
 			received_all_snapshots = 0;
 		}
 	}
 	if (received_all_snapshots) {
-		cout << "Rank " << world_rank << " received merge requests from all other hosts\n";
+		DEBUG("Rank " << world_rank << " received merge requests from all other hosts");
 
 		received_snapshot_levels[world_rank] = current_snapshot_level - 2;
 		merge_snapshots(received_snapshot_levels);
@@ -158,13 +158,13 @@ void snapshot_merger::handle_new_node_request(MPI_Status status) {
 }
 
 void snapshot_merger::handle_new_node_command(MPI_Status status) {
-	cout << "Rank " << world_rank << " commanded to add node\n";
+	DEBUG("Rank " << world_rank << " commanded to add node");
 	int node_id;
 	MPI_Recv(&node_id, 1, MPI_INT, status.MPI_SOURCE, NEW_NODE_COMMAND, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 	//check we are not currently checkpointing
-	cout << "Rank " << world_rank << " about to add node\n";
+	DEBUG("Rank " << world_rank << " about to add node");
 	dllama_instance->add_node(node_id);
-	cout << "Rank " << world_rank << " added node " << node_id << "\n";
+	DEBUG("Rank " << world_rank << " added node " << node_id);
 	num_new_node_requests--;
 	if (num_new_node_requests == 0) {
 		num_new_node_requests_lock.unlock();
@@ -175,11 +175,11 @@ void snapshot_merger::handle_new_edge(MPI_Status status) {
 	node_t edge[2];
 	MPI_Recv(&edge, 2, MPI_INT, status.MPI_SOURCE, NEW_EDGE, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 	dllama_instance->add_edge(edge[0], edge[1]);
-	cout << "Rank " << world_rank << " added edge " << edge[0] << " to " << edge[1] << "\n";
+	DEBUG("Rank " << world_rank << " added edge " << edge[0] << " to " << edge[1]);
 }
 
 void snapshot_merger::start_snapshot_listener() {
-	cout << "Rank " << world_rank << " mpi_listener running\n";
+	DEBUG("Rank " << world_rank << " mpi_listener running");
 
 	received_snapshot_levels = new int[world_size]();
 	expected_snapshot_levels = new int[world_size];
@@ -194,7 +194,7 @@ void snapshot_merger::start_snapshot_listener() {
 	while (true) {
 		MPI_Probe(MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD, &status);
 		listener_lock.lock();
-		cout << "mpi tag " << status.MPI_TAG << "\n";
+		DEBUG("mpi tag " << status.MPI_TAG << " received");
 		switch (status.MPI_TAG) {
 			case SNAPSHOT_MESSAGE:
 				handle_snapshot_message(status);
@@ -330,13 +330,11 @@ void snapshot_merger::read_second_snapshot() {
 	} else cout << "Rank " << world_rank << " unable to open snapshot file\n";
 }
 
-std::ostream& operator<<(std::ostream& out, const ll_mlcsr_core__begin_t& h)
-{
+std::ostream& operator<<(std::ostream& out, const ll_mlcsr_core__begin_t& h) {
     return out.write((char*) (&h), sizeof(ll_mlcsr_core__begin_t));
 }
 
-std::ostream& operator<<(std::ostream& out, const ll_persistent_chunk& h)
-{
+std::ostream& operator<<(std::ostream& out, const ll_persistent_chunk& h) {
     return out.write((char*) (&h), sizeof(ll_persistent_chunk));
 }
 
@@ -347,7 +345,7 @@ void snapshot_merger::merge_snapshots(int* rank_snapshots) {
 	
 	received_num_vertices[world_rank] = dllama_number_of_vertices;
 	int number_of_vertices = *max_element(received_num_vertices, received_num_vertices + world_size);
-	cout << "num vertices for new level 0: " << number_of_vertices << "\n";
+	DEBUG("num vertices for new level 0: " << number_of_vertices);
 	
 	//metadata
 	dll_level_meta new_meta;
@@ -379,15 +377,17 @@ void snapshot_merger::merge_snapshots(int* rank_snapshots) {
 		ll_mlcsr_core__begin_t vertex_table_entry;
 		vertex_table_entry.adj_list_start = edge_table.size();
 
-		cout << "neighbours of vertex " << vertex << ": ";
-		for (set<LL_DATA_TYPE>::iterator neighbour = neighbours.begin(); neighbour != neighbours.end(); ++neighbour) {
-			cout << *neighbour;
+		if (debug_enabled) {
+			cout << "neighbours of vertex " << vertex << ": ";
+			for (set<LL_DATA_TYPE>::iterator neighbour = neighbours.begin(); neighbour != neighbours.end(); ++neighbour) {
+				cout << *neighbour;
+			}
+			cout << "\n";
 		}
 		edge_table.insert(edge_table.end(), neighbours.begin(), neighbours.end()); //TODO: could just write this directly to file
 		vertex_table_entry.degree = neighbours.size();
 		vertex_table_entry.level_length = vertex_table_entry.degree; // level is 0 anyway
 		vertex_table.push_back(vertex_table_entry);
-		cout << "\n";
 	}
 	/*cout << "edge table: ";
 	for (vector<LL_DATA_TYPE>::iterator edges = edge_table.begin(); edges != edge_table.end(); ++edges) {
@@ -400,7 +400,7 @@ void snapshot_merger::merge_snapshots(int* rank_snapshots) {
 	int num_indirection_entries = (new_meta.lm_vt_size + LL_ENTRIES_PER_PAGE - 1) / LL_ENTRIES_PER_PAGE;
 	int num_indirection_table_chunks = ((num_indirection_entries * sizeof(ll_persistent_chunk)) + sizeof(dll_header_t) + LL_BLOCK_SIZE - 1) / LL_BLOCK_SIZE;
 	int file_size = LL_BLOCK_SIZE + (num_edge_table_chunks + num_indirection_table_chunks + num_vertex_chunks) * LL_BLOCK_SIZE;
-	cout << "new output file size should be: " << file_size << "\n";
+	DEBUG("new output file size should be: " << file_size);
 	
 	//write to file	
 	ofstream file(output_file_name, ios::out | ios::binary | ios::ate);
@@ -415,12 +415,12 @@ void snapshot_merger::merge_snapshots(int* rank_snapshots) {
 		
 		//vertex chunks
 		int position = file.tellp();
-		cout << "edge table finished at: " << position << "\n";
+		DEBUG("edge table finished at: " << position);
 		if (position % LL_BLOCK_SIZE != 0) {
 			position = ((position / LL_BLOCK_SIZE) + 1) * LL_BLOCK_SIZE;
 			file.seekp(position);
 		}
-		cout << "writing the vertex chunks at position " << position << "\n";
+		DEBUG("writing the vertex chunks at position " << position);
 		int vertex_chunks_position = position;
 		std::copy(vertex_table.begin(), vertex_table.end(), std::ostream_iterator<ll_mlcsr_core__begin_t>(file));
 		
@@ -463,7 +463,7 @@ void snapshot_merger::merge_snapshots(int* rank_snapshots) {
 		char end_of_file_bytes[file_size - position];
 		file.write(end_of_file_bytes, file_size - position);
 		
-		cout << "written file size is " << file.tellp() << "\n";
+		DEBUG("written file size is " << file.tellp());
 		
 		file.close();
 	} else cout << "Rank " << world_rank << " unable to open output file\n";

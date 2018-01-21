@@ -58,8 +58,8 @@ simple_dllama::simple_dllama(bool initialise_mpi) {
 	snapshot_merger_instance = new snapshot_merger(); //
 	mpi_listener = new thread(start_mpi_listener);
 	
-	cout << "Rank " << world_rank << " main and mpi_listener threads now execute concurrently...\n";
-	cout << "world size: " << world_size << "\n";
+	DEBUG("Rank " << world_rank << " main and mpi_listener threads now execute concurrently...");
+	DEBUG("world size: " << world_size);
 	
 	//initialise llama
 	char* database_directory = (char*) alloca(20);
@@ -97,8 +97,8 @@ void simple_dllama::load_net_graph(string net_graph) {
 	
 	current_snapshot_level = graph->num_levels();
 	dllama_number_of_vertices = graph->max_nodes();
-	cout << "num levels " << graph->num_levels() << "\n";
-	cout << "num vertices " << graph->max_nodes() << "\n";
+	DEBUG("num levels " << graph->num_levels());
+	DEBUG("num vertices " << graph->max_nodes());
 }
 
 edge_t simple_dllama::add_edge(node_t src, node_t tgt) {
@@ -126,7 +126,7 @@ node_t simple_dllama::add_node() {
 	num_new_node_requests_lock.unlock();
 	
 	int new_node_id = graph->max_nodes();
-	cout << "new node id: " << new_node_id << "\n";
+	DEBUG("new node id: " << new_node_id);
 	//tell all the other machines you want to add a node
 	for (int i = 0; i < world_size; i++) {
 		if (i != world_rank) {
@@ -221,5 +221,5 @@ void simple_dllama::add_random_edge() {
 	node_t src = graph->pick_random_node();
 	node_t tgt = graph->pick_random_node();
 	add_edge(src, tgt);
-	cout << "added edge from " << src << " to " << tgt << "\n";
+	DEBUG("added edge from " << src << " to " << tgt);
 }

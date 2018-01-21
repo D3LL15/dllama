@@ -57,8 +57,8 @@ dllama::dllama(bool initialise_mpi) {
 	snapshot_merger_instance = new snapshot_merger(); //
 	mpi_listener = new thread(start_mpi_listener);
 	
-	cout << "Rank " << world_rank << " main and mpi_listener threads now execute concurrently...\n";
-	cout << "world size: " << world_size << "\n";
+	DEBUG("Rank " << world_rank << " main and mpi_listener threads now execute concurrently...");
+	DEBUG("world size: " << world_size);
 	
 	//initialise llama
 	char* database_directory = (char*) alloca(20);
@@ -97,8 +97,8 @@ void dllama::load_net_graph(string net_graph) {
 	
 	current_snapshot_level = graph->num_levels();
 	dllama_number_of_vertices = graph->max_nodes();
-	cout << "num levels " << graph->num_levels() << "\n";
-	cout << "num vertices " << graph->max_nodes() << "\n";
+	DEBUG("num levels " << graph->num_levels());
+	DEBUG("num vertices " << graph->max_nodes());
 	merge_lock.unlock();
 }
 
@@ -118,7 +118,7 @@ node_t dllama::add_node() {
 	num_new_node_requests_lock.unlock();
 	
 	int new_node_id = graph->max_nodes();
-	cout << "new node id: " << new_node_id << "\n";
+	DEBUG("new node id: " << new_node_id);
 	//tell all the other machines you want to add a node
 	for (int i = 0; i < world_size; i++) {
 		if (i != world_rank) {
@@ -193,7 +193,7 @@ void dllama::auto_checkpoint() {
 }
 
 void dllama::checkpoint() {
-	cout << "current number of levels before checkpoint: " << graph->num_levels() << "\n";
+	DEBUG("current number of levels before checkpoint: " << graph->num_levels());
 	//the checkpoint lock ensures that dllama_number_of_vertices is only the number of vertices in snapshots, not in the writable llama
 	checkpoint_lock.lock();
 	graph->checkpoint();
@@ -203,7 +203,7 @@ void dllama::checkpoint() {
 
 	uint32_t file_number = (graph->num_levels() - 2) / LL_LEVELS_PER_ML_FILE;
 	if ((graph->num_levels() - 1) % LL_LEVELS_PER_ML_FILE == 0) {
-		cout << "Rank " << world_rank << " sending snapshot file\n";
+		DEBUG("Rank " << world_rank << " sending snapshot file");
 		streampos file_size;
 		char * memblock;
 
@@ -233,12 +233,12 @@ void dllama::checkpoint() {
 			for (int i = 0; i < world_size; i++) {
 				if (i != world_rank) {
 					MPI_Send(memblock, memblock_size, MPI_BYTE, i, SNAPSHOT_MESSAGE, MPI_COMM_WORLD);
-					cout << "sent snapshot: " << file_number << "\n";
+					DEBUG("sent snapshot: " << file_number);
 				}
 			}
 
 			delete[] memblock;
-		} else cout << "Rank " << world_rank << " unable to open input snapshot file\n";
+		} else cout << "Rank " << world_rank << " unable to open input snapshot file" << "\n";
 	}
 }
 
@@ -247,7 +247,7 @@ void dllama::start_merge() {
 	//MPI_Request mpi_req;
 	//MPI_Isend(&current_snapshot_level, 1, MPI_INT, world_rank, START_MERGE_REQUEST, MPI_COMM_WORLD, &mpi_req);
 	//MPI_Request_free(&mpi_req);
-	cout << "Rank " << world_rank << " manually starting merge\n";
+	DEBUG("Rank " << world_rank << " manually starting merge");
 	snapshot_merger_instance->begin_merge();
 }
 
@@ -281,11 +281,11 @@ void dllama::add_random_edge() {
 	node_t src = graph->pick_random_node();
 	node_t tgt = graph->pick_random_node();
 	add_edge(src, tgt);
-	cout << "added edge from " << src << " to " << tgt << "\n";
+	DEBUG("added edge from " << src << " to " << tgt);
 }
 
 void dllama::refresh_ro_graph() {
-	cout << "refreshing ro graph\n";
+	DEBUG("refreshing ro graph");
 	char* database_directory = (char*) alloca(20);
 	ostringstream oss;
 	oss << "db" << world_rank;
@@ -301,7 +301,7 @@ void dllama::delete_db() {
 		ostringstream oss;
 		oss << "db" << world_rank << "/csr__out__" << i << ".dat";
 		string file_name = oss.str();
-		cout << "deleting snapshot '" << file_name << "'\n";
+		DEBUG("deleting snapshot '" << file_name << "'");
 		remove(file_name.c_str());
 	}
 }
