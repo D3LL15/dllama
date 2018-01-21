@@ -112,7 +112,7 @@ void dllama::delete_edge(node_t src, edge_t edge) {
 }
 
 node_t dllama::add_node() {
-	//check that we are not already adding a node
+	//ensure that we are not already adding a node
 	num_new_node_requests_lock.lock();
 	self_adding_node = 1;
 	num_new_node_requests_lock.unlock();
