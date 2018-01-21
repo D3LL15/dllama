@@ -48,6 +48,7 @@ dllama::dllama(bool initialise_mpi) {
 	}
 	handling_mpi = initialise_mpi;
 	
+	dllama_instance = this;
 	merge_starting = 0;
 	current_snapshot_level = 0;
 	dllama_number_of_vertices = 0;

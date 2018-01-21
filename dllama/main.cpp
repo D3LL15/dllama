@@ -16,7 +16,7 @@ using namespace std;
 using namespace dllama_ns;
 
 void add_nodes_benchmark() {
-	
+	dllama* dllama_instance = new dllama();
 }
 
 void add_edges_benchmark() {
@@ -44,7 +44,10 @@ int main(int argc, char** argv) {
 				add_edges_benchmark();
 				break;
 			case '2':
-				add_nodes_benchmark();
+				add_large_graph_benchmark();
+				break;
+			case '3':
+				read_all_edges_of_random_nodes_benchmark();
 				break;
 			default:
 				cout << "invalid benchmark number" << "\n";
