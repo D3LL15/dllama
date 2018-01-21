@@ -81,17 +81,29 @@ namespace {
 
 		sleep(3);
 
+		node_t expected_neighbours1[3] = {1, 2, 3};
+		node_t expected_neighbours2[3] = {0, 2, 3};
+		node_t expected_neighbours3[3] = {0, 1, 3};
+		node_t expected_neighbours4[3] = {100, 100, 100};
+		node_t expected_neighbours5[3] = {0, 100, 100};
+		node_t* expected_neighbours[5] = {expected_neighbours1, expected_neighbours2, expected_neighbours3, expected_neighbours4, expected_neighbours5};
+		size_t expected_degree[5] = {3, 3, 3, 0, 1};
+		
 		ll_edge_iterator neighbours;
 		for (int i = 0; i < 5; i++) {
+			ASSERT_EQ(dllama_instance->out_degree(i), expected_degree[i]);
 			dllama_instance->out_iter_begin(neighbours, i);
 			if (debug_enabled) {
 				cout << "rank "<< world_rank << " neighbours of vertex " << i <<": ";
 			}
+			int j = 0;
 			while (dllama_instance->out_iter_has_next(neighbours)) {
 				dllama_instance->out_iter_next(neighbours);
+				ASSERT_EQ(neighbours.last_node, expected_neighbours[i][j]);
 				if (debug_enabled) {
 					cout << neighbours.last_node;
 				}
+				j++;
 			}
 			if (debug_enabled) {
 				cout << "\n";

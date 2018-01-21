@@ -49,6 +49,7 @@ int main(int argc, char** argv) {
 			default:
 				cout << "invalid benchmark number" << "\n";
 		}
+	}
 	/*
 	if (argc == 2) {
 		switch (*argv[1]) {
