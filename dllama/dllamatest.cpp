@@ -11,16 +11,16 @@ namespace {
 
 	// The fixture for testing class Foo.
 
-	class FooTest : public ::testing::Test {
+	class DllamaTest : public ::testing::Test {
 	protected:
 		// You can remove any or all of the following functions if its body
 		// is empty.
 
-		FooTest() {
+		DllamaTest() {
 			// You can do set-up work for each test here.
 		}
 
-		virtual ~FooTest() {
+		virtual ~DllamaTest() {
 			// You can do clean-up work that doesn't throw exceptions here.
 		}
 
@@ -42,17 +42,17 @@ namespace {
 
 	// Tests that the Foo::Bar() method does Abc.
 
-	TEST_F(FooTest, MethodBarDoesAbc) {
+	TEST_F(DllamaTest, MethodBarDoesAbc) {
 		EXPECT_EQ(0, 3 - 3);
 	}
 
 	// Tests that Foo does Xyz.
 
-	TEST_F(FooTest, DoesXyz) {
+	TEST_F(DllamaTest, DoesXyz) {
 		// Exercises the Xyz feature of Foo.
 	}
 	
-	TEST_F(FooTest, FullTest) {
+	TEST_F(DllamaTest, FullTest) {
 		MPI_Barrier(MPI_COMM_WORLD);
 		dllama_instance = new dllama(false);
 	
@@ -91,7 +91,7 @@ namespace {
 		
 		ll_edge_iterator neighbours;
 		for (int i = 0; i < 5; i++) {
-			ASSERT_EQ(dllama_instance->out_degree(i), expected_degree[i]);
+			EXPECT_EQ(dllama_instance->out_degree(i), expected_degree[i]);
 			dllama_instance->out_iter_begin(neighbours, i);
 			if (debug_enabled) {
 				cout << "rank "<< world_rank << " neighbours of vertex " << i <<": ";
@@ -99,7 +99,7 @@ namespace {
 			int j = 0;
 			while (dllama_instance->out_iter_has_next(neighbours)) {
 				dllama_instance->out_iter_next(neighbours);
-				ASSERT_EQ(neighbours.last_node, expected_neighbours[i][j]);
+				EXPECT_EQ(neighbours.last_node, expected_neighbours[i][j]);
 				if (debug_enabled) {
 					cout << neighbours.last_node;
 				}
