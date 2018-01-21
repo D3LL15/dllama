@@ -1,9 +1,11 @@
 #include "gtest/gtest.h"
 #include "dllama.h"
 #include "shared_thread_state.h"
+#include <iostream>
 #include <mpi.h>
 
 using namespace dllama_ns;
+using namespace std;
 
 namespace {
 
@@ -50,10 +52,47 @@ namespace {
 		// Exercises the Xyz feature of Foo.
 	}
 	
-	TEST_F(FooTest, Dllamatest) {
+	TEST_F(FooTest, FullTest) {
 		MPI_Barrier(MPI_COMM_WORLD);
 		dllama_instance = new dllama(false);
+	
 		dllama_instance->load_net_graph("simple_graph.net");
+
+		sleep(1);
+
+		if (world_rank == 0) {
+			dllama_instance->add_edge(1, 0);
+			dllama_instance->add_edge(2, 1);
+			dllama_instance->request_checkpoint();
+			dllama_instance->add_edge(2, 0);
+			dllama_instance->request_checkpoint();
+			node_t new_node = dllama_instance->add_node();
+			dllama_instance->add_edge(new_node, 0);
+			dllama_instance->request_checkpoint();
+			sleep(1);
+
+			cout << "Rank " << world_rank << " trying to manually start merge\n";
+			dllama_instance->start_merge();
+
+			sleep(1);
+		} else {
+			sleep(2);
+		}
+
+		sleep(3);
+
+		ll_edge_iterator neighbours;
+		for (int i = 0; i < 5; i++) {
+			dllama_instance->out_iter_begin(neighbours, i);
+			cout << "rank "<< world_rank << " neighbours of vertex " << i <<": ";
+			while (dllama_instance->out_iter_has_next(neighbours)) {
+				dllama_instance->out_iter_next(neighbours);
+				cout << neighbours.last_node;
+			}
+			cout << "\n";
+		}
+
+		dllama_instance->delete_db();
 		sleep(5);
 	}
 	

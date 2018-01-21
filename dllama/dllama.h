@@ -29,6 +29,7 @@ namespace dllama_ns {
         void auto_checkpoint();
         void refresh_ro_graph();
         void start_merge();
+        void delete_db();
     private:
         std::thread* mpi_listener;
     protected:

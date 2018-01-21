@@ -13,7 +13,7 @@ namespace dllama_ns {
     class simple_dllama {
     public:
         simple_dllama(bool initialise_mpi = true);
-        virtual ~dllama();
+        virtual ~simple_dllama();
         void load_net_graph(std::string net_graph);
         edge_t add_edge(node_t src, node_t tgt);
         void delete_edge(node_t src, edge_t edge);

@@ -8,6 +8,7 @@
 #include <vector>
 #include <thread>
 #include <stack>
+#include <stdio.h>
 
 #include "dllama.h"
 #include "shared_thread_state.h"
@@ -293,4 +294,14 @@ void dllama::refresh_ro_graph() {
 	database->reset_storage();
 	ll_persistent_storage* new_storage = database->storage();
 	graph->refresh_ro_graph(database, new_storage, world_rank);
+}
+
+void dllama::delete_db() {
+	for (unsigned int i = 0; i < graph->num_levels() - 1; i++) {
+		ostringstream oss;
+		oss << "db" << world_rank << "/csr__out__" << i << ".dat";
+		string file_name = oss.str();
+		cout << "deleting snapshot '" << file_name << "'\n";
+		remove(file_name.c_str());
+	}
 }

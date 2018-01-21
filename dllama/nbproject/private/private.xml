@@ -7,4 +7,17 @@
         <activeConfTypeElem>0</activeConfTypeElem>
         <activeConfIndexElem>0</activeConfIndexElem>
     </data>
+    <editor-bookmarks xmlns="http://www.netbeans.org/ns/editor-bookmarks/2" lastBookmarkId="0"/>
+    <open-files xmlns="http://www.netbeans.org/ns/projectui-open-files/2">
+        <group>
+            <file>file:/home/dan/project/current/dllama/dllama/snapshot_merger.h</file>
+            <file>file:/home/dan/project/current/dllama/dllama/dllamatest.cpp</file>
+            <file>file:/home/dan/project/current/dllama/dllama/snapshot_merger.cpp</file>
+            <file>file:/home/dan/project/current/dllama/dllama/dllama.cpp</file>
+            <file>file:/home/dan/project/current/dllama/dllama/shared_thread_state.h</file>
+            <file>file:/home/dan/project/current/dllama/dllama/simple_dllama.cpp</file>
+            <file>file:/home/dan/project/current/dllama/dllama/simple_dllama.h</file>
+            <file>file:/home/dan/project/current/dllama/dllama/dllama.h</file>
+        </group>
+    </open-files>
 </project-private>
