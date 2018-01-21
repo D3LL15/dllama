@@ -84,8 +84,8 @@ namespace {
 		node_t expected_neighbours1[3] = {1, 2, 3};
 		node_t expected_neighbours2[3] = {0, 2, 3};
 		node_t expected_neighbours3[3] = {0, 1, 3};
-		node_t expected_neighbours4[3] = {100, 100, 100};
-		node_t expected_neighbours5[3] = {0, 100, 100};
+		node_t expected_neighbours4[3] = {};
+		node_t expected_neighbours5[3] = {0};
 		node_t* expected_neighbours[5] = {expected_neighbours1, expected_neighbours2, expected_neighbours3, expected_neighbours4, expected_neighbours5};
 		size_t expected_degree[5] = {3, 3, 3, 0, 1};
 		
