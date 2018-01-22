@@ -32,6 +32,7 @@ namespace dllama_ns {
         void start_merge();
         void delete_db();
         node_t max_nodes();
+        void shutdown();
     private:
         std::thread* mpi_listener;
     protected:

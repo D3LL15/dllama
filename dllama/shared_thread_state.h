@@ -16,6 +16,7 @@ namespace dllama_ns {
     #define NEW_NODE_ACK 3
     #define NEW_NODE_COMMAND 4
     #define NEW_EDGE 5
+    #define SHUTDOWN 6
 
 #ifdef DEBUG_ENABLED
     #define DEBUG(x) std::cout << x << std::endl;

@@ -211,7 +211,8 @@ void snapshot_merger::start_snapshot_listener() {
 	expected_snapshot_levels[world_rank] = 0;
 
 	MPI_Status status;
-	while (true) {
+	bool running = true;
+	while (running) {
 		DEBUG("Rank " << world_rank << " start probe");
 		MPI_Probe(MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD, &status);
 		DEBUG("Rank " << world_rank << " probe successful");
@@ -235,6 +236,11 @@ void snapshot_merger::start_snapshot_listener() {
 				break;
 			case NEW_NODE_ACK:
 				handle_new_node_ack(status);
+				break;
+			case SHUTDOWN:
+				running = false;
+				int nop;
+				MPI_Recv(&nop, 1, MPI_INT, status.MPI_SOURCE, SHUTDOWN, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 				break;
 			default:
 				cout << "Rank " << world_rank << " received message with unknown tag\n";

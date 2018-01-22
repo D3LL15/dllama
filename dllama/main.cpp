@@ -75,10 +75,11 @@ void add_edges_benchmark(int num_nodes) {
 		}
 	}*/
 	
-	//cout << "rank " << world_rank << " node " << num_nodes << " out degree: " << dllama_instance->out_degree(num_nodes) << "\n";
+	cout << "rank " << world_rank << " node " << num_nodes << " out degree: " << dllama_instance->out_degree(num_nodes) << "\n";
 	
 	//dllama_instance->delete_db();
 	sleep(5);
+	dllama_instance->shutdown();
 }
 
 void add_large_graph_benchmark(int idk) {

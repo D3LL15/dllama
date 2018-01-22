@@ -324,3 +324,9 @@ void dllama::delete_db() {
 		remove(file_name.c_str());
 	}
 }
+
+void dllama::shutdown() {
+	int nop = 0;
+	MPI_Send(&nop, 1, MPI_INT, world_rank, SHUTDOWN, MPI_COMM_WORLD);
+	MPI_Finalize();
+}
