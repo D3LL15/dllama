@@ -121,17 +121,25 @@ node_t dllama::max_nodes() {
 }
 
 node_t dllama::add_node() {
+	return add_nodes(1);
+}
+
+node_t dllama::add_nodes(int num_new_nodes) {
+	if (num_new_nodes <= 0) {
+		cout << "invalid number of nodes added: " << num_new_nodes << "\n";
+		return 0;
+	}
 	//ensure that we are not already adding a node
 	num_new_node_requests_lock.lock();
 	self_adding_node = 1;
 	num_new_node_requests_lock.unlock();
 	
-	int new_node_id = graph->max_nodes();
-	DEBUG("Rank " << world_rank << " new node id: " << new_node_id);
+	//int new_node_id = graph->max_nodes();
+	DEBUG("Rank " << world_rank << " adding nodes");
 	//tell all the other machines you want to add a node
 	for (int i = 0; i < world_size; i++) {
 		if (i != world_rank) {
-			MPI_Send(&new_node_id, 1, MPI_INT, i, NEW_NODE_REQUEST, MPI_COMM_WORLD);
+			MPI_Send(&num_new_nodes, 1, MPI_INT, i, NEW_NODE_REQUEST, MPI_COMM_WORLD);
 		}
 	}
 
@@ -142,17 +150,21 @@ node_t dllama::add_node() {
 	lk.unlock();
 	
 	//adjust the new node id in case it changed in the previous phase
-	new_node_id = graph->max_nodes();
+	//new_node_id = graph->max_nodes();
 	
 	//tell them all to add the node
 	for (int i = 0; i < world_size; i++) {
 		if (i != world_rank) {
-			MPI_Send(&new_node_id, 1, MPI_INT, i, NEW_NODE_COMMAND, MPI_COMM_WORLD);
+			MPI_Send(&num_new_nodes, 1, MPI_INT, i, NEW_NODE_COMMAND, MPI_COMM_WORLD);
 		}
 	}
 
 	//add the node yourself
-	new_node_id = graph->add_node();
+	int new_node_id = 0;
+	for (int i = 0; i < num_new_nodes; i++) {
+		new_node_id = graph->add_node();
+	}
+	new_node_id = new_node_id + 1 - num_new_nodes;
 	
 	//ack all the requests on the stack
 	new_node_ack_stack_lock.lock();
@@ -168,7 +180,7 @@ node_t dllama::add_node() {
 }
 
 //not for manual use
-node_t dllama::add_node(node_t id) {
+node_t dllama::force_add_node() {
 	checkpoint_lock.lock();
 	int result = graph->add_node();
 	checkpoint_lock.unlock();

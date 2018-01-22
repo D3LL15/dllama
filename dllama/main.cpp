@@ -25,8 +25,8 @@ void add_nodes_benchmark(int num_nodes) {
 	
 	high_resolution_clock::time_point t1 = high_resolution_clock::now();
 	for (int i = 0; i < num_nodes; i++) {
-		node_t new_node = dllama_instance->add_node();
-		//cout << "rank " << world_rank << " " << new_node << "\n";
+		node_t new_node = dllama_instance->add_nodes(100);
+		cout << "rank " << world_rank << " " << new_node << "\n";
 	}
 	high_resolution_clock::time_point t2 = high_resolution_clock::now();
 	
