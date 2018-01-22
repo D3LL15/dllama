@@ -9,6 +9,7 @@
 #include <thread>
 #include <stack>
 #include <stdio.h>
+#include <condition_variable>
 
 #include "dllama.h"
 #include "shared_thread_state.h"
@@ -32,6 +33,9 @@ namespace dllama_ns {
 	mutex num_new_node_requests_lock;
 	int num_new_node_requests;
 	mutex new_node_ack_stack_lock;
+	int num_acks;
+	mutex num_acks_lock;
+	condition_variable num_acks_condition;
 
 	void start_mpi_listener() {
 		snapshot_merger_instance->start_snapshot_listener();
@@ -112,6 +116,10 @@ void dllama::delete_edge(node_t src, edge_t edge) {
 	graph->delete_edge(src, edge);
 }
 
+node_t dllama::max_nodes() {
+	return graph->max_nodes();
+}
+
 node_t dllama::add_node() {
 	//ensure that we are not already adding a node
 	num_new_node_requests_lock.lock();
@@ -119,7 +127,7 @@ node_t dllama::add_node() {
 	num_new_node_requests_lock.unlock();
 	
 	int new_node_id = graph->max_nodes();
-	DEBUG("new node id: " << new_node_id);
+	DEBUG("Rank " << world_rank << " new node id: " << new_node_id);
 	//tell all the other machines you want to add a node
 	for (int i = 0; i < world_size; i++) {
 		if (i != world_rank) {
@@ -128,13 +136,11 @@ node_t dllama::add_node() {
 	}
 
 	//wait for them to acknowledge that you can add a node
-	int ack;
-	for (int i = 0; i < world_size; i++) {
-		if (i != world_rank) {
-			MPI_Recv(&ack, 1, MPI_INT, MPI_ANY_SOURCE, NEW_NODE_ACK, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-		}
-	}
-
+	unique_lock<mutex> lk(num_acks_lock);
+	num_acks_condition.wait(lk, []{return num_acks == (world_size - 1);});
+	num_acks = 0;
+	lk.unlock();
+	
 	//adjust the new node id in case it changed in the previous phase
 	new_node_id = graph->max_nodes();
 	
@@ -146,12 +152,11 @@ node_t dllama::add_node() {
 	}
 
 	//add the node yourself
-	graph->add_node(new_node_id);
-	
-	self_adding_node = 0;
+	new_node_id = graph->add_node();
 	
 	//ack all the requests on the stack
 	new_node_ack_stack_lock.lock();
+	self_adding_node = 0;
 	int one = 1;
 	while (!new_node_ack_stack.empty()) {
 		MPI_Send(&one, 1, MPI_INT, new_node_ack_stack.top(), NEW_NODE_ACK, MPI_COMM_WORLD);
@@ -163,10 +168,11 @@ node_t dllama::add_node() {
 }
 
 //not for manual use
-void dllama::add_node(node_t id) {
+node_t dllama::add_node(node_t id) {
 	checkpoint_lock.lock();
-	graph->add_node(id);
+	int result = graph->add_node();
 	checkpoint_lock.unlock();
+	return result;
 }
 
 size_t dllama::out_degree(node_t node) {

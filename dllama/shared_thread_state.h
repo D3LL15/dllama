@@ -5,6 +5,7 @@
 #include <stack>
 #include "dllama.h"
 #include "snapshot_merger.h"
+#include <condition_variable>
 
 namespace dllama_ns {
     #define SINGLE_MACHINE 1
@@ -47,6 +48,10 @@ namespace dllama_ns {
     extern std::mutex num_new_node_requests_lock;
     extern int num_new_node_requests;
     extern std::mutex new_node_ack_stack_lock;
+    
+    extern int num_acks;
+    extern std::mutex num_acks_lock;
+    extern std::condition_variable num_acks_condition;
 }
 
 

@@ -18,7 +18,7 @@ namespace dllama_ns {
         edge_t add_edge(node_t src, node_t tgt);
         void delete_edge(node_t src, edge_t edge);
         node_t add_node();
-        void add_node(node_t id);
+        node_t add_node(node_t id);
         size_t out_degree(node_t node);
         void out_iter_begin(ll_edge_iterator& iter, node_t node);
         ITERATOR_DECL bool out_iter_has_next(ll_edge_iterator& iter);
@@ -30,6 +30,7 @@ namespace dllama_ns {
         void refresh_ro_graph();
         void start_merge();
         void delete_db();
+        node_t max_nodes();
     private:
         std::thread* mpi_listener;
     protected:

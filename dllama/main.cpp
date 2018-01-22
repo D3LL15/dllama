@@ -6,6 +6,7 @@
 #include <sstream>
 #include <mutex>
 #include <stdlib.h>
+#include <chrono>
 
 #include "dllama_test.h"
 #include "dllama.h"
@@ -13,21 +14,38 @@
 #include "shared_thread_state.h"
 
 using namespace std;
+using namespace std::chrono;
 using namespace dllama_ns;
 
-void add_nodes_benchmark() {
+void add_nodes_benchmark(int num_nodes) {
 	dllama* dllama_instance = new dllama();
+	dllama_instance->load_net_graph("simple_graph.net");
+	
+	sleep(2);
+	
+	high_resolution_clock::time_point t1 = high_resolution_clock::now();
+	for (int i = 0; i < num_nodes; i++) {
+		node_t new_node = dllama_instance->add_node();
+		//cout << "rank " << world_rank << " " << new_node << "\n";
+	}
+	high_resolution_clock::time_point t2 = high_resolution_clock::now();
+	
+	auto duration = duration_cast<microseconds>(t2 - t1).count();
+	float nodes_per_second = (1000000*num_nodes);
+	nodes_per_second /= duration;
+	cout << "rank " << world_rank << " took " << duration/num_nodes << " per node i.e. " << nodes_per_second << "per second\n";
+
 }
 
-void add_edges_benchmark() {
+void add_edges_benchmark(int num_edges) {
 	
 }
 
-void add_large_graph_benchmark() {
+void add_large_graph_benchmark(int idk) {
 	
 }
 
-void read_all_edges_of_random_nodes_benchmark() {
+void read_all_edges_of_random_nodes_benchmark(int idk) {
 	
 }
 
@@ -35,24 +53,26 @@ void read_all_edges_of_random_nodes_benchmark() {
 int main(int argc, char** argv) {
 	
 	//select benchmarks
-	if (argc == 2) {
+	if (argc == 3) {
+		int second_arg = atoi(argv[2]);
 		switch (*argv[1]) {
 			case '0':
-				add_nodes_benchmark();
+				add_nodes_benchmark(second_arg);
 				break;
 			case '1':
-				add_edges_benchmark();
+				add_edges_benchmark(second_arg);
 				break;
 			case '2':
-				add_large_graph_benchmark();
+				add_large_graph_benchmark(second_arg);
 				break;
 			case '3':
-				read_all_edges_of_random_nodes_benchmark();
+				read_all_edges_of_random_nodes_benchmark(second_arg);
 				break;
 			default:
 				cout << "invalid benchmark number" << "\n";
 		}
 	}
+	sleep(10);
 	/*
 	if (argc == 2) {
 		switch (*argv[1]) {

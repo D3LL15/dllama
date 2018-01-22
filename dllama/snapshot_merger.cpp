@@ -9,6 +9,7 @@
 #include <set>
 #include <vector>
 #include <cstdio>
+#include <condition_variable>
 
 #include "snapshot_merger.h"
 #include "shared_thread_state.h"
@@ -139,14 +140,15 @@ void snapshot_merger::begin_merge() {
 }
 
 void snapshot_merger::handle_new_node_request(MPI_Status status) {
+	DEBUG("Rank " << world_rank << " handling new node request");
 	int node_id;
 	MPI_Recv(&node_id, 1, MPI_INT, status.MPI_SOURCE, NEW_NODE_REQUEST, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-	
+	DEBUG("Rank " << world_rank << " completed mpi recv");
 	if (num_new_node_requests == 0) {
 		num_new_node_requests_lock.lock();
 	}
 	num_new_node_requests++;
-	
+	DEBUG("Rank " << world_rank << " handling new node request midpoint");
 	new_node_ack_stack_lock.lock();
 	if (self_adding_node && status.MPI_SOURCE < world_rank) {
 		new_node_ack_stack.push(status.MPI_SOURCE);
@@ -155,6 +157,7 @@ void snapshot_merger::handle_new_node_request(MPI_Status status) {
 		MPI_Send(&zero, 1, MPI_INT, status.MPI_SOURCE, NEW_NODE_ACK, MPI_COMM_WORLD);
 	}
 	new_node_ack_stack_lock.unlock();
+	DEBUG("Rank " << world_rank << " done handling new node request");
 }
 
 void snapshot_merger::handle_new_node_command(MPI_Status status) {
@@ -163,8 +166,8 @@ void snapshot_merger::handle_new_node_command(MPI_Status status) {
 	MPI_Recv(&node_id, 1, MPI_INT, status.MPI_SOURCE, NEW_NODE_COMMAND, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 	//check we are not currently checkpointing
 	DEBUG("Rank " << world_rank << " about to add node");
-	dllama_instance->add_node(node_id);
-	DEBUG("Rank " << world_rank << " added node " << node_id);
+	node_t new_node = dllama_instance->add_node(node_id);
+	DEBUG("Rank " << world_rank << " added node " << new_node);
 	num_new_node_requests--;
 	if (num_new_node_requests == 0) {
 		num_new_node_requests_lock.unlock();
@@ -176,6 +179,16 @@ void snapshot_merger::handle_new_edge(MPI_Status status) {
 	MPI_Recv(&edge, 2, MPI_INT, status.MPI_SOURCE, NEW_EDGE, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 	dllama_instance->add_edge(edge[0], edge[1]);
 	DEBUG("Rank " << world_rank << " added edge " << edge[0] << " to " << edge[1]);
+}
+
+void snapshot_merger::handle_new_node_ack(MPI_Status status) {
+	int ack;
+	MPI_Recv(&ack, 1, MPI_INT, status.MPI_SOURCE, NEW_NODE_ACK, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+	{
+		lock_guard<mutex> lk(num_acks_lock);
+		num_acks++;
+	}
+	num_acks_condition.notify_all();
 }
 
 void snapshot_merger::start_snapshot_listener() {
@@ -192,9 +205,11 @@ void snapshot_merger::start_snapshot_listener() {
 
 	MPI_Status status;
 	while (true) {
+		DEBUG("Rank " << world_rank << " start probe");
 		MPI_Probe(MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD, &status);
+		DEBUG("Rank " << world_rank << " probe successful");
 		listener_lock.lock();
-		DEBUG("mpi tag " << status.MPI_TAG << " received");
+		DEBUG("mpi tag " << status.MPI_TAG << " received by machine " << world_rank);
 		switch (status.MPI_TAG) {
 			case SNAPSHOT_MESSAGE:
 				handle_snapshot_message(status);
@@ -210,6 +225,9 @@ void snapshot_merger::start_snapshot_listener() {
 				break;
 			case NEW_EDGE:
 				handle_new_edge(status);
+				break;
+			case NEW_NODE_ACK:
+				handle_new_node_ack(status);
 				break;
 			default:
 				cout << "Rank " << world_rank << " received message with unknown tag\n";
