@@ -25,7 +25,7 @@ namespace dllama_ns {
 	mutex ro_graph_lock;
 	mutex checkpoint_lock;
 	int current_snapshot_level;
-	int dllama_number_of_vertices;
+	unsigned int dllama_number_of_vertices;
 	dllama* dllama_instance;
 	snapshot_merger* snapshot_merger_instance;
 	stack<int> new_node_ack_stack;

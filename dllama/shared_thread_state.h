@@ -41,7 +41,7 @@ namespace dllama_ns {
     extern snapshot_merger* snapshot_merger_instance;
 
     //protected by merge lock and merge starting lock
-    extern int dllama_number_of_vertices;
+    extern unsigned int dllama_number_of_vertices;
 
     extern std::stack<int> new_node_ack_stack;
     extern bool self_adding_node;

@@ -26,7 +26,7 @@ void add_nodes_benchmark(int num_nodes) {
 	high_resolution_clock::time_point t1 = high_resolution_clock::now();
 	for (int i = 0; i < num_nodes; i++) {
 		node_t new_node = dllama_instance->add_nodes(100);
-		cout << "rank " << world_rank << " " << new_node << "\n";
+		//cout << "rank " << world_rank << " " << new_node << "\n";
 	}
 	high_resolution_clock::time_point t2 = high_resolution_clock::now();
 	
@@ -37,8 +37,46 @@ void add_nodes_benchmark(int num_nodes) {
 
 }
 
-void add_edges_benchmark(int num_edges) {
+void add_edges_benchmark(int num_nodes) {
+	dllama* dllama_instance = new dllama();
+	dllama_instance->load_net_graph("simple_graph.net");
 	
+	sleep(2);
+	
+	dllama_instance->add_nodes(num_nodes);
+	
+	sleep(2);
+	
+	high_resolution_clock::time_point t1 = high_resolution_clock::now();
+	for (int i = 1; i < num_nodes + 1; i++) {
+		dllama_instance->add_edge(i, i - 1);
+	}
+	high_resolution_clock::time_point t2 = high_resolution_clock::now();
+	
+	auto duration = duration_cast<microseconds>(t2 - t1).count();
+	float nodes_per_second = (1000000*num_nodes);
+	nodes_per_second /= duration;
+	cout << "rank " << world_rank << " took " << duration/num_nodes << " per node i.e. " << nodes_per_second << "per second\n";
+	
+	if (world_rank == 1) {
+		dllama_instance->add_edge(num_nodes, num_nodes - 2);
+	}
+	
+	dllama_instance->request_checkpoint();
+	sleep(5);
+	if (world_rank == 1) {
+		dllama_instance->start_merge();
+	}
+	sleep(5);
+	
+	/*if (world_rank == 0) {
+		for (int i = 1; i < num_nodes + 1; i++) {
+			cout << "rank " << world_rank << " node " << i << " out degree: " << dllama_instance->out_degree(i) << "\n";
+		}
+	}
+	*/
+	dllama_instance->delete_db();
+	sleep(5);
 }
 
 void add_large_graph_benchmark(int idk) {

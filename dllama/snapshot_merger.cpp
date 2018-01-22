@@ -39,11 +39,14 @@ void snapshot_merger::handle_snapshot_message(MPI_Status status) {
 	file_number += memblock[2] << 8;
 	file_number += memblock[3];
 	DEBUG("Rank " << world_rank << " received file number: " << file_number);
-	uint32_t num_vertices = 0;
-	num_vertices += memblock[4] << 24;
-	num_vertices += memblock[5] << 16;
-	num_vertices += memblock[6] << 8;
-	num_vertices += memblock[7];
+	
+	unsigned int temp_num_vertices = (unsigned char)memblock[4];
+	unsigned int num_vertices = temp_num_vertices << 24;
+	temp_num_vertices = (unsigned char)memblock[5];
+	num_vertices += temp_num_vertices << 16;
+	temp_num_vertices = (unsigned char)memblock[6];
+	num_vertices += temp_num_vertices << 8;
+	num_vertices += (unsigned char)memblock[7];
 	DEBUG("Rank " << world_rank << " number of vertices from other machine: " << num_vertices);
 
 	//we can get away with this for single level files
@@ -392,7 +395,7 @@ void snapshot_merger::merge_snapshots(int* rank_snapshots) {
 				neighbours.insert(new_neighbours.begin(), new_neighbours.end());
 			}
 		}
-		//add edges from level 0
+		//add edges from level 0 if the vertex existed in level 0
 		vector<LL_DATA_TYPE> new_neighbours = snapshots.get_level_0_neighbours_of_vertex(vertex);
 		neighbours.insert(new_neighbours.begin(), new_neighbours.end());
 
@@ -460,6 +463,7 @@ void snapshot_merger::merge_snapshots(int* rank_snapshots) {
 			file.seekp(position);
 		}
 		new_meta.lm_header_offset = position;
+		DEBUG("writing the header at position " << position);
 		file.write((char*)(&header), sizeof(dll_header_t));
 		
 		//indirection table
@@ -472,20 +476,21 @@ void snapshot_merger::merge_snapshots(int* rank_snapshots) {
 			vertex_table_chunk.pc_offset = vertex_chunks_position + i * vertex_table_chunk.pc_length;
 			indirection_table.push_back(vertex_table_chunk);
 		}
+		DEBUG("writing the indirection table at position " << new_meta.lm_vt_offset);
 		std::copy(indirection_table.begin(), indirection_table.end(), std::ostream_iterator<ll_persistent_chunk>(file));
 		
 		position = file.tellp();
-		
+		DEBUG("finished at position " << position);
 		//metadata
 		file.seekp(0);
 		file.write((char*)(&new_meta), sizeof(dll_level_meta));
 		
 		//may not be necessary
-		file.seekp(position);
+		/*file.seekp(position);
 		char end_of_file_bytes[file_size - position];
-		file.write(end_of_file_bytes, file_size - position);
+		file.write(end_of_file_bytes, file_size - position);*/
 		
-		DEBUG("written file size is " << file.tellp());
+		//DEBUG("written file size is " << file.tellp());
 		
 		file.close();
 	} else cout << "Rank " << world_rank << " unable to open output file\n";
