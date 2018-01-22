@@ -82,7 +82,6 @@ dll_header_t* snapshot_manager::get_header(int rank, int level, int offset) {
 }
 
 vector<LL_DATA_TYPE> snapshot_manager::get_level_0_neighbours_of_vertex(node_t vertex) {
-	DEBUG("\n\ngetting level 0 neighbours of vertex " << vertex);
 	vector<LL_DATA_TYPE> neighbours;
 	dll_level_meta* meta = (dll_level_meta*) (level_0_snapshot);
 	
@@ -90,6 +89,7 @@ vector<LL_DATA_TYPE> snapshot_manager::get_level_0_neighbours_of_vertex(node_t v
 		return neighbours;
 	}
 
+	DEBUG("\n\ngetting level 0 neighbours of vertex " << vertex);
 	int vt_offset = meta->lm_vt_offset;
 	DEBUG("vt offset " << vt_offset);
 
@@ -115,7 +115,7 @@ vector<LL_DATA_TYPE> snapshot_manager::get_level_0_neighbours_of_vertex(node_t v
 	LL_DATA_TYPE* neighbour;
 	for (unsigned i = 0; i < vertex_table_entry->level_length; i++) {
 		neighbour = (LL_DATA_TYPE*) (level_0_snapshot + et_chunk.pc_offset + ((LL_EDGE_INDEX(vertex_table_entry->adj_list_start) + i) * sizeof (LL_DATA_TYPE)));
-		DEBUG("vertex " << vertex << " neighbour " << i << " is " << *neighbour);
+		//DEBUG("vertex " << vertex << " neighbour " << i << " is " << *neighbour);
 		neighbours.push_back(*neighbour);
 	}
 
@@ -147,7 +147,6 @@ vector<LL_DATA_TYPE> snapshot_manager::get_neighbours_of_vertex(int rank, node_t
 		DEBUG("vertex table chunk length " << indirection_entry->pc_length);
 		DEBUG("vertex table chunk offset " << indirection_entry->pc_offset);
 		if (page_level == 0) {
-			//continue; //to avoid repeatedly adding level 0
 			DEBUG("vertex chunk is in level 0");
 		} else {
 			int vertex_offset = vertex%LL_ENTRIES_PER_PAGE;

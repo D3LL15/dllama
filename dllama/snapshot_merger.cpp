@@ -364,13 +364,16 @@ std::ostream& operator<<(std::ostream& out, const ll_persistent_chunk& h) {
 }
 
 void snapshot_merger::merge_snapshots(int* rank_snapshots) {
+	DEBUG("Rank " << world_rank << " starting merge");
 	ostringstream oss;
 	oss << "db" << world_rank << "/new_level0.dat";
 	string output_file_name = oss.str();
 	
 	received_num_vertices[world_rank] = dllama_number_of_vertices;
+	
+	DEBUG("Rank " << world_rank << " before max element");
 	int number_of_vertices = *max_element(received_num_vertices, received_num_vertices + world_size);
-	DEBUG("num vertices for new level 0: " << number_of_vertices);
+	DEBUG("Rank " << world_rank << "num vertices for new level 0: " << number_of_vertices);
 	
 	//metadata
 	dll_level_meta new_meta;
@@ -402,13 +405,13 @@ void snapshot_merger::merge_snapshots(int* rank_snapshots) {
 		ll_mlcsr_core__begin_t vertex_table_entry;
 		vertex_table_entry.adj_list_start = edge_table.size();
 
-		if (debug_enabled) {
+		/*if (debug_enabled) {
 			cout << "neighbours of vertex " << vertex << ": ";
 			for (set<LL_DATA_TYPE>::iterator neighbour = neighbours.begin(); neighbour != neighbours.end(); ++neighbour) {
 				cout << *neighbour;
 			}
 			cout << "\n";
-		}
+		}*/
 		edge_table.insert(edge_table.end(), neighbours.begin(), neighbours.end()); //TODO: could just write this directly to file
 		vertex_table_entry.degree = neighbours.size();
 		vertex_table_entry.level_length = vertex_table_entry.degree; // level is 0 anyway
@@ -421,9 +424,13 @@ void snapshot_merger::merge_snapshots(int* rank_snapshots) {
 	cout << "\n";*/
 			
 	int num_edge_table_chunks = ((edge_table.size() * sizeof(LL_DATA_TYPE)) + LL_BLOCK_SIZE - 1) / LL_BLOCK_SIZE;
+	DEBUG("num_edge_table_chunks " << num_edge_table_chunks);
 	int num_vertex_chunks = (new_meta.lm_vt_size * sizeof(ll_mlcsr_core__begin_t) + LL_BLOCK_SIZE - 1) / LL_BLOCK_SIZE;
+	DEBUG("num_vertex_chunks " << num_vertex_chunks);
 	int num_indirection_entries = (new_meta.lm_vt_size + LL_ENTRIES_PER_PAGE - 1) / LL_ENTRIES_PER_PAGE;
+	DEBUG("num_indirection_entries " << num_indirection_entries);
 	int num_indirection_table_chunks = ((num_indirection_entries * sizeof(ll_persistent_chunk)) + sizeof(dll_header_t) + LL_BLOCK_SIZE - 1) / LL_BLOCK_SIZE;
+	DEBUG("num_indirection_table_chunks " << num_indirection_table_chunks);
 	int file_size = LL_BLOCK_SIZE + (num_edge_table_chunks + num_indirection_table_chunks + num_vertex_chunks) * LL_BLOCK_SIZE;
 	DEBUG("new output file size should be: " << file_size);
 	
@@ -436,7 +443,7 @@ void snapshot_merger::merge_snapshots(int* rank_snapshots) {
 		for (vector<LL_DATA_TYPE>::iterator edges = edge_table.begin(); edges != edge_table.end(); ++edges) {
 			file.write((char*) (&(*edges)), sizeof(LL_DATA_TYPE));
 		}
-		std::copy(edge_table.begin(), edge_table.end(), std::ostream_iterator<LL_DATA_TYPE>(file));
+		//std::copy(edge_table.begin(), edge_table.end(), std::ostream_iterator<LL_DATA_TYPE>(file));
 		
 		//vertex chunks
 		int position = file.tellp();

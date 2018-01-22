@@ -63,19 +63,21 @@ void add_edges_benchmark(int num_nodes) {
 	}
 	
 	dllama_instance->request_checkpoint();
-	sleep(5);
+	cout << "about to begin merge\n";
+	sleep(10);
 	if (world_rank == 1) {
 		dllama_instance->start_merge();
 	}
-	sleep(5);
-	
+	sleep(10);
 	/*if (world_rank == 0) {
 		for (int i = 1; i < num_nodes + 1; i++) {
 			cout << "rank " << world_rank << " node " << i << " out degree: " << dllama_instance->out_degree(i) << "\n";
 		}
-	}
-	*/
-	dllama_instance->delete_db();
+	}*/
+	
+	//cout << "rank " << world_rank << " node " << num_nodes << " out degree: " << dllama_instance->out_degree(num_nodes) << "\n";
+	
+	//dllama_instance->delete_db();
 	sleep(5);
 }
 
