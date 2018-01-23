@@ -28,7 +28,7 @@ snapshot_merger::~snapshot_merger() {
 void snapshot_merger::handle_snapshot_message(MPI_Status status) {
 	int bytes_received;
 	MPI_Get_count(&status, MPI_BYTE, &bytes_received);
-	DEBUG("Rank " << world_rank << " number of bytes being received: " << bytes_received);
+	DEBUG("Rank " << world_rank << " number of bytes being received: " << bytes_received << " from " << status.MPI_SOURCE);
 	char* memblock = new char [bytes_received];
 	MPI_Recv(memblock, bytes_received, MPI_BYTE, status.MPI_SOURCE, SNAPSHOT_MESSAGE, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 	DEBUG("Rank " << world_rank << " received file");
@@ -170,9 +170,9 @@ void snapshot_merger::handle_new_node_command(MPI_Status status) {
 	//check we are not currently checkpointing
 	
 	for (int i = 0; i < num_new_nodes; i++) {
-		DEBUG("Rank " << world_rank << " about to add node");
+		//DEBUG("Rank " << world_rank << " about to add node");
 		node_t new_node_id = dllama_instance->force_add_node();
-		DEBUG("Rank " << world_rank << " added node " << new_node_id);
+		//DEBUG("Rank " << world_rank << " added node " << new_node_id);
 	}
 	
 	num_new_node_requests--;

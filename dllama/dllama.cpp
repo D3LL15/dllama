@@ -46,7 +46,8 @@ using namespace dllama_ns;
 
 dllama::dllama(bool initialise_mpi) {
 	if (initialise_mpi) {
-		MPI_Init(NULL, NULL);
+		int *provided;
+		MPI_Init_thread(NULL, NULL, MPI_THREAD_MULTIPLE, provided);
 		MPI_Comm_size(MPI_COMM_WORLD, &world_size);
 		MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
 	}
@@ -79,7 +80,7 @@ dllama::dllama(bool initialise_mpi) {
 	graph = database->graph();
 	
 	current_snapshot_level = graph->num_levels();
-	dllama_number_of_vertices = graph->max_nodes();
+	dllama_number_of_vertices = graph->max_nodes() - 1;
 }
 
 dllama::~dllama() {
@@ -101,7 +102,7 @@ void dllama::load_net_graph(string net_graph) {
 	loader->load_direct(graph, net_graph.c_str(), &loader_config);
 	
 	current_snapshot_level = graph->num_levels();
-	dllama_number_of_vertices = graph->max_nodes();
+	dllama_number_of_vertices = graph->max_nodes() - 1;
 	DEBUG("num levels " << graph->num_levels());
 	DEBUG("num vertices " << graph->max_nodes());
 	merge_lock.unlock();
@@ -171,6 +172,7 @@ node_t dllama::add_nodes(int num_new_nodes) {
 	self_adding_node = 0;
 	int one = 1;
 	while (!new_node_ack_stack.empty()) {
+		DEBUG("Rank " << world_rank << "sending ack to rank " << new_node_ack_stack.top());
 		MPI_Send(&one, 1, MPI_INT, new_node_ack_stack.top(), NEW_NODE_ACK, MPI_COMM_WORLD);
 		new_node_ack_stack.pop();
 	}
@@ -212,53 +214,52 @@ void dllama::auto_checkpoint() {
 }
 
 void dllama::checkpoint() {
-	DEBUG("current number of levels before checkpoint: " << graph->num_levels());
+	//DEBUG("current number of levels before checkpoint: " << graph->num_levels());
 	//the checkpoint lock ensures that dllama_number_of_vertices is only the number of vertices in snapshots, not in the writable llama
 	checkpoint_lock.lock();
 	graph->checkpoint();
-	dllama_number_of_vertices = graph->max_nodes();
+	dllama_number_of_vertices = graph->max_nodes() - 1;
 	checkpoint_lock.unlock();
 	current_snapshot_level = graph->num_levels();
 
 	uint32_t file_number = (graph->num_levels() - 2) / LL_LEVELS_PER_ML_FILE;
-	if ((graph->num_levels() - 1) % LL_LEVELS_PER_ML_FILE == 0) {
-		DEBUG("Rank " << world_rank << " sending snapshot file");
-		streampos file_size;
-		char * memblock;
+	DEBUG("Rank " << world_rank << " sending snapshot file");
 
-		ostringstream oss;
-		oss << "db" << world_rank << "/csr__out__" << file_number << ".dat";
+	ostringstream oss;
+	oss << "db" << world_rank << "/csr__out__" << file_number << ".dat";
 
-		string input_file_name = oss.str();
+	string input_file_name = oss.str();
 
-		ifstream file(input_file_name, ios::in | ios::binary | ios::ate);
-		if (file.is_open()) {
-			file_size = file.tellg();
-			int memblock_size = file_size;
-			memblock_size += 8;
-			memblock = new char [memblock_size];
-			memblock[0] = (file_number >> 24) & 0xFF;
-			memblock[1] = (file_number >> 16) & 0xFF;
-			memblock[2] = (file_number >> 8) & 0xFF;
-			memblock[3] = file_number & 0xFF;
-			memblock[4] = (dllama_number_of_vertices >> 24) & 0xFF;
-			memblock[5] = (dllama_number_of_vertices >> 16) & 0xFF;
-			memblock[6] = (dllama_number_of_vertices >> 8) & 0xFF;
-			memblock[7] = dllama_number_of_vertices & 0xFF;
-			file.seekg(0, ios::beg);
-			file.read(memblock + 8, memblock_size);
-			file.close();
+	ifstream file(input_file_name, ios::in | ios::binary | ios::ate);
+	if (file.is_open()) {
+		streampos file_size = file.tellg();
+		int memblock_size = file_size;
+		memblock_size += 8;
+		char *memblock = new char [memblock_size];
+		DEBUG("Rank " << world_rank << " dllama_number_of_vertices " << dllama_number_of_vertices);
+		DEBUG("Rank " << world_rank << " file_number " << file_number);
 
-			for (int i = 0; i < world_size; i++) {
-				if (i != world_rank) {
-					MPI_Send(memblock, memblock_size, MPI_BYTE, i, SNAPSHOT_MESSAGE, MPI_COMM_WORLD);
-					DEBUG("sent snapshot: " << file_number);
-				}
+		memblock[0] = (file_number >> 24) & 0xFF;
+		memblock[1] = (file_number >> 16) & 0xFF;
+		memblock[2] = (file_number >> 8) & 0xFF;
+		memblock[3] = file_number & 0xFF;
+		memblock[4] = (dllama_number_of_vertices >> 24) & 0xFF;
+		memblock[5] = (dllama_number_of_vertices >> 16) & 0xFF;
+		memblock[6] = (dllama_number_of_vertices >> 8) & 0xFF;
+		memblock[7] = dllama_number_of_vertices & 0xFF;
+		file.seekg(0, ios::beg);
+		file.read(memblock + 8, file_size);
+		file.close();
+
+		for (int i = 0; i < world_size; i++) {
+			if (i != world_rank) {
+				MPI_Send(memblock, memblock_size, MPI_BYTE, i, SNAPSHOT_MESSAGE, MPI_COMM_WORLD);
+				DEBUG("Rank " << world_rank << " sent snapshot: " << file_number);
 			}
+		}
 
-			delete[] memblock;
-		} else cout << "Rank " << world_rank << " unable to open input snapshot file" << "\n";
-	}
+		delete[] memblock;
+	} else cout << "Rank " << world_rank << " unable to open input snapshot file" << "\n";
 }
 
 //asynchronous
@@ -328,5 +329,6 @@ void dllama::delete_db() {
 void dllama::shutdown() {
 	int nop = 0;
 	MPI_Send(&nop, 1, MPI_INT, world_rank, SHUTDOWN, MPI_COMM_WORLD);
-	MPI_Finalize();
+	mpi_listener->join();
+	//MPI_Finalize();
 }

@@ -18,7 +18,7 @@ using namespace std::chrono;
 using namespace dllama_ns;
 
 void add_nodes_benchmark(int num_nodes) {
-	dllama* dllama_instance = new dllama();
+	dllama* dllama_instance = new dllama(false);
 	dllama_instance->load_net_graph("simple_graph.net");
 	
 	sleep(2);
@@ -38,48 +38,66 @@ void add_nodes_benchmark(int num_nodes) {
 }
 
 void add_edges_benchmark(int num_nodes) {
-	dllama* dllama_instance = new dllama();
-	dllama_instance->load_net_graph("simple_graph.net");
+	MPI_Barrier(MPI_COMM_WORLD);
+	dllama* my_dllama_instance = new dllama(false);
+	my_dllama_instance->load_net_graph("simple_graph.net");
 	
-	sleep(2);
+	sleep(5);
+	//if (world_rank == 1) {
+		my_dllama_instance->add_nodes(num_nodes);
+	//}
+	sleep(20);
 	
-	dllama_instance->add_nodes(num_nodes);
 	
-	sleep(2);
+	//high_resolution_clock::time_point t1 = high_resolution_clock::now();
+	//if (world_rank == 0) {
+		for (int i = 1; i < num_nodes + 1; i++) {
+			my_dllama_instance->add_edge(i, i - 1);
+		}
+		//dllama_instance->add_edge(num_nodes, num_nodes - 2);
+		cout << "Rank " << world_rank << " requesting checkpoint\n";
+		my_dllama_instance->request_checkpoint();
+		cout << "Rank " << world_rank << " requested checkpoint\n";
+	//}
 	
-	high_resolution_clock::time_point t1 = high_resolution_clock::now();
-	for (int i = 1; i < num_nodes + 1; i++) {
-		dllama_instance->add_edge(i, i - 1);
-	}
-	high_resolution_clock::time_point t2 = high_resolution_clock::now();
+	sleep(5);
+	cout << "Rank " << world_rank << " sleeping\n";
+	sleep(5);
+	/*high_resolution_clock::time_point t2 = high_resolution_clock::now();
 	
 	auto duration = duration_cast<microseconds>(t2 - t1).count();
 	float nodes_per_second = (1000000*num_nodes);
 	nodes_per_second /= duration;
-	cout << "rank " << world_rank << " took " << duration/num_nodes << " per node i.e. " << nodes_per_second << "per second\n";
+	float time_per_node = duration;
+	time_per_node /= num_nodes;
+	cout << "rank " << world_rank << " took " << time_per_node << " per node i.e. " << nodes_per_second << "per second\n";*/
 	
-	if (world_rank == 1) {
-		dllama_instance->add_edge(num_nodes, num_nodes - 2);
-	}
+	/*if (world_rank == 0) {
+		my_dllama_instance->add_edge(num_nodes, num_nodes - 2);
+	}*/
 	
-	dllama_instance->request_checkpoint();
-	cout << "about to begin merge\n";
-	sleep(10);
-	if (world_rank == 1) {
-		dllama_instance->start_merge();
+	/*sleep(5);
+	cout << "requesting checkpoint\n";
+	my_dllama_instance->request_checkpoint();
+	cout << "requested checkpoint\n";*/
+	//sleep(10);
+	
+	cout << "starting merge1\n";
+	if (world_rank == 0) {
+		cout << "starting merge2\n";
+		my_dllama_instance->start_merge();
 	}
 	sleep(10);
 	/*if (world_rank == 0) {
 		for (int i = 1; i < num_nodes + 1; i++) {
-			cout << "rank " << world_rank << " node " << i << " out degree: " << dllama_instance->out_degree(i) << "\n";
+			cout << "rank " << world_rank << " node " << i << " out degree: " << my_dllama_instance->out_degree(i) << "\n";
 		}
 	}*/
+	//cout << "rank " << world_rank << " node " << num_nodes << " out degree: " << my_dllama_instance->out_degree(num_nodes) << "\n";
 	
-	cout << "rank " << world_rank << " node " << num_nodes << " out degree: " << dllama_instance->out_degree(num_nodes) << "\n";
-	
-	//dllama_instance->delete_db();
-	sleep(5);
-	dllama_instance->shutdown();
+	//my_dllama_instance->delete_db();
+	//sleep(5);
+	my_dllama_instance->shutdown();
 }
 
 void add_large_graph_benchmark(int idk) {
@@ -92,7 +110,10 @@ void read_all_edges_of_random_nodes_benchmark(int idk) {
 
 //usage: mpirun -n 2 ./dllama.exe 4
 int main(int argc, char** argv) {
-	
+	int *provided;
+	MPI_Init_thread(NULL, NULL, MPI_THREAD_MULTIPLE, provided);
+	MPI_Comm_size(MPI_COMM_WORLD, &world_size);
+	MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
 	//select benchmarks
 	if (argc == 3) {
 		int second_arg = atoi(argv[2]);
@@ -113,7 +134,7 @@ int main(int argc, char** argv) {
 				cout << "invalid benchmark number" << "\n";
 		}
 	}
-	sleep(10);
+	MPI_Finalize();
 	/*
 	if (argc == 2) {
 		switch (*argv[1]) {
