@@ -10,6 +10,7 @@
 #include <vector>
 #include <cstdio>
 #include <condition_variable>
+#include <chrono>
 
 #include "snapshot_merger.h"
 #include "shared_thread_state.h"
@@ -17,6 +18,7 @@
 #include "llama/ll_mlcsr_helpers.h"
 
 using namespace std;
+using namespace std::chrono;
 using namespace dllama_ns;
 
 snapshot_merger::snapshot_merger() {
@@ -371,6 +373,7 @@ std::ostream& operator<<(std::ostream& out, const ll_persistent_chunk& h) {
 
 void snapshot_merger::merge_snapshots(int* rank_snapshots) {
 	DEBUG("Rank " << world_rank << " starting merge");
+	high_resolution_clock::time_point t1 = high_resolution_clock::now();
 	ostringstream oss;
 	oss << "db" << world_rank << "/new_level0.dat";
 	string output_file_name = oss.str();
@@ -507,10 +510,15 @@ void snapshot_merger::merge_snapshots(int* rank_snapshots) {
 		
 		file.close();
 	} else cout << "Rank " << world_rank << " unable to open output file\n";
+	
+	high_resolution_clock::time_point t2 = high_resolution_clock::now();
+	auto duration = duration_cast<microseconds>(t2 - t1).count();
+	cout << "Rank " << world_rank << " took " << duration << " microseconds to merge\n";
 }
 
 void snapshot_merger::merge_local_llama() {
 	DEBUG("Rank " << world_rank << " starting merge");
+	high_resolution_clock::time_point t1 = high_resolution_clock::now();
 	ostringstream oss;
 	oss << "db" << world_rank << "/new_level0.dat";
 	string output_file_name = oss.str();
@@ -536,24 +544,18 @@ void snapshot_merger::merge_local_llama() {
 	vector<LL_DATA_TYPE> edge_table;
 	vector<ll_mlcsr_core__begin_t> vertex_table;
 	for (int vertex = 0; vertex < number_of_vertices; vertex++) {
+		//vector<LL_DATA_TYPE> neighbours = snapshots.get_neighbours_of_vertex(world_rank, vertex);
 		vector<LL_DATA_TYPE> neighbours = snapshots.get_neighbours_of_vertex(world_rank, vertex);
-
-		//add edges from level 0 if the vertex existed in level 0
-		vector<LL_DATA_TYPE> new_neighbours = snapshots.get_level_0_neighbours_of_vertex(vertex);
-		neighbours.insert(neighbours.end(), new_neighbours.begin(), new_neighbours.end());
-
 		ll_mlcsr_core__begin_t vertex_table_entry;
 		vertex_table_entry.adj_list_start = edge_table.size();
-
-		/*if (debug_enabled) {
-			cout << "neighbours of vertex " << vertex << ": ";
-			for (set<LL_DATA_TYPE>::iterator neighbour = neighbours.begin(); neighbour != neighbours.end(); ++neighbour) {
-				cout << *neighbour;
-			}
-			cout << "\n";
-		}*/
-		edge_table.insert(edge_table.end(), neighbours.begin(), neighbours.end()); //TODO: could just write this directly to file
-		vertex_table_entry.degree = neighbours.size();
+		
+		//add edges from level 0 if the vertex existed in level 0
+		vector<LL_DATA_TYPE> new_neighbours = snapshots.get_level_0_neighbours_of_vertex(vertex);
+		
+		edge_table.insert(edge_table.end(), neighbours.begin(), neighbours.end());
+		edge_table.insert(edge_table.end(), new_neighbours.begin(), new_neighbours.end());
+		
+		vertex_table_entry.degree = neighbours.size() + new_neighbours.size();
 		vertex_table_entry.level_length = vertex_table_entry.degree; // level is 0 anyway
 		vertex_table.push_back(vertex_table_entry);
 	}
@@ -633,5 +635,8 @@ void snapshot_merger::merge_local_llama() {
 		
 		file.close();
 	} else cout << "Rank " << world_rank << " unable to open output file\n";
-	
+	delete[] rank_snapshots;
+	high_resolution_clock::time_point t2 = high_resolution_clock::now();
+	auto duration = duration_cast<microseconds>(t2 - t1).count();
+	cout << "Rank " << world_rank << " took " << duration << " microseconds to merge\n";
 }

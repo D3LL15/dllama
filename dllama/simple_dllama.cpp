@@ -126,7 +126,10 @@ edge_t dllama::add_edge(node_t src, node_t tgt) {
 }
 
 edge_t dllama::force_add_edge(node_t src, node_t tgt) {
-	return graph->add_edge(src, tgt);
+	checkpoint_lock.lock();
+	edge_t result =  graph->add_edge(src, tgt);
+	checkpoint_lock.unlock();
+	return result;
 }
 
 //currently LLAMA does not support deletions properly, so this method also does not

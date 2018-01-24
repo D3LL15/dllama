@@ -45,13 +45,13 @@ void add_edges_benchmark(int num_nodes) {
 	high_resolution_clock::time_point t1 = high_resolution_clock::now();
 	for (int j = 0; j < 100; j++) {
 		MPI_Barrier(MPI_COMM_WORLD);
-		if (world_rank == 0) {
+		//if (world_rank == 0) {
 			node_t start_id = my_dllama_instance->add_nodes(num_nodes);
 			for (int i = start_id; i <= start_id + num_nodes; i++) {
 				my_dllama_instance->add_edge(i, i - 1);
 			}
 			my_dllama_instance->request_checkpoint();
-		}
+		//}
 	}
 	
 	high_resolution_clock::time_point t2 = high_resolution_clock::now();
