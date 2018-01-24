@@ -67,7 +67,7 @@ void add_edges_benchmark(int num_nodes) {
 	
 	if (world_rank == 0) {
 		cout << "rank " << world_rank << " took " << time_per_edge << " per edge i.e. " << edges_per_second << "per second\n";
-		//my_dllama_instance->start_merge();
+		my_dllama_instance->start_merge();
 	}
 
 	sleep(5);

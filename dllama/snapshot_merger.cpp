@@ -530,7 +530,7 @@ void snapshot_merger::merge_local_llama() {
 
 	//edge table
 	int* rank_snapshots = new int[world_size]();
-	rank_snapshots[world_rank] = current_snapshot_level;
+	rank_snapshots[world_rank] = current_snapshot_level - 2;
 	snapshot_manager snapshots(rank_snapshots, true);
 
 	vector<LL_DATA_TYPE> edge_table;
