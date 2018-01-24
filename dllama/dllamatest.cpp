@@ -119,7 +119,9 @@ namespace {
 } // namespace
 
 int main(int argc, char **argv) {
+	int p = 0;
 	int *provided;
+	provided = &p;
 	MPI_Init_thread(NULL, NULL, MPI_THREAD_MULTIPLE, provided);
 	MPI_Comm_size(MPI_COMM_WORLD, &world_size);
 	MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);

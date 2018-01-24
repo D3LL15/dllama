@@ -8,7 +8,7 @@
 
 namespace dllama_ns {
 
-    void start_mpi_listener();
+    //void start_mpi_listener();
 
     class simple_dllama {
     public:
@@ -17,8 +17,9 @@ namespace dllama_ns {
         void load_net_graph(std::string net_graph);
         edge_t add_edge(node_t src, node_t tgt);
         void delete_edge(node_t src, edge_t edge);
+        node_t add_nodes(int num_new_nodes);
         node_t add_node();
-        void add_node(node_t id);
+        node_t force_add_node();
         size_t out_degree(node_t node);
         void out_iter_begin(ll_edge_iterator& iter, node_t node);
         ITERATOR_DECL bool out_iter_has_next(ll_edge_iterator& iter);
@@ -27,6 +28,11 @@ namespace dllama_ns {
         void add_random_edge();
         void request_checkpoint();
         void auto_checkpoint();
+        void refresh_ro_graph();
+        void start_merge();
+        void delete_db();
+        node_t max_nodes();
+        void shutdown();
     private:
         std::thread* mpi_listener;
     protected:

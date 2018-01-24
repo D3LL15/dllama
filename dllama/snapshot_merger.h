@@ -16,6 +16,7 @@ namespace dllama_ns {
         void start_snapshot_listener();
         void merge_snapshots(int* rank_snapshots);
         void begin_merge();
+        void merge_local_llama();
     private:
     protected:
         void handle_snapshot_message(MPI_Status status);

@@ -16,6 +16,7 @@ namespace dllama_ns {
         virtual ~dllama();
         void load_net_graph(std::string net_graph);
         edge_t add_edge(node_t src, node_t tgt);
+        edge_t force_add_edge(node_t src, node_t tgt);
         void delete_edge(node_t src, edge_t edge);
         node_t add_nodes(int num_new_nodes);
         node_t add_node();

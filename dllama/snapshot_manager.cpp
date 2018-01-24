@@ -50,6 +50,45 @@ snapshot_manager::snapshot_manager(int* rank_snapshots) {
 	} else cout << "Rank " << world_rank << " snapshot manager unable to open snapshot file\n";
 }
 
+snapshot_manager::snapshot_manager(int* rank_snapshots, bool simple) {
+	rank_num_snapshots = rank_snapshots;
+	snapshots = new char** [world_size];
+	for (int r = 0; r < world_size; r++) {
+		if (r == world_rank) {
+			snapshots[r] = new char* [rank_snapshots[r]];
+			for (int f = 0; f < rank_snapshots[r]; f++) {
+				ostringstream oss;
+				oss << "db" << world_rank << "/csr__out__" << f+1 << ".dat";
+				
+				string input_file_name = oss.str().c_str();
+				ifstream file(input_file_name, ios::in | ios::binary | ios::ate);
+				if (file.is_open()) {
+					int file_size = file.tellg();
+					DEBUG("file size " << file_size);
+					snapshots[r][f] = new char [file_size];
+					file.seekg(0, ios::beg);
+					file.read(snapshots[r][f], file_size);
+					file.close();
+				} else cout << "Rank " << world_rank << " snapshot manager unable to open snapshot file\n";
+			}
+		} else {
+			snapshots[r] = new char* [rank_snapshots[r]];
+		}
+	}
+	ostringstream oss;
+	oss << "db" << world_rank << "/csr__out__" << 0 << ".dat";
+	string input_file_name = oss.str().c_str();
+	ifstream file(input_file_name, ios::in | ios::binary | ios::ate);
+	if (file.is_open()) {
+		int file_size = file.tellg();
+		DEBUG("file size " << file_size);
+		level_0_snapshot = new char [file_size];
+		file.seekg(0, ios::beg);
+		file.read(level_0_snapshot, file_size);
+		file.close();
+	} else cout << "Rank " << world_rank << " snapshot manager unable to open snapshot file\n";
+}
+
 snapshot_manager::~snapshot_manager() {
 	for (int r = 0; r < world_size; r++) {
 		for (int f = 0; f < rank_num_snapshots[r]; f++) {

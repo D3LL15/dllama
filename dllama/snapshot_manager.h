@@ -9,6 +9,7 @@ namespace dllama_ns {
     class snapshot_manager {
     public:
         snapshot_manager(int* rank_snapshots);
+        snapshot_manager(int* rank_snapshots, bool simple);
         ~snapshot_manager();
         ll_persistent_chunk* get_ll_persistent_chunk(int rank, int level, int offset);
         dll_level_meta* get_dll_level_meta(int rank, int level);

@@ -46,10 +46,15 @@ using namespace dllama_ns;
 
 dllama::dllama(bool initialise_mpi) {
 	if (initialise_mpi) {
+		int p = 0;
 		int *provided;
+		provided = &p;
 		MPI_Init_thread(NULL, NULL, MPI_THREAD_MULTIPLE, provided);
 		MPI_Comm_size(MPI_COMM_WORLD, &world_size);
 		MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
+		if (*provided != MPI_THREAD_MULTIPLE) {
+			cout << "ERROR: MPI implementation doesn't provide multi-thread support\n";
+		}
 	}
 	handling_mpi = initialise_mpi;
 	
@@ -109,6 +114,10 @@ void dllama::load_net_graph(string net_graph) {
 }
 
 edge_t dllama::add_edge(node_t src, node_t tgt) {
+	return graph->add_edge(src, tgt);
+}
+
+edge_t dllama::force_add_edge(node_t src, node_t tgt) {
 	return graph->add_edge(src, tgt);
 }
 
@@ -264,9 +273,6 @@ void dllama::checkpoint() {
 
 //asynchronous
 void dllama::start_merge() {
-	//MPI_Request mpi_req;
-	//MPI_Isend(&current_snapshot_level, 1, MPI_INT, world_rank, START_MERGE_REQUEST, MPI_COMM_WORLD, &mpi_req);
-	//MPI_Request_free(&mpi_req);
 	DEBUG("Rank " << world_rank << " manually starting merge");
 	snapshot_merger_instance->begin_merge();
 }
@@ -330,5 +336,7 @@ void dllama::shutdown() {
 	int nop = 0;
 	MPI_Send(&nop, 1, MPI_INT, world_rank, SHUTDOWN, MPI_COMM_WORLD);
 	mpi_listener->join();
-	//MPI_Finalize();
+	if (handling_mpi) {
+		MPI_Finalize();
+	}
 }
