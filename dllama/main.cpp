@@ -17,71 +17,178 @@ using namespace std;
 using namespace std::chrono;
 using namespace dllama_ns;
 
+//10000 nodes
 void add_nodes_benchmark(int num_nodes) {
-	dllama* dllama_instance = new dllama(false);
-	dllama_instance->load_net_graph("simple_graph.net");
-	
-	sleep(2);
-	
-	high_resolution_clock::time_point t1 = high_resolution_clock::now();
-	for (int i = 0; i < num_nodes; i++) {
-		node_t new_node = dllama_instance->add_nodes(100);
-		//cout << "rank " << world_rank << " " << new_node << "\n";
+	if (world_rank == 0) {
+		cout << "add nodes benchmark with " << world_size << " machines, microseconds to add " << num_nodes << " nodes:\n";
 	}
-	high_resolution_clock::time_point t2 = high_resolution_clock::now();
+	MPI_Barrier(MPI_COMM_WORLD);
 	
-	auto duration = duration_cast<microseconds>(t2 - t1).count();
-	float nodes_per_second = (1000000*num_nodes);
-	nodes_per_second /= duration;
-	cout << "rank " << world_rank << " took " << duration/num_nodes << " per node i.e. " << nodes_per_second << "per second\n";
+	for (int j = 0; j < 20; j++) {
+		dllama* dllama_instance = new dllama(false);
+		dllama_instance->load_net_graph("empty_graph.net");
+		if (world_rank == 0) {
+			high_resolution_clock::time_point t1 = high_resolution_clock::now();
+			node_t new_node = dllama_instance->add_nodes(num_nodes);
+			dllama_instance->request_checkpoint();
+			high_resolution_clock::time_point t2 = high_resolution_clock::now();
 
+			auto duration = duration_cast<microseconds>(t2 - t1).count();
+			cout << duration << " ";
+		}
+		MPI_Barrier(MPI_COMM_WORLD);
+		dllama_instance->delete_db();
+		dllama_instance->shutdown();
+		delete dllama_instance;
+		
+		//dllama_instance->load_net_graph("empty_graph.net");
+		MPI_Barrier(MPI_COMM_WORLD);
+	}
+	if (world_rank == 0) {
+		cout << "\n";
+	}
+	//dllama_instance->shutdown();
 }
 
+//10000 nodes
 void add_edges_benchmark(int num_nodes) {
 	MPI_Barrier(MPI_COMM_WORLD);
-	dllama* my_dllama_instance = new dllama(false);
-	my_dllama_instance->load_net_graph("simple_graph.net");
-	MPI_Barrier(MPI_COMM_WORLD);
-	high_resolution_clock::time_point t1 = high_resolution_clock::now();
-	for (int j = 0; j < 100; j++) {
-		MPI_Barrier(MPI_COMM_WORLD);
-		//if (world_rank == 0) {
-			node_t start_id = my_dllama_instance->add_nodes(num_nodes);
-			for (int i = start_id; i <= start_id + num_nodes; i++) {
-				my_dllama_instance->add_edge(i, i - 1);
-			}
-			my_dllama_instance->request_checkpoint();
-		//}
-	}
-	
-	high_resolution_clock::time_point t2 = high_resolution_clock::now();
-	sleep(2);
-	MPI_Barrier(MPI_COMM_WORLD);
-	
-	auto duration = duration_cast<microseconds>(t2 - t1).count();
-	double edges_per_second = num_nodes*100;
-	edges_per_second /= duration;
-	edges_per_second *= 1000000;
-	double time_per_edge = duration;
-	time_per_edge /= (num_nodes*100);
 	
 	if (world_rank == 0) {
-		cout << "rank " << world_rank << " took " << time_per_edge << " per edge i.e. " << edges_per_second << "per second\n";
-		my_dllama_instance->start_merge();
+		cout << "add edges benchmark with " << world_size << " machines, microseconds to add 100 edges each to " << num_nodes << " nodes:\n";
 	}
-
-	sleep(5);
 	
-	my_dllama_instance->delete_db();
-	my_dllama_instance->shutdown();
+	for (int j = 0; j < 20; j++) {
+		MPI_Barrier(MPI_COMM_WORLD);
+		dllama* my_dllama_instance = new dllama(false);
+		my_dllama_instance->load_net_graph("empty_graph.net");
+		if (world_rank == 0) {
+			my_dllama_instance->add_nodes(num_nodes);
+			my_dllama_instance->request_checkpoint();
+			high_resolution_clock::time_point t1 = high_resolution_clock::now();
+			for (int i = 1; i <= num_nodes; i++) {
+				for (int k = 0; k < 100; k++) {
+					my_dllama_instance->add_edge(i, k);
+				}
+			}
+			my_dllama_instance->request_checkpoint();
+			high_resolution_clock::time_point t2 = high_resolution_clock::now();
+			auto duration = duration_cast<microseconds>(t2 - t1).count();
+			cout << duration << " ";
+		}
+		MPI_Barrier(MPI_COMM_WORLD);
+		my_dllama_instance->delete_db();
+		my_dllama_instance->shutdown();
+		delete my_dllama_instance;
+		
+	}
+	if (world_rank == 0) {
+		cout << "\n";
+	}
+	
 }
 
-void add_large_graph_benchmark(int idk) {
+//10000 nodes
+void merge_benchmark(int num_nodes) {
+	MPI_Barrier(MPI_COMM_WORLD);
+	
+	if (world_rank == 0) {
+		cout << "merge benchmark with " << world_size << " machines, microseconds to merge 10 checkpoints with 100 edges added to " << num_nodes << " nodes each checkpoint:\n";
+	}
+	
+	for (int j = 0; j < 10; j++) {
+		dllama* my_dllama_instance = new dllama(false);
+		my_dllama_instance->load_net_graph("empty_graph.net");
+		MPI_Barrier(MPI_COMM_WORLD);
+		if (world_rank == 0) {
+			my_dllama_instance->add_nodes(num_nodes);
+			for (int z = 0; z < 10; z++) {
+				for (int i = 1; i <= num_nodes; i++) {
+					for (int k = 100*z; k < 100*(z+1); k++) {
+						my_dllama_instance->add_edge(i, k);
+					}
+				}
+				my_dllama_instance->request_checkpoint();
+			}
+			my_dllama_instance->start_merge();
+		}
+		sleep(10);
+		
+		MPI_Barrier(MPI_COMM_WORLD);
+		my_dllama_instance->delete_db();
+		my_dllama_instance->shutdown();
+		delete my_dllama_instance;
+		//my_dllama_instance->load_net_graph("empty_graph.net");
+	}
+	if (world_rank == 0) {
+		cout << "\n";
+	}
 	
 }
 
-void read_all_edges_of_random_nodes_benchmark(int idk) {
+void add_and_read_graph(string input_file, int num_nodes) {
+	MPI_Barrier(MPI_COMM_WORLD);
 	
+	ifstream file(input_file);
+	if (!file.is_open()) {
+		cout << "cannot open graph net file\n";
+		return;
+	}
+	
+	for (int j = 0; j < 10; j++) {
+		dllama* my_dllama_instance = new dllama(false);
+		my_dllama_instance->load_net_graph("empty_graph.net");
+		MPI_Barrier(MPI_COMM_WORLD);
+		if (world_rank == 0) {
+			high_resolution_clock::time_point t1 = high_resolution_clock::now();
+			my_dllama_instance->add_nodes(num_nodes);
+			string line;
+			int from;
+			int to;
+			while (getline(file, line)) {
+				sscanf(line.c_str(), "%d	%d", &from, &to);
+				my_dllama_instance->add_edge(from, to);
+			}
+			my_dllama_instance->request_checkpoint();
+			//my_dllama_instance->load_net_graph("kronecker_graph.net");
+			
+			high_resolution_clock::time_point t2 = high_resolution_clock::now();
+			auto duration = duration_cast<microseconds>(t2 - t1).count();
+			cout << duration << ",";
+			
+			t1 = high_resolution_clock::now();
+			for (int i = 0; i < num_nodes; i++) {
+				my_dllama_instance->get_neighbours_of_vertex(i);
+			}
+			t2 = high_resolution_clock::now();
+			duration = duration_cast<microseconds>(t2 - t1).count();
+			cout << duration << " ";
+		}
+		MPI_Barrier(MPI_COMM_WORLD);
+		my_dllama_instance->delete_db();
+		my_dllama_instance->shutdown();
+		delete my_dllama_instance;
+		file.seekg(0);
+	}
+	if (world_rank == 0) {
+		cout << "\n";
+	}
+	file.close();
+	//my_dllama_instance->shutdown();
+}
+
+void add_and_read_kronecker_graph() {
+	if (world_rank == 0) {
+		cout << "add kronecker graph benchmark with " << world_size << " machines. microseconds to add graph then read all edges (1024 nodes, 2655 edges):\n";
+	}
+	add_and_read_graph("kronecker_graph.net", 1024);
+}
+
+void add_and_read_power_graph() {
+	if (world_rank == 0) {
+		cout << "add power graph benchmark with " << world_size << " machines. microseconds to add graph then read all edges (1000 nodes, 7196 edges):\n";
+	}
+	add_and_read_graph("powerlaw.net", 1000);
 }
 
 //usage: mpirun -n 2 ./dllama.exe 4
@@ -106,15 +213,26 @@ int main(int argc, char** argv) {
 				add_edges_benchmark(second_arg);
 				break;
 			case '2':
-				add_large_graph_benchmark(second_arg);
+				merge_benchmark(second_arg);
 				break;
 			case '3':
-				read_all_edges_of_random_nodes_benchmark(second_arg);
+				add_and_read_kronecker_graph();
+				break;
+			case '4':
+				add_and_read_power_graph();
+				break;
+			case '5':
+				add_nodes_benchmark(10000);
+				add_edges_benchmark(10000);
+				merge_benchmark(10000);
+				add_and_read_kronecker_graph();
+				add_and_read_power_graph();
 				break;
 			default:
 				cout << "invalid benchmark number" << "\n";
 		}
 	}
+	MPI_Barrier(MPI_COMM_WORLD);
 	MPI_Finalize();
 	/*
 	if (argc == 2) {
