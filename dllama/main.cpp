@@ -170,18 +170,17 @@ void merge_benchmark(int num_nodes) {
 
 void add_and_read_graph(string input_file, int num_nodes) {
 	MPI_Barrier(MPI_COMM_WORLD);
-	
-	ifstream file(input_file);
-	if (!file.is_open()) {
-		cout << "cannot open graph net file\n";
-		return;
-	}
-	
+
 	for (int j = 0; j < 10; j++) {
 		dllama* my_dllama_instance = new dllama(false);
 		my_dllama_instance->load_net_graph("empty_graph.net");
 		MPI_Barrier(MPI_COMM_WORLD);
 		if (world_rank == 0) {
+			ifstream file(input_file);
+			if (!file.is_open()) {
+				cout << "cannot open graph net file\n";
+				return;
+			}
 			high_resolution_clock::time_point t1 = high_resolution_clock::now();
 			my_dllama_instance->add_nodes(num_nodes);
 			string line;
@@ -205,17 +204,17 @@ void add_and_read_graph(string input_file, int num_nodes) {
 			t2 = high_resolution_clock::now();
 			duration = duration_cast<microseconds>(t2 - t1).count();
 			cout << duration << " ";
+			file.close();
 		}
 		MPI_Barrier(MPI_COMM_WORLD);
 		my_dllama_instance->delete_db();
 		my_dllama_instance->shutdown();
 		delete my_dllama_instance;
-		file.seekg(0);
 	}
 	if (world_rank == 0) {
 		cout << "\n";
 	}
-	file.close();
+	
 	//my_dllama_instance->shutdown();
 }
 
