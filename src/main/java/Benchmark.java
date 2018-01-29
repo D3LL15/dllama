@@ -22,7 +22,7 @@ public class Benchmark
 		System.out.println("nanoseconds to add 1000 nodes");
 		Session session = driver.session();
 		try {
-			for (int j = 0; j < 1; j++) {
+			for (int j = 0; j < 10; j++) {
 
 				long t1 = System.nanoTime();
 				for (int num = 0; num < 1000; num++) {
@@ -43,7 +43,7 @@ public class Benchmark
 		System.out.println("nanoseconds to add 100 edges to 100 nodes");
 		Session session = driver.session();
 		try {
-			for (int j = 0; j < 1; j++) {
+			for (int j = 0; j < 10; j++) {
 				for (int num = 0; num < 100; num++) {
 					session.run("CREATE (a:Node {num: {x}})", parameters("x", num));
 				}
@@ -76,7 +76,7 @@ public class Benchmark
 					session.run("MATCH (a:Node), (b:Node) WHERE a.num = {x} AND b.num = {y} CREATE (a)-[r:Edge]->(b)", parameters("x", num, "y", i));
 				}
 			}
-			for (int j = 0; j < 1; j++) {
+			for (int j = 0; j < 10; j++) {
 				long t1 = System.nanoTime();
 
 				for (int num = 0; num < 100; num++) {
@@ -100,7 +100,7 @@ public class Benchmark
 	private void addAndReadGraph(int numberOfNodes, String fileName) {
 		Session session = driver.session();
 		try {
-			for (int j = 0; j < 1; j++) {
+			for (int j = 0; j < 10; j++) {
 
 				BufferedReader reader;
 				reader = new BufferedReader(new FileReader(fileName));
