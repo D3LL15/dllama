@@ -5,3 +5,5 @@
 *.exe
 
 .idea/
+
+myNeo4jDatabase/
