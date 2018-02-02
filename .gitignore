@@ -6,4 +6,5 @@
 
 .idea/
 
-myNeo4jDatabase/
+#myNeo4jDatabase/
+#target/

@@ -12,8 +12,8 @@ public class Benchmark
 {
 	GraphDatabaseService graphDb;
 
-	public Benchmark() {
-		File dbDir = new File("myNeo4jDatabase");
+	public Benchmark(String directory) {
+		File dbDir = new File(directory + "/myNeo4jDatabase");
 		graphDb = new GraphDatabaseFactory().newEmbeddedDatabase(dbDir);
 		registerShutdownHook(graphDb);
 
@@ -173,14 +173,14 @@ public class Benchmark
 		System.out.println("");
 	}
 
-	private void addAndReadPowerGraph() {
+	private void addAndReadPowerGraph(String directory) {
 		System.out.println("microseconds to add power law graph then read all edges from each node");
-		addAndReadGraph(1024, "dllama/kronecker_graph.net");
+		addAndReadGraph(1024, directory + "/kronecker_graph.net");
 	}
 
-	private void addAndReadKroneckerGraph() {
+	private void addAndReadKroneckerGraph(String directory) {
 		System.out.println("microseconds to add kronecker graph then read all edges from each node");
-		addAndReadGraph(1000, "dllama/powerlaw.net");
+		addAndReadGraph(1000, directory + "/powerlaw.net");
 	}
 
 	private static void registerShutdownHook( final GraphDatabaseService graphDb )
@@ -214,14 +214,19 @@ public class Benchmark
 
 	public static void main(String... args)
 	{
-		Benchmark benchmark = new Benchmark();
+		//run clean compile then assembly:single
 
-		benchmark.addNodes();
-		benchmark.addEdges();
-		benchmark.readEdges();
-		benchmark.addAndReadPowerGraph();
-		benchmark.addAndReadKroneckerGraph();
+		if (args.length == 1) {
+			Benchmark benchmark = new Benchmark(args[0]);
+			benchmark.addNodes();
+			benchmark.addEdges();
+			benchmark.readEdges();
+			benchmark.addAndReadPowerGraph(args[0]);
+			benchmark.addAndReadKroneckerGraph(args[0]);
+			benchmark.graphDb.shutdown();
 
-		benchmark.graphDb.shutdown();
+		} else {
+			System.out.println("Please provide the directory containing the example graph files");
+		}
 	}
 }
