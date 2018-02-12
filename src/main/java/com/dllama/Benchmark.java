@@ -175,12 +175,14 @@ public class Benchmark
 
 	private void addAndReadPowerGraph(String directory) {
 		System.out.println("microseconds to add power law graph then read all edges from each node");
-		addAndReadGraph(1024, directory + "/kronecker_graph.net");
+		//addAndReadGraph(1024, directory + "/kronecker_graph.net");
+		addAndReadGraph(50000, directory + "/powerlaw2.net");
 	}
 
 	private void addAndReadKroneckerGraph(String directory) {
 		System.out.println("microseconds to add kronecker graph then read all edges from each node");
-		addAndReadGraph(1000, directory + "/powerlaw.net");
+		//addAndReadGraph(1000, directory + "/powerlaw.net");
+		addAndReadGraph(131072, directory + "/krongraph2.net");
 	}
 
 	private static void registerShutdownHook( final GraphDatabaseService graphDb )
@@ -219,10 +221,10 @@ public class Benchmark
 		if (args.length == 2) {
 			Benchmark benchmark = new Benchmark(args[1]);
 			benchmark.addNodes();
-			//benchmark.addEdges();
-			//benchmark.readEdges();
-			//benchmark.addAndReadPowerGraph(args[0]);
-			//benchmark.addAndReadKroneckerGraph(args[0]);
+			benchmark.addEdges();
+			benchmark.readEdges();
+			benchmark.addAndReadPowerGraph(args[0]);
+			benchmark.addAndReadKroneckerGraph(args[0]);
 			benchmark.graphDb.shutdown();
 
 		} else {
