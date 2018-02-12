@@ -216,8 +216,8 @@ public class Benchmark
 	{
 		//run clean compile then assembly:single
 
-		if (args.length == 1) {
-			Benchmark benchmark = new Benchmark(args[0]);
+		if (args.length == 2) {
+			Benchmark benchmark = new Benchmark(args[1]);
 			benchmark.addNodes();
 			benchmark.addEdges();
 			benchmark.readEdges();
@@ -226,7 +226,8 @@ public class Benchmark
 			benchmark.graphDb.shutdown();
 
 		} else {
-			System.out.println("Please provide the directory containing the example graph files");
+			System.out.println("Please provide the directory containing the example graph files then the directory" +
+					" in which you would like to store the graph database");
 		}
 	}
 }
