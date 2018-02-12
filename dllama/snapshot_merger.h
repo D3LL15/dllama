@@ -9,7 +9,7 @@
 namespace dllama_ns {
     class snapshot_merger {
     public:
-        snapshot_merger();
+        snapshot_merger(std::string database_location);
         virtual ~snapshot_merger();
         void read_snapshots(std::string input_file_name = "db0/csr__out__0.dat");
         void read_second_snapshot();
@@ -29,7 +29,7 @@ namespace dllama_ns {
         int* expected_snapshot_levels;
         int* received_num_vertices;
         std::mutex listener_lock;
-
+        std::string database_location;
     };
 
     /**

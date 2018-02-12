@@ -17,7 +17,9 @@ using namespace std;
 using namespace std::chrono;
 using namespace dllama_ns;
 
-//1,000,000 nodes
+string database_location;
+
+//100,000 nodes
 void add_nodes_benchmark(int num_nodes, int num_iterations) {
 	if (world_rank == 0) {
 		cout << "add nodes benchmark with " << world_size << " machines, microseconds to add " << num_nodes << " nodes:\n";
@@ -25,7 +27,7 @@ void add_nodes_benchmark(int num_nodes, int num_iterations) {
 	MPI_Barrier(MPI_COMM_WORLD);
 	
 	for (int j = 0; j < num_iterations; j++) {
-		dllama* dllama_instance = new dllama(false);
+		dllama* dllama_instance = new dllama(database_location, false);
 		dllama_instance->load_net_graph("empty_graph.net");
 		if (world_rank == 0) {
 			high_resolution_clock::time_point t1 = high_resolution_clock::now();
@@ -60,7 +62,7 @@ void add_edges_benchmark(int num_nodes, int num_iterations) {
 	
 	for (int j = 0; j < num_iterations; j++) {
 		MPI_Barrier(MPI_COMM_WORLD);
-		dllama* my_dllama_instance = new dllama(false);
+		dllama* my_dllama_instance = new dllama(database_location, false);
 		my_dllama_instance->load_net_graph("empty_graph.net");
 		if (world_rank == 0) {
 			my_dllama_instance->add_nodes(num_nodes);
@@ -97,7 +99,7 @@ void read_edges_benchmark(int num_nodes, int num_iterations) {
 	
 	for (int j = 0; j < num_iterations; j++) {
 		MPI_Barrier(MPI_COMM_WORLD);
-		dllama* my_dllama_instance = new dllama(false);
+		dllama* my_dllama_instance = new dllama(database_location, false);
 		my_dllama_instance->load_net_graph("empty_graph.net");
 		if (world_rank == 0) {
 			my_dllama_instance->add_nodes(num_nodes);
@@ -139,7 +141,7 @@ void merge_benchmark(int num_nodes, int num_iterations) {
 	}
 	
 	for (int j = 0; j < num_iterations; j++) {
-		dllama* my_dllama_instance = new dllama(false);
+		dllama* my_dllama_instance = new dllama(database_location, false);
 		my_dllama_instance->load_net_graph("empty_graph.net");
 		MPI_Barrier(MPI_COMM_WORLD);
 		if (world_rank == 0) {
@@ -172,7 +174,7 @@ void add_and_read_graph(string input_file, int num_nodes, int num_iterations) {
 	MPI_Barrier(MPI_COMM_WORLD);
 
 	for (int j = 0; j < num_iterations; j++) {
-		dllama* my_dllama_instance = new dllama(false);
+		dllama* my_dllama_instance = new dllama(database_location, false);
 		my_dllama_instance->load_net_graph("empty_graph.net");
 		MPI_Barrier(MPI_COMM_WORLD);
 		if (world_rank == 0) {
@@ -246,7 +248,7 @@ void add_and_read_power_graph2(int num_iterations) {
 	add_and_read_graph("powerlaw2.net", 50000, num_iterations);
 }
 
-//usage: mpirun -n 2 ./dllama.exe 4
+//usage: mpirun -n 2 ./dllama.exe 4 10000 10 database/
 int main(int argc, char** argv) {
 	int p = 0;
 	int *provided;
@@ -258,9 +260,10 @@ int main(int argc, char** argv) {
 		cout << "ERROR: MPI implementation doesn't provide multi-thread support\n";
 	}
 	//select benchmarks
-	if (argc == 4) {
+	if (argc == 5) {
 		int second_arg = atoi(argv[2]);
 		int third_arg = atoi(argv[3]);
+		database_location = argv[4];
 		switch (*argv[1]) {
 			case '0':
 				add_nodes_benchmark(second_arg, third_arg);
@@ -279,19 +282,19 @@ int main(int argc, char** argv) {
 				break;
 			case '5':
 				//simple dllama benchmark
-				add_nodes_benchmark(1000000, third_arg);
-				add_edges_benchmark(10000, third_arg);
-				read_edges_benchmark(10000, third_arg);
-				merge_benchmark(10000, third_arg);
+				add_nodes_benchmark(second_arg*10, third_arg);
+				add_edges_benchmark(second_arg, third_arg);
+				read_edges_benchmark(second_arg, third_arg);
+				merge_benchmark(second_arg, third_arg);
 				add_and_read_kronecker_graph(third_arg);
 				add_and_read_power_graph(third_arg);
 				break;
 			case '6':
 				//dllama benchmark
-				add_nodes_benchmark(1000000, third_arg);
-				add_edges_benchmark(10000, third_arg);
-				read_edges_benchmark(10000, third_arg);
-				merge_benchmark(10000, third_arg);
+				add_nodes_benchmark(second_arg*10, third_arg);
+				add_edges_benchmark(second_arg, third_arg);
+				read_edges_benchmark(second_arg, third_arg);
+				merge_benchmark(second_arg, third_arg);
 				add_and_read_kronecker_graph(third_arg);
 				add_and_read_power_graph(third_arg);
 				add_and_read_kronecker_graph2(third_arg);
@@ -307,7 +310,7 @@ int main(int argc, char** argv) {
 				add_and_read_power_graph2(third_arg);
 				break;
 			default:
-				cout << "provide benchmark number, number of nodes, number of iterations" << "\n";
+				cout << "provide benchmark number, number of nodes, number of iterations, location to store database" << "\n";
 		}
 	}
 	MPI_Barrier(MPI_COMM_WORLD);

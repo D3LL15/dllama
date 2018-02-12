@@ -44,7 +44,8 @@ namespace dllama_ns {
 
 using namespace dllama_ns;
 
-dllama::dllama(bool initialise_mpi) {
+dllama::dllama(string database_location, bool initialise_mpi) {
+	this->database_location = database_location;
 	if (initialise_mpi) {
 		int p = 0;
 		int *provided;
@@ -65,20 +66,21 @@ dllama::dllama(bool initialise_mpi) {
 	self_adding_node = 0;
 	num_new_node_requests = 0;
 	
-	snapshot_merger_instance = new snapshot_merger(); //
+	snapshot_merger_instance = new snapshot_merger(database_location); //
 	mpi_listener = new thread(start_mpi_listener);
 	
 	DEBUG("Rank " << world_rank << " main and mpi_listener threads now execute concurrently...");
 	DEBUG("world size: " << world_size);
 	
 	//initialise llama
-	char* database_directory = (char*) alloca(20);
+	//char* database_directory = (char*) alloca(20);
 
 	//this only applies if we are simulating on a single machine
 	ostringstream oss;
-	oss << "db" << world_rank;
-	strcpy(database_directory, oss.str().c_str());
-
+	oss << database_location << "db" << world_rank;
+	//strcpy(database_directory, oss.str().c_str());
+	const char* database_directory = oss.str().c_str();
+	
 	database = new ll_database(database_directory);
 	//one thread for now
 	database->set_num_threads(1);
@@ -235,7 +237,7 @@ void dllama::checkpoint() {
 	DEBUG("Rank " << world_rank << " sending snapshot file");
 
 	ostringstream oss;
-	oss << "db" << world_rank << "/csr__out__" << file_number << ".dat";
+	oss << database_location << "db" << world_rank << "/csr__out__" << file_number << ".dat";
 
 	string input_file_name = oss.str();
 
@@ -312,20 +314,21 @@ void dllama::add_random_edge() {
 
 void dllama::refresh_ro_graph() {
 	DEBUG("refreshing ro graph");
-	char* database_directory = (char*) alloca(20);
+	//char* database_directory = (char*) alloca(20);
 	ostringstream oss;
-	oss << "db" << world_rank;
-	strcpy(database_directory, oss.str().c_str());
-
+	oss << database_location << "db" << world_rank;
+	//strcpy(database_directory, oss.str().c_str());
+	const char* database_directory = oss.str().c_str();
+	
 	database->reset_storage();
 	ll_persistent_storage* new_storage = database->storage();
-	graph->refresh_ro_graph(database, new_storage, world_rank);
+	graph->refresh_ro_graph(database, new_storage, world_rank, database_location);
 }
 
 void dllama::delete_db() {
 	for (unsigned int i = 0; i < graph->num_levels() - 1; i++) {
 		ostringstream oss;
-		oss << "db" << world_rank << "/csr__out__" << i << ".dat";
+		oss << database_location << "db" << world_rank << "/csr__out__" << i << ".dat";
 		string file_name = oss.str();
 		DEBUG("deleting snapshot '" << file_name << "'");
 		remove(file_name.c_str());

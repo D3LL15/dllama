@@ -10,7 +10,8 @@
 using namespace std;
 using namespace dllama_ns;
 
-snapshot_manager::snapshot_manager(int* rank_snapshots) {
+snapshot_manager::snapshot_manager(int* rank_snapshots, string database_location) {
+	this->database_location = database_location;
 	rank_num_snapshots = rank_snapshots;
 	snapshots = new char** [world_size];
 	for (int r = 0; r < world_size; r++) {
@@ -18,9 +19,9 @@ snapshot_manager::snapshot_manager(int* rank_snapshots) {
 		for (int f = 0; f < rank_snapshots[r]; f++) {
 			ostringstream oss;
 			if (r == world_rank) {
-				oss << "db" << world_rank << "/csr__out__" << f+1 << ".dat";
+				oss << database_location << "db" << world_rank << "/csr__out__" << f+1 << ".dat";
 			} else {
-				oss << "db" << world_rank << "/rank" << r << "/csr__out__" << f+1 << ".dat";
+				oss << database_location << "db" << world_rank << "/rank" << r << "/csr__out__" << f+1 << ".dat";
 			}
 
 			string input_file_name = oss.str().c_str();
@@ -37,7 +38,7 @@ snapshot_manager::snapshot_manager(int* rank_snapshots) {
 		
 	}
 	ostringstream oss;
-	oss << "db" << world_rank << "/csr__out__" << 0 << ".dat";
+	oss << database_location << "db" << world_rank << "/csr__out__" << 0 << ".dat";
 	string input_file_name = oss.str().c_str();
 	ifstream file(input_file_name, ios::in | ios::binary | ios::ate);
 	if (file.is_open()) {
@@ -50,15 +51,17 @@ snapshot_manager::snapshot_manager(int* rank_snapshots) {
 	} else cout << "Rank " << world_rank << " snapshot manager unable to open snapshot file\n";
 }
 
-snapshot_manager::snapshot_manager(int* rank_snapshots, bool simple) {
+snapshot_manager::snapshot_manager(int* rank_snapshots, bool simple, string database_location) {
+	this->database_location = database_location;
 	rank_num_snapshots = rank_snapshots;
+	
 	snapshots = new char** [world_size];
 	for (int r = 0; r < world_size; r++) {
 		if (r == world_rank) {
 			snapshots[r] = new char* [rank_snapshots[r]];
 			for (int f = 0; f < rank_snapshots[r]; f++) {
 				ostringstream oss;
-				oss << "db" << world_rank << "/csr__out__" << f+1 << ".dat";
+				oss << database_location << "db" << world_rank << "/csr__out__" << f+1 << ".dat";
 				
 				string input_file_name = oss.str().c_str();
 				ifstream file(input_file_name, ios::in | ios::binary | ios::ate);
@@ -76,7 +79,7 @@ snapshot_manager::snapshot_manager(int* rank_snapshots, bool simple) {
 		}
 	}
 	ostringstream oss;
-	oss << "db" << world_rank << "/csr__out__" << 0 << ".dat";
+	oss << database_location << "db" << world_rank << "/csr__out__" << 0 << ".dat";
 	string input_file_name = oss.str().c_str();
 	ifstream file(input_file_name, ios::in | ios::binary | ios::ate);
 	if (file.is_open()) {

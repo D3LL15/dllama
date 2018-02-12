@@ -3,6 +3,7 @@
 
 #include <thread>
 #include <vector>
+#include <string>
 
 #include "llama.h"
 
@@ -12,7 +13,7 @@ namespace dllama_ns {
 
     class dllama {
     public:
-        dllama(bool initialise_mpi = true);
+        dllama(std::string database_location, bool initialise_mpi = true);
         virtual ~dllama();
         void load_net_graph(std::string net_graph);
         edge_t add_edge(node_t src, node_t tgt);
@@ -41,6 +42,7 @@ namespace dllama_ns {
         ll_writable_graph* graph;
         ll_database* database;
         bool handling_mpi;
+        std::string database_location;
     };
 }
 

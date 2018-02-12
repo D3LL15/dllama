@@ -2042,7 +2042,7 @@ public:
 	}
         
         
-        void refresh_ro_graph(ll_database* database, ll_persistent_storage* storage, int world_rank) {
+        void refresh_ro_graph(ll_database* database, ll_persistent_storage* storage, int world_rank, std::string database_location) {
             
             int num_levels = _ro_graph.num_levels();
             //std::cout<< "num levels" << num_levels << "\n";
@@ -2054,7 +2054,7 @@ public:
             //delete old snapshots
             for (int i = 0; i < num_levels; i++) {
                 std::ostringstream oss;
-                oss << "db" << world_rank << "/csr__out__" << i << ".dat";
+                oss << database_location << "db" << world_rank << "/csr__out__" << i << ".dat";
                 if (remove(oss.str().c_str()) != 0) {
                     std::cout << "error removing old snapshots\n";
                 }
@@ -2063,8 +2063,8 @@ public:
             //rename new level 0 snapshot
             std::ostringstream oss1;
             std::ostringstream oss2;
-            oss1 << "db" << world_rank << "/new_level0.dat";
-            oss2 << "db" << world_rank << "/csr__out__0.dat";
+            oss1 << database_location << "db" << world_rank << "/new_level0.dat";
+            oss2 << database_location << "db" << world_rank << "/csr__out__0.dat";
             if (rename(oss1.str().c_str(), oss2.str().c_str()) != 0) {
                 std::cout << "error renaming new level 0 file\n";
             }

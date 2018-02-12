@@ -54,7 +54,7 @@ namespace {
 	
 	TEST_F(DllamaTest, FullTest) {
 		MPI_Barrier(MPI_COMM_WORLD);
-		dllama* dllama_instance = new dllama(false);
+		dllama* dllama_instance = new dllama("", false);
 	
 		dllama_instance->load_net_graph("simple_graph.net");
 

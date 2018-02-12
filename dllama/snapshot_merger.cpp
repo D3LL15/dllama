@@ -21,7 +21,8 @@ using namespace std;
 using namespace std::chrono;
 using namespace dllama_ns;
 
-snapshot_merger::snapshot_merger() {
+snapshot_merger::snapshot_merger(string database_location) {
+	this->database_location = database_location;
 }
 
 snapshot_merger::~snapshot_merger() {
@@ -56,7 +57,7 @@ void snapshot_merger::handle_snapshot_message(MPI_Status status) {
 	received_num_vertices[status.MPI_SOURCE] = num_vertices;
 
 	ostringstream oss;
-	oss << "db" << world_rank << "/rank" << status.MPI_SOURCE;
+	oss << database_location << "db" << world_rank << "/rank" << status.MPI_SOURCE;
 	//create receipt directory if it doesn't already exist
 	mkdir(oss.str().c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IWOTH | S_IXOTH);
 	oss << "/csr__out__" << file_number << ".dat";
@@ -375,7 +376,7 @@ void snapshot_merger::merge_snapshots(int* rank_snapshots) {
 	DEBUG("Rank " << world_rank << " starting merge");
 	high_resolution_clock::time_point t1 = high_resolution_clock::now();
 	ostringstream oss;
-	oss << "db" << world_rank << "/new_level0.dat";
+	oss << database_location << "db" << world_rank << "/new_level0.dat";
 	string output_file_name = oss.str();
 	
 	received_num_vertices[world_rank] = dllama_number_of_vertices;
@@ -394,7 +395,7 @@ void snapshot_merger::merge_snapshots(int* rank_snapshots) {
 	new_meta.lm_vt_size = number_of_vertices;
 
 	//edge table
-	snapshot_manager snapshots(rank_snapshots);
+	snapshot_manager snapshots(rank_snapshots, database_location);
 
 	vector<LL_DATA_TYPE> edge_table;
 	vector<ll_mlcsr_core__begin_t> vertex_table;
@@ -522,7 +523,7 @@ void snapshot_merger::merge_local_llama() {
 	DEBUG("Rank " << world_rank << " starting merge");
 	high_resolution_clock::time_point t1 = high_resolution_clock::now();
 	ostringstream oss;
-	oss << "db" << world_rank << "/new_level0.dat";
+	oss << database_location << "db" << world_rank << "/new_level0.dat";
 	string output_file_name = oss.str();
 	
 	DEBUG("Rank " << world_rank << " before max element");
@@ -541,18 +542,18 @@ void snapshot_merger::merge_local_llama() {
 	//edge table
 	int* rank_snapshots = new int[world_size]();
 	rank_snapshots[world_rank] = current_snapshot_level - 2;
-	snapshot_manager snapshots(rank_snapshots, true);
+	snapshot_manager* snapshots = new snapshot_manager(rank_snapshots, true, database_location);
 
 	vector<LL_DATA_TYPE> edge_table;
 	vector<ll_mlcsr_core__begin_t> vertex_table;
 	for (int vertex = 0; vertex < number_of_vertices; vertex++) {
 		//vector<LL_DATA_TYPE> neighbours = snapshots.get_neighbours_of_vertex(world_rank, vertex);
-		vector<LL_DATA_TYPE> neighbours = snapshots.get_neighbours_of_vertex(world_rank, vertex);
+		vector<LL_DATA_TYPE> neighbours = snapshots->get_neighbours_of_vertex(world_rank, vertex);
 		ll_mlcsr_core__begin_t vertex_table_entry;
 		vertex_table_entry.adj_list_start = edge_table.size();
 		
 		//add edges from level 0 if the vertex existed in level 0
-		vector<LL_DATA_TYPE> new_neighbours = snapshots.get_level_0_neighbours_of_vertex(vertex);
+		vector<LL_DATA_TYPE> new_neighbours = snapshots->get_level_0_neighbours_of_vertex(vertex);
 		
 		edge_table.insert(edge_table.end(), neighbours.begin(), neighbours.end());
 		edge_table.insert(edge_table.end(), new_neighbours.begin(), new_neighbours.end());
@@ -637,6 +638,7 @@ void snapshot_merger::merge_local_llama() {
 		
 		file.close();
 	} else cout << "Rank " << world_rank << " unable to open output file\n";
+	delete snapshots;
 	delete[] rank_snapshots;
 	high_resolution_clock::time_point t2 = high_resolution_clock::now();
 	auto duration = duration_cast<microseconds>(t2 - t1).count();
