@@ -27,12 +27,12 @@ public class Benchmark
 	}
 
 	private void addNodes() {
-		System.out.println("microseconds to add 10000 nodes");
+		System.out.println("microseconds to add 1,000,000 nodes");
 		for (int j = 0; j < 10; j++) {
 			long t1 = System.nanoTime();
 			org.neo4j.graphdb.Transaction tx = graphDb.beginTx();
 			try {
-				for (int num = 0; num < 10000; num++) {
+				for (int num = 0; num < 1000000; num++) {
 					Node newNode = graphDb.createNode();
 					newNode.setProperty("num", num);
 				}
@@ -102,7 +102,7 @@ public class Benchmark
 
 		tx = graphDb.beginTx();
 		try {
-			for (int j = 0; j < 10; j++) {
+			for (int j = 0; j < 50; j++) {
 				long t1 = System.nanoTime();
 
 				ResourceIterator<Node> readNodes = graphDb.getAllNodes().iterator();
@@ -219,10 +219,10 @@ public class Benchmark
 		if (args.length == 2) {
 			Benchmark benchmark = new Benchmark(args[1]);
 			benchmark.addNodes();
-			benchmark.addEdges();
-			benchmark.readEdges();
-			benchmark.addAndReadPowerGraph(args[0]);
-			benchmark.addAndReadKroneckerGraph(args[0]);
+			//benchmark.addEdges();
+			//benchmark.readEdges();
+			//benchmark.addAndReadPowerGraph(args[0]);
+			//benchmark.addAndReadKroneckerGraph(args[0]);
 			benchmark.graphDb.shutdown();
 
 		} else {
