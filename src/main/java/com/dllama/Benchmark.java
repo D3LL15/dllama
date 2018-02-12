@@ -7,6 +7,7 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
+import java.util.Iterator;
 
 public class Benchmark
 {
@@ -26,9 +27,9 @@ public class Benchmark
 		}
 	}
 
-	private void addNodes() {
+	private void addNodes(int numIterations) {
 		System.out.println("microseconds to add 1,000,000 nodes");
-		for (int j = 0; j < 10; j++) {
+		for (int j = 0; j < numIterations; j++) {
 			long t1 = System.nanoTime();
 			org.neo4j.graphdb.Transaction tx = graphDb.beginTx();
 			try {
@@ -48,10 +49,10 @@ public class Benchmark
 		System.out.println("");
 	}
 
-	private void addEdges() {
+	private void addEdges(int numIterations) {
 		System.out.println("microseconds to add 100 edges to 10000 nodes");
 		int numNodes = 10000;
-		for (int j = 0; j < 10; j++) {
+		for (int j = 0; j < numIterations; j++) {
 			long t1 = System.nanoTime();
 			org.neo4j.graphdb.Transaction tx = graphDb.beginTx();
 			try {
@@ -78,53 +79,60 @@ public class Benchmark
 		System.out.println("");
 	}
 
-	private void readEdges() {
+	private void readEdges(int numIterations) {
 		System.out.println("microseconds to read 100 edges from each of 10000 nodes");
 		int numNodes = 10000;
 
-		org.neo4j.graphdb.Transaction tx = graphDb.beginTx();
-		try {
-			Node[] nodes = new Node[numNodes];
-			for (int num = 0; num < numNodes; num++) {
-				nodes[num] = graphDb.createNode();
-				nodes[num].setProperty("num", num);
-			}
-
-			for (int num = 0; num < numNodes; num++) {
-				for (int i = 0; i < 100; i++) {
-					Relationship relationship = nodes[num].createRelationshipTo(nodes[i], RelTypes.EDGE);
+		for (int j = 0; j < numIterations; j++) {
+			org.neo4j.graphdb.Transaction tx = graphDb.beginTx();
+			try {
+				Node[] nodes = new Node[numNodes];
+				for (int num = 0; num < numNodes; num++) {
+					nodes[num] = graphDb.createNode();
+					nodes[num].setProperty("num", num);
 				}
-			}
-		}
+
+				for (int num = 0; num < numNodes; num++) {
+					for (int i = 0; i < 100; i++) {
+						Relationship relationship = nodes[num].createRelationshipTo(nodes[i], RelTypes.EDGE);
+					}
+				}
+		/*}
 		finally {
 			tx.close();
 		}
 
 		tx = graphDb.beginTx();
-		try {
-			for (int j = 0; j < 50; j++) {
+		try {*/
+
 				long t1 = System.nanoTime();
 
 				ResourceIterator<Node> readNodes = graphDb.getAllNodes().iterator();
 				while (readNodes.hasNext()) {
 					Node n = readNodes.next();
-					n.getRelationships().iterator();
+					Iterator<Relationship> edges = n.getRelationships().iterator();
+					while (edges.hasNext()) {
+						edges.next();
+					}
 				}
 
 				long t2 = System.nanoTime();
-				long duration = (t2 - t1)/1000;
+				long duration = (t2 - t1) / 1000;
 				System.out.print(duration + " ");
-			}
+				//deleteDB();
+			//}
 		}
-		finally {
+		finally{
 			tx.close();
 		}
+			deleteDB();
+	}
 		System.out.println("");
-		deleteDB();
+		//deleteDB();
 	}
 
-	private void addAndReadGraph(int numberOfNodes, String fileName) {
-		for (int j = 0; j < 10; j++) {
+	private void addAndReadGraph(int numberOfNodes, String fileName, int numIterations) {
+		for (int j = 0; j < numIterations; j++) {
 			long t1 = System.nanoTime();
 
 			org.neo4j.graphdb.Transaction tx = graphDb.beginTx();
@@ -173,16 +181,24 @@ public class Benchmark
 		System.out.println("");
 	}
 
-	private void addAndReadPowerGraph(String directory) {
+	private void addAndReadPowerGraph(String directory, int numIterations) {
 		System.out.println("microseconds to add power law graph then read all edges from each node");
-		//addAndReadGraph(1024, directory + "/kronecker_graph.net");
-		addAndReadGraph(50000, directory + "/powerlaw2.net");
+		addAndReadGraph(1000, directory + "/powerlaw.net", numIterations);
 	}
 
-	private void addAndReadKroneckerGraph(String directory) {
+	private void addAndReadKroneckerGraph(String directory, int numIterations) {
 		System.out.println("microseconds to add kronecker graph then read all edges from each node");
-		//addAndReadGraph(1000, directory + "/powerlaw.net");
-		addAndReadGraph(131072, directory + "/krongraph2.net");
+		addAndReadGraph(1024, directory + "/kronecker_graph.net", numIterations);
+	}
+
+	private void addAndReadPowerGraph2(String directory, int numIterations) {
+		System.out.println("microseconds to add power law graph then read all edges from each node");
+		addAndReadGraph(50000, directory + "/powerlaw2.net", numIterations);
+	}
+
+	private void addAndReadKroneckerGraph2(String directory, int numIterations) {
+		System.out.println("microseconds to add kronecker graph then read all edges from each node");
+		addAndReadGraph(131072, directory + "/krongraph2.net", numIterations);
 	}
 
 	private static void registerShutdownHook( final GraphDatabaseService graphDb )
@@ -218,13 +234,16 @@ public class Benchmark
 	{
 		//run clean compile then assembly:single
 
-		if (args.length == 2) {
+		if (args.length == 3) {
 			Benchmark benchmark = new Benchmark(args[1]);
-			benchmark.addNodes();
-			benchmark.addEdges();
-			benchmark.readEdges();
-			benchmark.addAndReadPowerGraph(args[0]);
-			benchmark.addAndReadKroneckerGraph(args[0]);
+			int numIterations = Integer.parseInt(args[2]);
+			benchmark.addNodes(numIterations);
+			benchmark.addEdges(numIterations);
+			benchmark.readEdges(numIterations);
+			benchmark.addAndReadPowerGraph(args[0], numIterations);
+			benchmark.addAndReadKroneckerGraph(args[0], numIterations);
+			benchmark.addAndReadPowerGraph2(args[0], numIterations);
+			benchmark.addAndReadKroneckerGraph2(args[0], numIterations);
 			benchmark.graphDb.shutdown();
 
 		} else {
