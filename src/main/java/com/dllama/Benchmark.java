@@ -27,13 +27,13 @@ public class Benchmark
 		}
 	}
 
-	private void addNodes(int numIterations) {
-		System.out.println("microseconds to add 1,000,000 nodes");
+	private void addNodes(int numIterations, int numNodes) {
+		System.out.println("microseconds to add 100000 nodes");
 		for (int j = 0; j < numIterations; j++) {
 			long t1 = System.nanoTime();
 			org.neo4j.graphdb.Transaction tx = graphDb.beginTx();
 			try {
-				for (int num = 0; num < 1000000; num++) {
+				for (int num = 0; num < numNodes*10; num++) {
 					Node newNode = graphDb.createNode();
 					newNode.setProperty("num", num);
 				}
@@ -49,9 +49,9 @@ public class Benchmark
 		System.out.println("");
 	}
 
-	private void addEdges(int numIterations) {
+	private void addEdges(int numIterations, int numNodes) {
 		System.out.println("microseconds to add 100 edges to 10000 nodes");
-		int numNodes = 10000;
+		//int numNodes = 10000;
 		for (int j = 0; j < numIterations; j++) {
 			long t1 = System.nanoTime();
 			org.neo4j.graphdb.Transaction tx = graphDb.beginTx();
@@ -79,9 +79,9 @@ public class Benchmark
 		System.out.println("");
 	}
 
-	private void readEdges(int numIterations) {
+	private void readEdges(int numIterations, int numNodes) {
 		System.out.println("microseconds to read 100 edges from each of 10000 nodes");
-		int numNodes = 10000;
+		//int numNodes = 10000;
 
 		for (int j = 0; j < numIterations; j++) {
 			org.neo4j.graphdb.Transaction tx = graphDb.beginTx();
@@ -234,12 +234,13 @@ public class Benchmark
 	{
 		//run clean compile then assembly:single
 
-		if (args.length == 3) {
+		if (args.length == 4) {
 			Benchmark benchmark = new Benchmark(args[1]);
 			int numIterations = Integer.parseInt(args[2]);
-			benchmark.addNodes(numIterations);
-			benchmark.addEdges(numIterations);
-			benchmark.readEdges(numIterations);
+			int numNodes = Integer.parseInt(args[3]);
+			benchmark.addNodes(numIterations, numNodes);
+			benchmark.addEdges(numIterations, numNodes);
+			benchmark.readEdges(numIterations, numNodes);
 			benchmark.addAndReadPowerGraph(args[0], numIterations);
 			benchmark.addAndReadKroneckerGraph(args[0], numIterations);
 			benchmark.addAndReadPowerGraph2(args[0], numIterations);
@@ -248,7 +249,7 @@ public class Benchmark
 
 		} else {
 			System.out.println("Please provide the directory containing the example graph files then the directory" +
-					" in which you would like to store the graph database");
+					" in which you would like to store the graph database then num nodes");
 		}
 	}
 }
