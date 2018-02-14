@@ -1,0 +1,1094 @@
+Changed directory to /home/js2072/dllama/dllama.
+
+JobID: 702000
+======
+Time: Wed 14 Feb 15:07:33 GMT 2018
+Running on master node: cpu-e-58
+Current directory: /home/js2072/dllama/dllama
+
+Nodes allocated:
+================
+cpu-e-58 cpu-e-209 cpu-e-322 cpu-e-334
+
+numtasks=4, numnodes=4, mpi_tasks_per_node=1 (OMP_NUM_THREADS=1)
+
+Executing command:
+==================
+mpirun -ppn 1 -np 4 /home/js2072/dllama/dllama/dllama.exe 0 10000 10 /local/
+
+started benchmark
+add nodes benchmark with 4 machines, microseconds to add 10000 nodes:
+Rank 0 main and mpi_listener threads now execute concurrently...
+world size: 4
+started benchmark
+Rank 1 main and mpi_listener threads now execute concurrently...
+world size: 4
+started benchmark
+Rank 3 main and mpi_listener threads now execute concurrently...
+world size: 4
+started benchmark
+Rank 2 main and mpi_listener threads now execute concurrently...
+world size: 4
+Rank 1 mpi_listener running
+Rank 1 start probe
+Rank 0 mpi_listener running
+Rank 0 start probe
+Rank 3 mpi_listener running
+Rank 3 start probe
+Rank 2 mpi_listener running
+Rank 2 start probe
+num levels 2
+num vertices 1
+num levels 2
+num vertices 1
+num levels 2
+num vertices 1
+num levels 2
+num vertices 1
+Rank 0 adding nodes
+Rank 0 probe successful
+mpi tag 3 received by machine 0
+Rank 0 start probe
+Rank 0 probe successful
+mpi tag 3 received by machine 0
+Rank 0 start probe
+Rank 0 probe successful
+mpi tag 3 received by machine 0
+Rank 0 start probe
+Rank 1 probe successful
+mpi tag 2 received by machine 1
+Rank 1 handling new node request
+Rank 1 completed mpi recv
+Rank 1 handling new node request midpoint
+Rank 1 done handling new node request
+Rank 1 start probe
+Rank 1 probe successful
+mpi tag 4 received by machine 1
+Rank 1 commanded to add node
+Rank 1 start probe
+Rank 3 probe successful
+mpi tag 2 received by machine 3
+Rank 3 handling new node request
+Rank 3 completed mpi recv
+Rank 3 handling new node request midpoint
+Rank 3 done handling new node request
+Rank 3 start probe
+Rank 3 probe successful
+mpi tag 4 received by machine 3
+Rank 3 commanded to add node
+Rank 3 start probe
+Rank 2 probe successful
+mpi tag 2 received by machine 2
+Rank 2 handling new node request
+Rank 2 completed mpi recv
+Rank 2 handling new node request midpoint
+Rank 2 done handling new node request
+Rank 2 start probe
+Rank 2 probe successful
+mpi tag 4 received by machine 2
+Rank 2 commanded to add node
+Rank 2 start probe
+Rank 0 sending snapshot file
+Rank 0 dllama_number_of_vertices 10000
+Rank 0 file_number 1
+Rank 1 probe successful
+mpi tag 0 received by machine 1
+Rank 1 number of bytes being received: 176136 from 0
+Rank 1 received file
+Rank 1 received file number: 1
+Rank 1 number of vertices from other machine: 10000
+Rank 0 sent snapshot: 1
+Rank 2 probe successful
+mpi tag 0 received by machine 2
+Rank 2 number of bytes being received: 176136 from 0
+Rank 2 received file
+Rank 2 received file number: 1
+Rank 2 number of vertices from other machine: 10000
+Rank 0 sent snapshot: 1
+deleting snapshot '/local/db1/csr__out__0.dat'
+Rank 3 probe successful
+mpi tag 0 received by machine 3
+Rank 3 number of bytes being received: 176136 from 0
+Rank 3 received file
+Rank 3 received file number: 1
+Rank 3 number of vertices from other machine: 10000
+deleting snapshot '/local/db2/csr__out__0.dat'
+deleting snapshot '/local/db3/csr__out__0.dat'
+Rank 0 sent snapshot: 1
+152024 deleting snapshot '/local/db0/csr__out__0.dat'
+deleting snapshot '/local/db0/csr__out__1.dat'
+Rank 0 probe successful
+mpi tag 6 received by machine 0
+Rank 1 start probe
+Rank 3 start probe
+Rank 2 start probe
+Rank 3 probe successful
+mpi tag 6 received by machine 3
+Rank 2 probe successful
+mpi tag 6 received by machine 2
+Rank 0 main and mpi_listener threads now execute concurrently...
+world size: 4
+Rank 1 probe successful
+mpi tag 6 received by machine 1
+Rank 3 main and mpi_listener threads now execute concurrently...
+world size: 4
+Rank 2 main and mpi_listener threads now execute concurrently...
+world size: 4
+Rank 1 main and mpi_listener threads now execute concurrently...
+world size: 4
+Rank 0 mpi_listener running
+Rank 0 start probe
+Rank 1 mpi_listener running
+Rank 1 start probe
+Rank 3 mpi_listener running
+Rank 3 start probe
+Rank 2 mpi_listener running
+Rank 2 start probe
+num levels 2
+num vertices 1
+num levels 2
+num vertices 1
+num levels 2
+num vertices 1
+Rank 0 adding nodes
+Rank Rank 0 probe successful
+mpi tag 3 received by machine 0
+Rank 0 start probe
+3 probe successful
+mpi tag 2 received by machine 3
+Rank 3 handling new node request
+Rank 3 completed mpi recv
+Rank 3 handling new node request midpoint
+Rank 3 done handling new node request
+Rank 3 start probe
+num levels 2
+num vertices 1
+Rank 0 probe successful
+mpi tag 3 received by machine 0
+Rank 0 start probe
+Rank 0 probe successful
+mpi tag 3 received by machine 0
+Rank 0 start probe
+Rank 1 probe successful
+mpi tag 2 received by machine 1
+Rank 1 handling new node request
+Rank 1 completed mpi recv
+Rank 1 handling new node request midpoint
+Rank 1 done handling new node request
+Rank 1 start probe
+Rank 1 probe successful
+mpi tag 4 received by machine 1
+Rank 1 commanded to add node
+Rank 1 start probe
+Rank 2 probe successful
+mpi tag 2 received by machine 2
+Rank 2 handling new node request
+Rank 2 completed mpi recv
+Rank 2 handling new node request midpoint
+Rank 2 done handling new node request
+Rank 2 start probe
+Rank 2 probe successful
+mpi tag 4 received by machine 2
+Rank 2 commanded to add node
+Rank 3 probe successful
+mpi tag 4 received by machine 3
+Rank 3 commanded to add node
+Rank 3 start probe
+Rank 2 start probe
+Rank 0 sending snapshot file
+Rank 0 dllama_number_of_vertices 10000
+Rank 0 file_number 1
+Rank 1 probe successful
+mpi tag 0 received by machine 1
+Rank 1 number of bytes being received: 176136 from 0
+Rank 0 sent snapshot: 1
+Rank 1 received file
+Rank 1 received file number: 1
+Rank 1 number of vertices from other machine: 10000
+Rank 1 start probe
+Rank 2 probe successful
+mpi tag 0 received by machine 2
+Rank 2 number of bytes being received: 176136 from 0
+Rank 2 received file
+Rank 2 received file number: 1
+Rank 2 number of vertices from other machine: 10000
+Rank 2 start probe
+Rank 0 sent snapshot: 1
+Rank 3 probe successful
+mpi tag 0 received by machine 3
+Rank 3 number of bytes being received: 176136 from 0
+Rank 3 received file
+Rank 3 received file number: 1
+Rank 3 number of vertices from other machine: 10000
+Rank 3 start probe
+Rank 0 sent snapshot: 1
+206989 deleting snapshot '/local/db2/csr__out__0.dat'
+deleting snapshot '/local/db0/csr__out__0.dat'
+deleting snapshot '/local/db0/csr__out__1.dat'
+Rank 0 probe successful
+mpi tag 6 received by machine 0
+Rank 2 probe successful
+mpi tag 6 received by machine 2
+deleting snapshot '/local/db1/csr__out__0.dat'
+deleting snapshot '/local/db3/csr__out__0.dat'
+Rank 0 main and mpi_listener threads now execute concurrently...
+world size: 4
+Rank 1 probe successful
+mpi tag 6 received by machine 1
+Rank 3 probe successful
+mpi tag 6 received by machine 3
+Rank 2 main and mpi_listener threads now execute concurrently...
+world size: 4
+Rank 1 main and mpi_listener threads now execute concurrently...
+world size: 4
+Rank 3 main and mpi_listener threads now execute concurrently...
+world size: 4
+Rank 0 mpi_listener running
+Rank 0 start probe
+Rank 1 mpi_listener running
+Rank 1 start probe
+Rank 3 mpi_listener running
+Rank 3 start probe
+Rank 2 mpi_listener running
+Rank 2 start probe
+num levels 2
+num vertices 1
+num levels 2
+num vertices 1
+num levels 2
+num vertices 1
+num levels 2
+num vertices 1
+Rank 0 adding nodes
+Rank 0 probe successful
+mpi tag 3 received by machine 0
+Rank 0 start probe
+Rank 0 probe successful
+mpi tag 3 received by machine 0
+Rank 0 start probe
+Rank 0 probe successful
+mpi tag 3 received by machine 0
+Rank 0 start probe
+Rank 1 probe successful
+mpi tag 2 received by machine 1
+Rank 1 handling new node request
+Rank 1 completed mpi recv
+Rank 1 handling new node request midpoint
+Rank 1 done handling new node request
+Rank 1 start probe
+Rank 1 probe successful
+mpi tag 4 received by machine 1
+Rank 1 commanded to add node
+Rank 1 start probe
+Rank 3 probe successful
+mpi tag 2 received by machine 3
+Rank 3 handling new node request
+Rank 3 completed mpi recv
+Rank 3 handling new node request midpoint
+Rank 3 done handling new node request
+Rank 3 start probe
+Rank 3 probe successful
+mpi tag 4 received by machine 3
+Rank 3 commanded to add node
+Rank 3 start probe
+Rank 2 probe successful
+mpi tag 2 received by machine 2
+Rank 2 handling new node request
+Rank 2 completed mpi recv
+Rank 2 handling new node request midpoint
+Rank 2 done handling new node request
+Rank 2 start probe
+Rank 2 probe successful
+mpi tag 4 received by machine 2
+Rank 2 commanded to add node
+Rank 2 start probe
+Rank 0 sending snapshot file
+Rank 0 dllama_number_of_vertices 10000
+Rank 0 file_number 1
+Rank 1 probe successful
+mpi tag 0 received by machine 1
+Rank 1 number of bytes being received: 176136 from 0
+Rank 1 received file
+Rank 1 received file number: 1
+Rank 1 number of vertices from other machine: 10000
+Rank 1 start probe
+Rank 0 sent snapshot: 1
+Rank 0 sent snapshot: 1
+Rank 0 sent snapshot: 1
+161353 deleting snapshot '/local/db0/csr__out__0.dat'
+deleting snapshot '/local/db0/csr__out__1.dat'
+Rank 0 probe successful
+mpi tag 6 received by machine 0
+Rank 3 probe successful
+mpi tag 0 received by machine 3
+Rank 3 number of bytes being received: 176136 from 0
+Rank 3 received file
+Rank 3 received file number: 1
+Rank 3 number of vertices from other machine: 10000
+Rank 3 start probe
+Rank 2 probe successful
+mpi tag 0 received by machine 2
+Rank 2 number of bytes being received: 176136 from 0
+Rank 2 received file
+Rank 2 received file number: 1
+Rank 2 number of vertices from other machine: 10000
+Rank 2 start probe
+deleting snapshot '/local/db1/csr__out__0.dat'
+deleting snapshot '/local/db3/csr__out__0.dat'
+deleting snapshot '/local/db2/csr__out__0.dat'
+Rank 1 probe successful
+mpi tag 6 received by machine 1
+Rank 3 probe successful
+mpi tag 6 received by machine 3
+Rank 0 main and mpi_listener threads now execute concurrently...
+world size: 4
+Rank 1 main and mpi_listener threads now execute concurrently...
+world size: 4
+Rank 3 main and mpi_listener threads now execute concurrently...
+world size: 4
+Rank 2 probe successful
+mpi tag 6 received by machine 2
+Rank 2 main and mpi_listener threads now execute concurrently...
+world size: 4
+Rank 0 mpi_listener running
+Rank 0 start probe
+Rank 1 mpi_listener running
+Rank 1 start probe
+Rank 3 mpi_listener running
+Rank 3 start probe
+Rank 2 mpi_listener running
+Rank 2 start probe
+num levels 2
+num vertices 1
+num levels 2
+num vertices 1
+num levels 2
+num vertices 1
+Rank 0 adding nodes
+Rank 0 probe successful
+mpi tag 3 received by machine 0
+Rank 0 start probe
+Rank 3 probe successful
+mpi tag 2 received by machine 3
+Rank 3 handling new node request
+Rank 3 completed mpi recv
+Rank 3 handling new node request midpoint
+Rank 3 done handling new node request
+Rank 3 start probe
+num levels 2
+num vertices 1
+Rank 0 probe successful
+mpi tag 3 received by machine 0
+Rank 0 start probe
+Rank 0 probe successful
+mpi tag 3 received by machine 0
+Rank 0 start probe
+Rank 1 probe successful
+mpi tag 2 received by machine 1
+Rank 1 handling new node request
+Rank 1 completed mpi recv
+Rank 1 handling new node request midpoint
+Rank 1 done handling new node request
+Rank 1 start probe
+Rank 1 probe successful
+mpi tag 4 received by machine 1
+Rank 1 commanded to add node
+Rank 1 start probe
+Rank 2 probe successful
+mpi tag 2 received by machine 2
+Rank 2 handling new node request
+Rank 2 completed mpi recv
+Rank 2 handling new node request midpoint
+Rank 2 done handling new node request
+Rank 2 start probe
+Rank 2 probe successful
+mpi tag 4 received by machine 2
+Rank 2 commanded to add node
+Rank 2 start probe
+Rank 3 probe successful
+mpi tag 4 received by machine 3
+Rank 3 commanded to add node
+Rank 3 start probe
+Rank 0 sending snapshot file
+Rank 0 dllama_number_of_vertices 10000
+Rank 0 file_number 1
+Rank 1 probe successful
+mpi tag 0 received by machine 1
+Rank 1 number of bytes being received: 176136 from 0
+Rank Rank 0 sent snapshot: 1
+1 received file
+Rank 1 received file number: 1
+Rank 1 number of vertices from other machine: 10000
+Rank 1 start probe
+Rank 0 sent snapshot: 1
+Rank 2 probe successful
+mpi tag 0 received by machine 2
+Rank 2 number of bytes being received: 176136 from 0
+Rank 2 received file
+Rank 2 received file number: 1
+Rank 2 number of vertices from other machine: 10000
+Rank 2 start probe
+deleting snapshot '/local/db1/csr__out__0.dat'
+Rank 0 sent snapshot: 1
+175003 deleting snapshot '/local/db0/csr__out__0.dat'
+deleting snapshot '/local/db0/csr__out__1.dat'
+Rank 3 probe successful
+mpi tag 0 received by machine 3
+Rank 3 number of bytes being received: 176136 from 0
+Rank 3 received file
+Rank 3 received file number: 1
+Rank 3 number of vertices from other machine: 10000
+Rank 3 start probe
+Rank 1 probe successful
+mpi tag 6 received by machine 1
+deleting snapshot '/local/db2/csr__out__0.dat'
+Rank 0 probe successful
+mpi tag 6 received by machine 0
+deleting snapshot '/local/db3/csr__out__0.dat'
+Rank 2 probe successful
+mpi tag 6 received by machine 2
+Rank 3 probe successful
+mpi tag 6 received by machine 3
+Rank 0 main and mpi_listener threads now execute concurrently...
+world size: 4
+Rank 1 main and mpi_listener threads now execute concurrently...
+world size: 4
+Rank 3 main and mpi_listener threads now execute concurrently...
+world size: 4
+Rank 2 main and mpi_listener threads now execute concurrently...
+world size: 4
+Rank 0 mpi_listener running
+Rank 0 start probe
+Rank 1 mpi_listener running
+Rank 1 start probe
+Rank 3 mpi_listener running
+Rank 3 start probe
+Rank 2 mpi_listener running
+Rank 2 start probe
+num levels 2
+num vertices 1
+num levels 2
+num vertices 1
+num levels 2
+num vertices 1
+Rank 0 adding nodes
+num levels 2
+num vertices 1
+Rank 1 probe successful
+mpi tag 2 received by machine 1
+Rank 1 handling new node request
+Rank 1 completed mpi recv
+Rank 1 handling new node request midpoint
+Rank 1 done handling new node request
+Rank 1 start probe
+Rank 0 probe successful
+mpi tag 3 received by machine 0
+Rank 0 start probe
+Rank 0 probe successful
+mpi tag 3 received by machine 0
+Rank 0 start probe
+Rank 0 probe successful
+mpi tag 3 received by machine 0
+Rank 0 start probe
+Rank 3 probe successful
+mpi tag 2 received by machine 3
+Rank 3 handling new node request
+Rank 3 completed mpi recv
+Rank 3 handling new node request midpoint
+Rank 3 done handling new node request
+Rank 3 start probe
+Rank 3 probe successful
+mpi tag 4 received by machine 3
+Rank 3 commanded to add node
+Rank 3 start probe
+Rank 2 probe successful
+mpi tag 2 received by machine 2
+Rank 2 handling new node request
+Rank 2 completed mpi recv
+Rank 2 handling new node request midpoint
+Rank 2 done handling new node request
+Rank 2 start probe
+Rank 2 probe successful
+mpi tag 4 received by machine 2
+Rank 2 commanded to add node
+Rank 2 start probe
+Rank 1 probe successful
+mpi tag 4 received by machine 1
+Rank 1 commanded to add node
+Rank 1 start probe
+Rank 0 sending snapshot file
+Rank 0 dllama_number_of_vertices 10000
+Rank 0 file_number 1
+Rank 1 probe successful
+mpi tag 0 received by machine 1
+Rank 1 number of bytes being received: 176136 from 0
+Rank 1 received file
+Rank 1 received file number: 1
+Rank 1 number of vertices from other machine: Rank 0 sent snapshot: 1
+10000
+Rank 1 start probe
+Rank 0 sent snapshot: 1
+Rank 2 probe successful
+mpi tag 0 received by machine 2
+Rank 2 number of bytes being received: 176136 from 0
+Rank 2 received file
+Rank 2 received file number: 1
+Rank 2 number of vertices from other machine: 10000
+Rank 2 start probe
+deleting snapshot 'Rank 0 sent snapshot: 1
+169053 deleting snapshot '/local/db0/csr__out__0.dat'
+deleting snapshot '/local/db0/csr__out__1.dat'
+Rank 3 probe successful
+mpi tag 0 received by machine 3
+Rank 3 number of bytes being received: 176136 from 0
+Rank 3 received file
+Rank 3 received file number: 1
+Rank 3 number of vertices from other machine: 10000
+Rank 3 start probe
+/local/db1/csr__out__0.dat'
+Rank 0 probe successful
+mpi tag 6 received by machine 0
+Rank 1 probe successful
+mpi tag 6 received by machine 1
+deleting snapshot '/local/db3/csr__out__0.dat'
+deleting snapshot '/local/db2/csr__out__0.dat'
+Rank 2 probe successful
+mpi tag 6 received by machine 2
+Rank 1 main and mpi_listener threads now execute concurrently...
+world size: 4
+Rank 3 probe successful
+mpi tag 6 received by machine 3
+Rank 2 main and mpi_listener threads now execute concurrently...
+world size: 4
+Rank 0 main and mpi_listener threads now execute concurrently...
+world size: 4
+Rank 1 mpi_listener running
+Rank 1 start probe
+Rank 3 main and mpi_listener threads now execute concurrently...
+world size: 4
+Rank 0 mpi_listener running
+Rank 0 start probe
+Rank 3 mpi_listener running
+Rank 3 start probe
+Rank 2 mpi_listener running
+Rank 2 start probe
+num levels 2
+num vertices 1
+num levels 2
+num vertices 1
+num levels 2
+num vertices 1
+Rank 0 adding nodes
+Rank Rank 0 probe successful
+mpi tag 3 received by machine 0
+Rank 0 start probe
+2 probe successful
+mpi tag 2 received by machine 2
+Rank 2 handling new node request
+Rank 2 completed mpi recv
+Rank 2 handling new node request midpoint
+Rank 2 done handling new node request
+Rank 2 start probe
+num levels 2
+num vertices 1
+Rank 0 probe successful
+mpi tag 3 received by machine 0
+Rank 0 start probe
+Rank 1 probe successful
+mpi tag 2 received by machine 1
+Rank 1 handling new node request
+Rank 1 completed mpi recv
+Rank 1 handling new node request midpoint
+Rank 1 done handling new node request
+Rank 1 start probe
+Rank 0 probe successful
+mpi tag 3 received by machine 0
+Rank 0 start probe
+Rank 1 probe successful
+mpi tag 4 received by machine 1
+Rank 1 commanded to add node
+Rank 1 start probe
+Rank 3 probe successful
+mpi tag 2 received by machine 3
+Rank 3 handling new node request
+Rank 3 completed mpi recv
+Rank 3 handling new node request midpoint
+Rank 3 done handling new node request
+Rank 3 start probe
+Rank 3 probe successful
+mpi tag 4 received by machine 3
+Rank 3 commanded to add node
+Rank 3 start probe
+Rank 2 probe successful
+mpi tag 4 received by machine 2
+Rank 2 commanded to add node
+Rank 2 start probe
+Rank 0 sending snapshot file
+Rank 0 dllama_number_of_vertices 10000
+Rank 0 file_number 1
+Rank 0 sent snapshot: 1
+Rank 1 probe successful
+mpi tag 0 received by machine 1
+Rank 1 number of bytes being received: 176136 from 0
+Rank 1 received file
+Rank 1 received file number: 1
+Rank 1 number of vertices from other machine: 10000
+Rank 1 start probe
+Rank 0 sent snapshot: 1
+Rank 0 sent snapshot: 1
+175444 deleting snapshot '/local/db0/csr__out__0.dat'
+deleting snapshot '/local/db0/csr__out__1.dat'
+Rank 0 probe successful
+mpi tag 6 received by machine 0
+Rank 3 probe successful
+mpi tag 0 received by machine 3
+Rank 3 number of bytes being received: 176136 from 0
+Rank 3 received file
+Rank 3 received file number: 1
+Rank 3 number of vertices from other machine: 10000
+Rank 3 start probe
+Rank 2 probe successful
+mpi tag 0 received by machine 2
+Rank 2 number of bytes being received: 176136 from 0
+Rank 2 received file
+Rank 2 received file number: 1
+Rank 2 number of vertices from other machine: 10000
+Rank 2 start probe
+deleting snapshot '/local/db1/csr__out__0.dat'
+deleting snapshot '/local/db3/csr__out__0.dat'
+deleting snapshot '/local/db2/csr__out__0.dat'
+Rank 1 probe successful
+mpi tag 6 received by machine 1
+Rank 3 probe successful
+mpi tag 6 received by machine 3
+Rank 0 main and mpi_listener threads now execute concurrently...
+world size: 4
+Rank 1 main and mpi_listener threads now execute concurrently...
+world size: 4
+Rank 3 main and mpi_listener threads now execute concurrently...
+world size: 4
+Rank 2 probe successful
+mpi tag 6 received by machine 2
+Rank 2 main and mpi_listener threads now execute concurrently...
+world size: 4
+Rank 0 mpi_listener running
+Rank 0 start probe
+Rank 1 mpi_listener running
+Rank 1 start probe
+Rank 3 mpi_listener running
+Rank 3 start probe
+Rank 2 mpi_listener running
+Rank 2 start probe
+num levels 2
+num vertices 1
+num levels 2
+num vertices 1
+Rank 0 adding nodes
+Rank 3 probe successful
+mpi tag 2 received by machine 3
+Rank 3 handling new node request
+Rank 3 completed mpi recv
+Rank 3 handling new node request midpoint
+Rank 3 done handling new node request
+Rank 3 start probe
+Rank Rank 0 probe successful
+mpi tag 3 received by machine 0
+Rank 0 start probe
+Rank 0 probe successful
+mpi tag 3 received by machine 0
+Rank 0 start probe
+num levels 2
+num vertices 1
+2 probe successful
+mpi tag 2 received by machine 2
+Rank 2 handling new node request
+Rank 2 completed mpi recv
+Rank 2 handling new node request midpoint
+Rank 2 done handling new node request
+Rank 2 start probe
+num levels 2
+num vertices 1
+Rank 0 probe successful
+mpi tag 3 received by machine 0
+Rank 0 start probe
+Rank 1 probe successful
+mpi tag 2 received by machine 1
+Rank 1 handling new node request
+Rank 1 completed mpi recv
+Rank 1 handling new node request midpoint
+Rank 1 done handling new node request
+Rank 1 start probe
+Rank 1 probe successful
+mpi tag 4 received by machine 1
+Rank 1 commanded to add node
+Rank 1 start probe
+Rank 3 probe successful
+mpi tag 4 received by machine 3
+Rank 3 commanded to add node
+Rank 3 start probe
+Rank 2 probe successful
+mpi tag 4 received by machine 2
+Rank 2 commanded to add node
+Rank 2 start probe
+Rank 0 sending snapshot file
+Rank 0 dllama_number_of_vertices 10000
+Rank 0 file_number 1
+Rank 1 probe successful
+mpi tag 0 received by machine 1
+Rank 1 number of bytes being received: 176136 from 0
+Rank 1 received file
+Rank 1 received file number: 1
+Rank 1 number of vertices from other machine: 10000
+Rank 0 sent snapshot: 1
+Rank Rank 13 start probe probe successful
+
+mpi tag 0 received by machine 3
+Rank 3 number of bytes being received: 176136 from 0
+Rank 3 received fileRank 0 sent snapshot: 1
+
+Rank 3 received file number: 1
+Rank 3 number of vertices from other machine: 10000
+Rank 0 sent snapshot: 1
+127811 deleting snapshot '/local/db0/csr__out__0.dat'
+deleting snapshot '/local/db0/csr__out__1.dat'
+Rank 0 probe successful
+mpi tag 6 received by machine 0
+Rank Rank 2 probe successful
+mpi tag 0 received by machine 2
+Rank 2 number of bytes being received: 176136 from 0
+Rank 2 received file
+Rank 2 received file number: 1
+Rank 2 number of vertices from other machine: 10000
+Rank 2 start probe
+3 start probe
+deleting snapshot '/local/db1/csr__out__0.dat'
+deleting snapshot '/local/db3/csr__out__0.dat'
+deleting snapshot '/local/db2/csr__out__0.dat'
+Rank 1 probe successful
+mpi tag 6 received by machine 1
+Rank 3 probe successful
+mpi tag 6 received by machine 3
+Rank 3 main and mpi_listener threads now execute concurrently...
+world size: 4
+Rank 2 probe successful
+mpi tag 6 received by machine 2
+Rank 0 main and mpi_listener threads now execute concurrently...
+world size: 4
+Rank 1 main and mpi_listener threads now execute concurrently...
+world size: 4
+Rank 2 main and mpi_listener threads now execute concurrently...
+world size: 4
+Rank 0 mpi_listener running
+Rank 0 start probe
+Rank 1 mpi_listener running
+Rank 1 start probe
+Rank 3 mpi_listener running
+Rank 3 start probe
+Rank 2 mpi_listener running
+Rank 2 start probe
+num levels 2
+num vertices 1
+num levels 2
+num vertices 1
+Rank 0 adding nodes
+num levels 2
+num vertices 1
+Rank Rank 0 probe successful
+mpi tag 3 received by machine 0
+Rank 0 start probe
+2 probe successful
+mpi tag 2 received by machine 2
+Rank 2 handling new node request
+Rank 2 completed mpi recv
+Rank 2 handling new node request midpoint
+Rank 2 done handling new node request
+Rank 2 start probe
+num levels 2
+num vertices 1
+Rank 0 probe successful
+mpi tag 3 received by machine 0
+Rank 0 start probe
+Rank 0 probe successful
+mpi tag 3 received by machine 0
+Rank 0 start probe
+Rank 1 probe successful
+mpi tag 2 received by machine 1
+Rank 1 handling new node request
+Rank 1 completed mpi recv
+Rank 1 handling new node request midpoint
+Rank 1 done handling new node request
+Rank 1 start probe
+Rank 1 probe successful
+mpi tag 4 received by machine 1
+Rank 1 commanded to add node
+Rank 3 probe successful
+mpi tag 2 received by machine 3
+Rank 3 handling new node request
+Rank 3 completed mpi recv
+Rank 3 handling new node request midpoint
+Rank 3 done handling new node request
+Rank 3 start probe
+Rank 3 probe successful
+mpi tag 4 received by machine 3
+Rank 3 commanded to add node
+Rank 3 start probe
+Rank 1 start probe
+Rank 2 probe successful
+mpi tag 4 received by machine 2
+Rank 2 commanded to add node
+Rank 2 start probe
+Rank 0 sending snapshot file
+Rank 0 dllama_number_of_vertices 10000
+Rank 0 file_number 1
+Rank 1 probe successful
+mpi tag 0 received by machine 1
+Rank 1 number of bytes being received: 176136 from 0
+Rank 1 received file
+Rank 1 received file number: 1
+Rank 1 number of vertices from other machine: 10000
+Rank 0 sent snapshot: 1
+Rank Rank 13 start probe probe successful
+
+mpi tag 0 received by machine 3
+Rank 3 number of bytes being received: 176136 from 0
+Rank 3Rank 0 sent snapshot: 1
+ received file
+Rank 3 received file number: 1
+Rank 3 number of vertices from other machine: 10000
+Rank 0 sent snapshot: 1
+122434 deleting snapshot '/local/db0/csr__out__0.dat'
+deleting snapshot '/local/db0/csr__out__1.dat'
+Rank 0 probe successful
+mpi tag 6 received by machine 0
+deleting snapshot '/local/db1/csr__out__0.dat'
+Rank Rank 2 probe successful
+mpi tag 0 received by machine 2
+Rank 2 number of bytes being received: 176136 from 0
+Rank 2 received file
+Rank 2 received file number: 1
+Rank 2 number of vertices from other machine: 10000
+Rank 2 start probe
+3 start probe
+deleting snapshot '/local/db3/csr__out__0.dat'
+Rank 1 probe successful
+mpi tag 6 received by machine 1
+Rank 3 probe successful
+mpi tag 6 received by machine 3
+deleting snapshot '/local/db2/csr__out__0.dat'
+Rank 2 probe successful
+mpi tag 6 received by machine 2
+Rank 0 main and mpi_listener threads now execute concurrently...
+world size: 4
+Rank 1 main and mpi_listener threads now execute concurrently...
+world size: 4
+Rank 3 main and mpi_listener threads now execute concurrently...
+world size: 4
+Rank 2 main and mpi_listener threads now execute concurrently...
+world size: 4
+Rank 0 mpi_listener running
+Rank 0 start probe
+Rank 1 mpi_listener running
+Rank 1 start probe
+Rank 3 mpi_listener running
+Rank 3 start probe
+Rank 2 mpi_listener running
+Rank 2 start probe
+num levels 2
+num vertices 1
+num levels 2
+num vertices 1
+num levels 2
+num vertices 1
+Rank 0 adding nodes
+num levels 2
+num vertices 1
+Rank 0 probe successful
+mpi tag 3 received by machine 0
+Rank 0 start probe
+Rank 1 probe successful
+mpi tag 2 received by machine 1
+Rank 1 handling new node request
+Rank 1 completed mpi recv
+Rank 1 handling new node request midpoint
+Rank 1 done handling new node request
+Rank 1 start probe
+Rank 0 probe successful
+mpi tag 3 received by machine 0
+Rank 0 start probe
+Rank 0 probe successful
+mpi tag 3 received by machine 0
+Rank 0 start probe
+Rank Rank 3 probe successful
+mpi tag 2 received by machine 3
+Rank 3 handling new node request
+Rank 3 completed mpi recv
+Rank 3 handling new node request midpoint
+Rank 3 done handling new node request
+Rank 3 start probe
+Rank 3 probe successful
+mpi tag 4 received by machine 3
+Rank 3 commanded to add node
+Rank 3 start probe
+1 probe successful
+mpi tag 4 received by machine 1
+Rank 1 commanded to add node
+Rank 1 start probe
+Rank 2 probe successful
+mpi tag 2 received by machine 2
+Rank 2 handling new node request
+Rank 2 completed mpi recv
+Rank 2 handling new node request midpoint
+Rank 2 done handling new node request
+Rank 2 start probe
+Rank 2 probe successful
+mpi tag 4 received by machine 2
+Rank 2 commanded to add node
+Rank 2 start probe
+Rank 0 sending snapshot file
+Rank 0 dllama_number_of_vertices 10000
+Rank 0 file_number 1
+Rank 0 sent snapshot: 1
+Rank 1 probe successful
+mpi tag 0 received by machine 1
+Rank 1 number of bytes being received: 176136 from 0
+Rank 1 received file
+Rank 1 received file number: 1
+Rank 1 number of vertices from other machine: 10000
+Rank 1 start probe
+Rank 0 sent snapshot: 1
+Rank 3 probe successful
+mpi tag 0 received by machine 3
+Rank 3 number of bytes being received: 176136 from 0
+Rank 3 received file
+Rank 3 received file number: 1
+Rank 3 number of vertices from other machine: 10000
+Rank 3 start probe
+Rank 0 sent snapshot: 1
+175471 deleting snapshot '/local/db0/csr__out__0.dat'
+deleting snapshot '/local/db0/csr__out__1.dat'
+Rank 2 probe successful
+mpi tag 0 received by machine 2
+Rank 2 number of bytes being received: 176136 from 0
+Rank 2 received file
+Rank 2 received file number: 1
+Rank 2 number of vertices from other machine: 10000
+Rank 2 start probe
+deleting snapshot '/local/db1/csr__out__0.dat'
+Rank 0 probe successful
+mpi tag 6 received by machine 0
+deleting snapshot '/local/db3/csr__out__0.dat'
+deleting snapshot '/local/db2/csr__out__0.dat'
+Rank 1 probe successful
+mpi tag 6 received by machine 1
+Rank 3 probe successful
+mpi tag 6 received by machine 3
+Rank 3 main and mpi_listener threads now execute concurrently...
+world size: 4
+Rank 2 probe successful
+mpi tag 6 received by machine 2
+Rank 0 main and mpi_listener threads now execute concurrently...
+world size: 4
+Rank 1 main and mpi_listener threads now execute concurrently...
+world size: 4
+Rank 2 main and mpi_listener threads now execute concurrently...
+world size: 4
+Rank 0 mpi_listener running
+Rank 0 start probe
+Rank 1 mpi_listener running
+Rank 1 start probe
+Rank 3 mpi_listener running
+Rank 3 start probe
+Rank 2 mpi_listener running
+Rank 2 start probe
+num levels 2
+num vertices 1
+num levels 2
+num vertices 1
+num levels 2
+num vertices 1
+num levels 2
+num vertices 1
+Rank 0 adding nodes
+Rank 0 probe successful
+mpi tag 3 received by machine 0
+Rank 0 start probe
+Rank 0 probe successful
+mpi tag 3 received by machine 0
+Rank 0 start probe
+Rank 1 probe successful
+mpi tag 2 received by machine 1
+Rank 1 handling new node request
+Rank 1 completed mpi recv
+Rank 1 handling new node request midpoint
+Rank 1 done handling new node request
+Rank 1 start probe
+Rank 3 probe successful
+mpi tag 2 received by machine 3
+Rank 3 handling new node request
+Rank 3 completed mpi recv
+Rank 3 handling new node request midpoint
+Rank 3 done handling new node request
+Rank 3 start probe
+Rank 0 probe successful
+mpi tag 3 received by machine 0
+Rank 0 start probe
+Rank 1 probe successful
+mpi tag 4 received by machine 1
+Rank 1 commanded to add node
+Rank 1 start probe
+Rank 3 probe successful
+mpi tag 4 received by machine 3
+Rank 3 commanded to add node
+Rank 3 start probe
+Rank 2 probe successful
+mpi tag 2 received by machine 2
+Rank 2 handling new node request
+Rank 2 completed mpi recv
+Rank 2 handling new node request midpoint
+Rank 2 done handling new node request
+Rank 2 start probe
+Rank 2 probe successful
+mpi tag 4 received by machine 2
+Rank 2 commanded to add node
+Rank 2 start probe
+Rank 0 sending snapshot file
+Rank 0 dllama_number_of_vertices 10000
+Rank 0 file_number 1
+Rank 0 sent snapshot: 1
+Rank 1 probe successful
+mpi tag 0 received by machine 1
+Rank 1 number of bytes being received: 176136 from 0
+Rank 1 received file
+Rank 1 received file number: 1
+Rank 1 number of vertices from other machine: 10000
+Rank 1 start probe
+Rank 0 sent snapshot: 1
+Rank 0 sent snapshot: 1
+171329 deleting snapshot '/local/db0/csr__out__0.dat'
+deleting snapshot '/local/db0/csr__out__1.dat'
+Rank 0 probe successful
+mpi tag 6 received by machine 0
+Rank 3 probe successful
+mpi tag 0 received by machine 3
+Rank 3 number of bytes being received: 176136 from 0
+Rank 3 received file
+Rank 3 received file number: 1
+Rank 3 number of vertices from other machine: 10000
+Rank 3 start probe
+Rank 2 probe successful
+mpi tag 0 received by machine 2
+Rank 2 number of bytes being received: 176136 from 0
+Rank 2 received file
+Rank 2 received file number: 1
+Rank 2 number of vertices from other machine: 10000
+Rank 2 start probe
+deleting snapshot '/local/db1/csr__out__0.dat'
+deleting snapshot '/local/db3/csr__out__0.dat'
+Rank 1 probe successful
+mpi tag 6 received by machine 1
+Rank 3 probe successful
+mpi tag 6 received by machine 3
+deleting snapshot '/local/db2/csr__out__0.dat'
+Rank 2 probe successful
+mpi tag 6 received by machine 2
+

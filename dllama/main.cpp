@@ -260,7 +260,7 @@ int main(int argc, char** argv) {
 		cout << "ERROR: MPI implementation doesn't provide multi-thread support\n";
 	}
 	//select benchmarks
-	cout << "started benchmark\n";
+	//cout << "started benchmark\n";
     if (argc == 5) {
 		int second_arg = atoi(argv[2]);
 		int third_arg = atoi(argv[3]);
