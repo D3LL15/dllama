@@ -1,0 +1,12 @@
+srun: error: Unable to resolve "scheduler": Unknown host
+srun: error: Unable to establish control machine address
+srun: error: Unable to confirm allocation for job 696111: No error
+srun: Check SLURM_JOB_ID environment variable for expired or invalid job.
+srun: error: Unable to resolve "scheduler": Unknown host
+srun: error: Unable to establish control machine address
+srun: error: Unable to confirm allocation for job 696143: No error
+srun: Check SLURM_JOB_ID environment variable for expired or invalid job.
+[mpiexec@cpu-e-82] match_arg (./utils/args/args.c:194): unrecognized argument npernode
+[mpiexec@cpu-e-82] HYDU_parse_array (./utils/args/args.c:214): argument matching returned error
+[mpiexec@cpu-e-82] parse_args (./ui/mpich/utils.c:2956): error parsing input array
+[mpiexec@cpu-e-82] HYD_uii_mpx_get_parameters (./ui/mpich/utils.c:3230): unable to parse user arguments

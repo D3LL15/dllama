@@ -1,0 +1,67 @@
+# On branch master
+# Changes not staged for commit:
+#   (use "git add/rm <file>..." to update what will be committed)
+#   (use "git checkout -- <file>..." to discard changes in working directory)
+#
+#	deleted:    ../bin/llama-pagerank
+#	modified:   Makefile
+#	modified:   main.cpp
+#
+# Untracked files:
+#   (use "git add <file>..." to include in what will be committed)
+#
+#	../.DS_Store
+#	../._.DS_Store
+#	../._.gitignore
+#	.DS_Store
+#	._.DS_Store
+#	._kronecker_graph.net
+#	._krongraph2.net
+#	._powerlaw2.net
+#	gitstatus
+#	listOfOpenMPIs
+#	listOfPossibleModules
+#	machine.file.692340
+#	machine.file.692530
+#	machine.file.692853
+#	machine.file.694231
+#	machine.file.694889
+#	machine.file.694917
+#	machine.file.694975
+#	machine.file.695977
+#	machine.file.696040
+#	machine.file.696052
+#	machine.file.696111
+#	machine.file.696143
+#	machine.file.696235
+#	machine.file.696491
+#	machine.file.696564
+#	machine.file.696661
+#	machine.file.696914
+#	machine.file.696927
+#	machine.file.700289
+#	makeOutput.txt
+#	makeOutput2.txt
+#	outfile
+#	outfile2
+#	slurm-692340.out
+#	slurm-692530.out
+#	slurm-692853.out
+#	slurm-694231.out
+#	slurm-694889.out
+#	slurm-694917.out
+#	slurm-694975.out
+#	slurm-695977.out
+#	slurm-696040.out
+#	slurm-696052.out
+#	slurm-696111.out
+#	slurm-696143.out
+#	slurm-696235.out
+#	slurm-696491.out
+#	slurm-696564.out
+#	slurm-696661.out
+#	slurm-696914.out
+#	slurm-696927.out
+#	slurm-700289.out
+#	slurm_submit.darwin
+no changes added to commit (use "git add" and/or "git commit -a")

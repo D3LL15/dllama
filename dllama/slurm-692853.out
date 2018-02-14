@@ -1,0 +1,24 @@
+Changed directory to /home/js2072/dllama/dllama.
+
+JobID: 692853
+======
+Time: Tue 13 Feb 17:26:08 GMT 2018
+Running on master node: cpu-e-112
+Current directory: /home/js2072/dllama/dllama
+/usr/bin/perl: symbol lookup error: /usr/local/Cluster-Apps/slurm-14.11.8/lib64/perl5/auto/Slurm/Slurm.so: undefined symbol: Perl_Gthr_key_ptr
+
+Nodes allocated:
+================
+
+
+numtasks=4, numnodes=4, mpi_tasks_per_node=1 (OMP_NUM_THREADS=1)
+
+Executing command:
+==================
+mpirun -ppn 1 -np 4 /home/js2072/dllama/dllama/dllama.exe 0 10000 10 /local/
+
+srun: error: Unable to resolve "scheduler": Unknown host
+srun: error: Unable to establish control machine address
+srun: error: Unable to confirm allocation for job 692853: No error
+srun: Check SLURM_JOB_ID environment variable for expired or invalid job.
+slurmstepd: error: *** JOB 692853 ON cpu-e-112 CANCELLED AT 2018-02-13T17:46:24 DUE TO TIME LIMIT ***
