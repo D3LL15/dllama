@@ -280,7 +280,7 @@ void breadth_first_search(int num_iterations) {
 	MPI_Barrier(MPI_COMM_WORLD);
 
 	node_t end_id = 692;
-	for (int j = 0; j < num_iterations; j++) {
+	for (int j = 0; j < num_iterations*5; j++) {
 		if (world_rank == 0) {
 			high_resolution_clock::time_point t1 = high_resolution_clock::now();
 			
@@ -298,7 +298,7 @@ void breadth_first_search(int num_iterations) {
 				vector<node_t> neighbours = my_dllama_instance->get_neighbours_of_vertex(n);
 				for (int i = 0; i < neighbours.size(); i++) {
 					node_t destination = neighbours.at(i);
-					if (destination == end_id) {
+					if (destination == (end_id + j)) {
 						found_node = true;
 						break;
 					}
