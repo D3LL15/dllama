@@ -7,6 +7,8 @@
 #include <mutex>
 #include <stdlib.h>
 #include <chrono>
+#include <unordered_set>
+#include <queue>
 
 #include "dllama_test.h"
 #include "dllama.h"
@@ -251,6 +253,85 @@ void add_and_read_power_graph2(int num_iterations) {
 	add_and_read_graph("powerlaw2.net", 50000, num_iterations);
 }
 
+void breadth_first_search(int num_iterations) {
+	int num_nodes = 1024;
+	string input_file = "kronecker_graph.net";
+	dllama* my_dllama_instance = new dllama(database_location, false);
+	my_dllama_instance->load_net_graph("empty_graph.net");
+	MPI_Barrier(MPI_COMM_WORLD);
+	if (world_rank == 0) {
+		cout << "microseconds for breadth first search\n";
+		ifstream file(input_file);
+		if (!file.is_open()) {
+			cout << "cannot open graph net file\n";
+			return;
+		}
+		my_dllama_instance->add_nodes(num_nodes);
+		string line;
+		int from;
+		int to;
+		while (getline(file, line)) {
+			sscanf(line.c_str(), "%d	%d", &from, &to);
+			my_dllama_instance->add_edge(from, to);
+		}
+		file.close();
+		my_dllama_instance->request_checkpoint();
+	}
+	MPI_Barrier(MPI_COMM_WORLD);
+
+	node_t end_id = 692;
+	for (int j = 0; j < num_iterations; j++) {
+		if (world_rank == 0) {
+			high_resolution_clock::time_point t1 = high_resolution_clock::now();
+			
+			for (int i = 0; i < num_nodes; i++) {
+				my_dllama_instance->get_neighbours_of_vertex(i);
+			}
+			queue<node_t> next_nodes;
+			unordered_set<node_t> seen_nodes;
+			
+			node_t n = 0;
+			seen_nodes.insert(n);
+			
+			bool found_node = false;
+			while (!found_node) {
+				vector<node_t> neighbours = my_dllama_instance->get_neighbours_of_vertex(n);
+				for (int i = 0; i < neighbours.size(); i++) {
+					node_t destination = neighbours.at(i);
+					if (destination == end_id) {
+						found_node = true;
+						break;
+					}
+					if (seen_nodes.find(destination) == seen_nodes.end()) {
+						next_nodes.push(destination);
+						seen_nodes.insert(destination);
+					}
+				}
+				
+				if (next_nodes.empty()) {
+					break;
+				}
+
+				n = next_nodes.front();
+				next_nodes.pop();
+			}
+			
+			high_resolution_clock::time_point t2 = high_resolution_clock::now();
+			auto duration = duration_cast<microseconds>(t2 - t1).count();
+			cout << duration << "\n";
+			
+		}
+		MPI_Barrier(MPI_COMM_WORLD);
+		
+	}
+	if (world_rank == 0) {
+		cout << "\n";
+	}
+	my_dllama_instance->delete_db();
+	my_dllama_instance->shutdown();
+	delete my_dllama_instance;
+}
+
 //usage: mpirun -n 2 ./dllama.exe 4 10000 10 database/
 int main(int argc, char** argv) {
 	int p = 0;
@@ -314,6 +395,9 @@ int main(int argc, char** argv) {
 				break;
 			case '9':
 				add_and_read_power_graph2(third_arg);
+				break;
+			case 'a':
+				breadth_first_search(third_arg);
 				break;
 			default:
 				cout << "provide benchmark number, number of nodes, number of iterations, location to store database" << "\n";
