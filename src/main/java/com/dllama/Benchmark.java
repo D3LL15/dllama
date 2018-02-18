@@ -7,7 +7,10 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
+import java.util.ArrayDeque;
+import java.util.HashSet;
 import java.util.Iterator;
+import java.util.Queue;
 
 public class Benchmark
 {
@@ -21,14 +24,14 @@ public class Benchmark
 		org.neo4j.graphdb.Transaction tx1 = graphDb.beginTx();
 		try {
 			graphDb.execute("MATCH (n) DETACH DELETE n");
-
+			tx1.success();
 		} finally {
 			tx1.close();
 		}
 	}
 
 	private void addNodes(int numIterations, int numNodes) {
-		System.out.println("microseconds to add 100000 nodes");
+		System.out.format("microseconds to add %d nodes\n", numNodes * 10);
 		for (int j = 0; j < numIterations; j++) {
 			long t1 = System.nanoTime();
 			org.neo4j.graphdb.Transaction tx = graphDb.beginTx();
@@ -37,20 +40,20 @@ public class Benchmark
 					Node newNode = graphDb.createNode();
 					newNode.setProperty("num", num);
 				}
-
+				tx.success();
 			} finally {
 				tx.close();
 			}
 			long t2 = System.nanoTime();
 			long duration = (t2 - t1)/1000;
-			System.out.print(duration + " ");
+			System.out.println(duration);
 			deleteDB();
 		}
 		System.out.println("");
 	}
 
 	private void addEdges(int numIterations, int numNodes) {
-		System.out.println("microseconds to add 100 edges to 10000 nodes");
+		System.out.format("microseconds to add 100 edges to %d nodes\n", numNodes);
 		//int numNodes = 10000;
 		for (int j = 0; j < numIterations; j++) {
 			long t1 = System.nanoTime();
@@ -67,20 +70,21 @@ public class Benchmark
 						Relationship relationship = nodes[num].createRelationshipTo(nodes[i], RelTypes.EDGE);
 					}
 				}
+				tx.success();
 			}
 			finally {
 				tx.close();
 			}
 			long t2 = System.nanoTime();
 			long duration = (t2 - t1)/1000;
-			System.out.print(duration + " ");
+			System.out.println(duration);
 			deleteDB();
 		}
 		System.out.println("");
 	}
 
 	private void readEdges(int numIterations, int numNodes) {
-		System.out.println("microseconds to read 100 edges from each of 10000 nodes");
+		System.out.format("microseconds to read 100 edges from each of %d nodes\n", numNodes);
 		//int numNodes = 10000;
 
 		for (int j = 0; j < numIterations; j++) {
@@ -97,13 +101,14 @@ public class Benchmark
 						Relationship relationship = nodes[num].createRelationshipTo(nodes[i], RelTypes.EDGE);
 					}
 				}
-		/*}
-		finally {
-			tx.close();
-		}
+				tx.success();
+			}
+			finally {
+				tx.close();
+			}
 
-		tx = graphDb.beginTx();
-		try {*/
+			tx = graphDb.beginTx();
+			try {
 
 				long t1 = System.nanoTime();
 
@@ -118,15 +123,15 @@ public class Benchmark
 
 				long t2 = System.nanoTime();
 				long duration = (t2 - t1) / 1000;
-				System.out.print(duration + " ");
+				System.out.println(duration);
 				//deleteDB();
-			//}
-		}
-		finally{
-			tx.close();
-		}
+				tx.success();
+			}
+			finally{
+				tx.close();
+			}
 			deleteDB();
-	}
+		}
 		System.out.println("");
 		//deleteDB();
 	}
@@ -154,6 +159,8 @@ public class Benchmark
 					line = reader.readLine();
 				}
 				reader.close();
+
+				tx.success();
 			}
 			catch (IOException e) {
 				e.printStackTrace();
@@ -169,13 +176,14 @@ public class Benchmark
 					Node n = readNodes.next();
 					n.getRelationships().iterator();
 				}
+				tx.success();
 			}
 			finally {
 				tx.close();
 			}
 			long t2 = System.nanoTime();
 			long duration = (t2 - t1)/1000;
-			System.out.print(duration + " ");
+			System.out.println(duration);
 			deleteDB();
 		}
 		System.out.println("");
@@ -220,6 +228,7 @@ public class Benchmark
 		org.neo4j.graphdb.Transaction tx1 = graphDb.beginTx();
 		try {
 			graphDb.execute("MATCH (n) DETACH DELETE n");
+			tx1.success();
 		} finally {
 			tx1.close();
 		}
@@ -230,6 +239,118 @@ public class Benchmark
 		EDGE
 	}
 
+	private void breadthFirstSearch(String directory, int numIterations) {
+		int numberOfNodes = 1024;
+		long startID = 0;
+		long endID = 0;
+		org.neo4j.graphdb.Transaction tx = graphDb.beginTx();
+		try {
+			BufferedReader reader;
+			reader = new BufferedReader(new FileReader(directory + "/kronecker_graph.net"));
+			String line = reader.readLine();
+			String[] fileNodes;
+
+			Node[] nodes = new Node[numberOfNodes];
+			for (int num = 0; num < numberOfNodes; num++) {
+				nodes[num] = graphDb.createNode();
+				nodes[num].setProperty("num", num);
+				/*if (nodes[num].getId() == 724) {
+					System.out.format("end node actual number = %d\n", num);
+				}*/
+			}
+			startID = nodes[0].getId();
+			endID = nodes[692].getId();
+
+			while (line != null) {
+				fileNodes = line.split("	");
+				//System.out.format("from: %d to: %d\n", Integer.parseInt(fileNodes[0]), Integer.parseInt(fileNodes[1]));
+				Relationship relationship = nodes[Integer.parseInt(fileNodes[0])].createRelationshipTo(nodes[Integer.parseInt(fileNodes[1])], RelTypes.EDGE);
+				line = reader.readLine();
+			}
+			reader.close();
+			tx.success();
+		}
+		catch (IOException e) {
+			e.printStackTrace();
+		}
+		finally {
+			tx.close();
+		}
+
+		for (int j = 0; j < numIterations; j++) {
+
+			long t1 = System.nanoTime();
+			tx = graphDb.beginTx();
+			try {
+				Queue<Node> nextNodes = new ArrayDeque<Node>();
+				HashSet<Node> seenNodes = new HashSet<Node>();
+
+				Node n = graphDb.getNodeById(startID);
+				//System.out.format("started at node %d\n", n.getId());
+				seenNodes.add(n);
+
+				boolean foundNode = false;
+				while (!foundNode) {
+					Iterator<Relationship> neighbours = n.getRelationships().iterator();
+
+					while (neighbours.hasNext()) {
+						Relationship r = neighbours.next();
+						Node endNode = r.getEndNode();
+						if (endNode.getId() == endID) {
+							//System.out.println("found node");
+							foundNode = true;
+							break;
+						}
+						if (!seenNodes.contains(endNode)) {
+							nextNodes.add(endNode);
+							seenNodes.add(endNode);
+						}
+					}
+
+					if (nextNodes.isEmpty()) {
+						break;
+					}
+
+					n = nextNodes.remove();
+				}
+
+				/*for (int i = 0; i < 10000; i++) {
+					Iterator<Relationship> neighbours = n.getRelationships().iterator();
+					//visitedNodes.add(n);
+
+					while (neighbours.hasNext()) {
+						Relationship r = neighbours.next();
+						Node endNode = r.getEndNode();
+						if (!seenNodes.contains(endNode)) {
+							nextNodes.add(endNode);
+							seenNodes.add(endNode);
+						}
+					}
+
+					if (nextNodes.isEmpty()) {
+						System.out.format("reached %d nodes\n", i);
+						break;
+					}
+
+					n = nextNodes.remove();
+				}
+				System.out.format("last node = %d\n", n.getId());*/
+
+
+				tx.success();
+			}
+			finally {
+				tx.close();
+			}
+			long t2 = System.nanoTime();
+			long duration = (t2 - t1)/1000;
+			System.out.println(duration);
+
+		}
+		deleteDB();
+		System.out.println("");
+	}
+
 	public static void main(String... args)
 	{
 		//run clean compile then assembly:single
@@ -238,13 +359,14 @@ public class Benchmark
 			Benchmark benchmark = new Benchmark(args[1]);
 			int numIterations = Integer.parseInt(args[2]);
 			int numNodes = Integer.parseInt(args[3]);
-			benchmark.addNodes(numIterations, numNodes);
+			/*benchmark.addNodes(numIterations, numNodes);
 			benchmark.addEdges(numIterations, numNodes);
 			benchmark.readEdges(numIterations, numNodes);
 			benchmark.addAndReadPowerGraph(args[0], numIterations);
 			benchmark.addAndReadKroneckerGraph(args[0], numIterations);
 			benchmark.addAndReadPowerGraph2(args[0], numIterations);
-			benchmark.addAndReadKroneckerGraph2(args[0], numIterations);
+			benchmark.addAndReadKroneckerGraph2(args[0], numIterations);*/
+			benchmark.breadthFirstSearch(args[0], numIterations);
 			benchmark.graphDb.shutdown();
 
 		} else {
