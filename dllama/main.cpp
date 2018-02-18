@@ -399,6 +399,11 @@ int main(int argc, char** argv) {
 			case 'a':
 				breadth_first_search(third_arg);
 				break;
+			case 'b':
+				read_edges_benchmark(second_arg, third_arg);
+				merge_benchmark(second_arg, third_arg);
+				breadth_first_search(third_arg);
+				break;
 			default:
 				cout << "provide benchmark number, number of nodes, number of iterations, location to store database" << "\n";
 		}
