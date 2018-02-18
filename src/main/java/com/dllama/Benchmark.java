@@ -240,6 +240,7 @@ public class Benchmark
 	}
 
 	private void breadthFirstSearch(String directory, int numIterations) {
+		System.out.println("microseconds for breadth first search");
 		int numberOfNodes = 1024;
 		long startID = 0;
 		long endID = 0;
@@ -359,13 +360,11 @@ public class Benchmark
 			Benchmark benchmark = new Benchmark(args[1]);
 			int numIterations = Integer.parseInt(args[2]);
 			int numNodes = Integer.parseInt(args[3]);
-			/*benchmark.addNodes(numIterations, numNodes);
+			benchmark.addNodes(numIterations, numNodes);
 			benchmark.addEdges(numIterations, numNodes);
 			benchmark.readEdges(numIterations, numNodes);
 			benchmark.addAndReadPowerGraph(args[0], numIterations);
 			benchmark.addAndReadKroneckerGraph(args[0], numIterations);
-			benchmark.addAndReadPowerGraph2(args[0], numIterations);
-			benchmark.addAndReadKroneckerGraph2(args[0], numIterations);*/
 			benchmark.breadthFirstSearch(args[0], numIterations);
 			benchmark.graphDb.shutdown();
 
