@@ -3,6 +3,9 @@
 #include "shared_thread_state.h"
 #include <iostream>
 #include <mpi.h>
+#include <algorithm>
+#include <fstream>
+#include <sstream>
 
 using namespace dllama_ns;
 using namespace std;
@@ -52,9 +55,65 @@ namespace {
 		// Exercises the Xyz feature of Foo.
 	}
 	
+	TEST_F(DllamaTest, KronGraphTest) {
+		MPI_Barrier(MPI_COMM_WORLD);
+
+		int num_nodes = 1024;
+		int num_edges = 2655;
+		dllama* my_dllama_instance = new dllama("database/", false);
+		my_dllama_instance->load_net_graph("empty_graph.net");
+		MPI_Barrier(MPI_COMM_WORLD);
+		if (world_rank == 0) {
+			ifstream file("kronecker_graph.net");
+			if (!file.is_open()) {
+				cout << "cannot open graph net file\n";
+				return;
+			}
+			my_dllama_instance->add_nodes(num_nodes);
+			string line;
+			int from;
+			int to;
+			for (int i = 0; i < num_edges/2; i++) {
+				getline(file, line);
+				sscanf(line.c_str(), "%d	%d", &from, &to);
+				my_dllama_instance->add_edge(from, to);
+			}
+			my_dllama_instance->request_checkpoint();
+			for (int i = num_edges/2; i < num_edges; i++) {
+				getline(file, line);
+				sscanf(line.c_str(), "%d	%d", &from, &to);
+				my_dllama_instance->add_edge(from, to);
+			}
+			file.close();
+			my_dllama_instance->request_checkpoint();
+			my_dllama_instance->start_merge();
+			sleep(8);
+
+			ifstream file2("kronecker_graph.net");
+			if (!file2.is_open()) {
+				cout << "cannot open graph net file\n";
+				return;
+			}
+			while (getline(file2, line)) {
+				sscanf(line.c_str(), "%d	%d", &from, &to);
+				vector<node_t> neighbours = my_dllama_instance->get_neighbours_of_vertex(from);
+				if (std::find(neighbours.begin(), neighbours.end(), to) == neighbours.end()) {
+					cout << "no edge from " << from << " to " << to << "\n";
+					EXPECT_EQ(true, false);
+				}
+			}
+			file2.close();
+		}
+		MPI_Barrier(MPI_COMM_WORLD);
+		my_dllama_instance->delete_db();
+		my_dllama_instance->shutdown();
+		delete my_dllama_instance;
+		sleep(2);
+	}
+	
 	TEST_F(DllamaTest, FullTest) {
 		MPI_Barrier(MPI_COMM_WORLD);
-		dllama* dllama_instance = new dllama("", false);
+		dllama* dllama_instance = new dllama("database/", false);
 	
 		dllama_instance->load_net_graph("simple_graph.net");
 
@@ -74,13 +133,11 @@ namespace {
 			DEBUG("Rank " << world_rank << " trying to manually start merge");
 			dllama_instance->start_merge();
 
-			sleep(1);
-		} else {
-			sleep(2);
+			sleep(5);
 		}
 
-		sleep(3);
-
+		MPI_Barrier(MPI_COMM_WORLD);
+		
 		node_t expected_neighbours1[3] = {1, 2, 3};
 		node_t expected_neighbours2[3] = {0, 2, 3};
 		node_t expected_neighbours3[3] = {0, 1, 3};

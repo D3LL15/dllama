@@ -37,5 +37,6 @@ dllama.exe : main.cpp dllama_test.cpp dllama_test.h dllama.cpp dllama.h snapshot
 simple_dllama.exe : main.cpp dllama_test.cpp dllama_test.h simple_dllama.cpp dllama.h snapshot_merger.cpp snapshot_merger.h shared_thread_state.h snapshot_manager.cpp snapshot_manager.h 
 	$(CC) $(CFLAGS) main.cpp dllama_test.cpp simple_dllama.cpp snapshot_merger.cpp snapshot_manager.cpp $(LFLAGS) -o simple_dllama.exe
 
-#dllamatest.exe : dllamatest.cpp dllama_test.cpp dllama_test.h dllama.cpp dllama.h snapshot_merger.cpp snapshot_merger.h shared_thread_state.h snapshot_manager.cpp snapshot_manager.h
- 	#$(CC) $(CFLAGS) -DDEBUG_ENABLED -Igoogletestmaster/googletest/include dllamatest.cpp dllama_test.cpp dllama.cpp snapshot_merger.cpp snapshot_manager.cpp -Lgoogletestmaster/googlemock/gtest/ -lgtest $(LFLAGS) -o dllamatest.exe
+dllamatest.exe : dllamatest.cpp dllama_test.cpp dllama_test.h dllama.cpp dllama.h snapshot_merger.cpp snapshot_merger.h shared_thread_state.h snapshot_manager.cpp snapshot_manager.h
+	$(CC) $(CFLAGS) -Igoogletestmaster/googletest/include dllamatest.cpp dllama_test.cpp dllama.cpp snapshot_merger.cpp snapshot_manager.cpp -Lgoogletestmaster/googlemock/gtest/ -lgtest $(LFLAGS) -o dllamatest.exe
+

@@ -36,7 +36,7 @@ void add_nodes_benchmark(int num_nodes, int num_iterations) {
 			high_resolution_clock::time_point t2 = high_resolution_clock::now();
 
 			auto duration = duration_cast<microseconds>(t2 - t1).count();
-			cout << duration << " ";
+			cout << duration << "\n";
 		}
 		MPI_Barrier(MPI_COMM_WORLD);
 		dllama_instance->delete_db();
@@ -76,7 +76,7 @@ void add_edges_benchmark(int num_nodes, int num_iterations) {
 			my_dllama_instance->request_checkpoint();
 			high_resolution_clock::time_point t2 = high_resolution_clock::now();
 			auto duration = duration_cast<microseconds>(t2 - t1).count();
-			cout << duration << " ";
+			cout << duration << "\n";
 		}
 		MPI_Barrier(MPI_COMM_WORLD);
 		my_dllama_instance->delete_db();
@@ -118,7 +118,7 @@ void read_edges_benchmark(int num_nodes, int num_iterations) {
 			
 			high_resolution_clock::time_point t2 = high_resolution_clock::now();
 			auto duration = duration_cast<microseconds>(t2 - t1).count();
-			cout << duration << " ";
+			cout << duration << "\n";
 		}
 		MPI_Barrier(MPI_COMM_WORLD);
 		my_dllama_instance->delete_db();
@@ -171,6 +171,9 @@ void merge_benchmark(int num_nodes, int num_iterations) {
 }
 
 void add_and_read_graph(string input_file, int num_nodes, int num_iterations) {
+	if (world_rank == 0) {
+		cout << "NB: interleaved results (time to load then time to read for each iteration)\n";
+	}
 	MPI_Barrier(MPI_COMM_WORLD);
 
 	for (int j = 0; j < num_iterations; j++) {
@@ -197,7 +200,7 @@ void add_and_read_graph(string input_file, int num_nodes, int num_iterations) {
 			
 			high_resolution_clock::time_point t2 = high_resolution_clock::now();
 			auto duration = duration_cast<microseconds>(t2 - t1).count();
-			cout << duration << ",";
+			cout << duration << "\n";
 			
 			t1 = high_resolution_clock::now();
 			for (int i = 0; i < num_nodes; i++) {
@@ -205,7 +208,7 @@ void add_and_read_graph(string input_file, int num_nodes, int num_iterations) {
 			}
 			t2 = high_resolution_clock::now();
 			duration = duration_cast<microseconds>(t2 - t1).count();
-			cout << duration << " ";
+			cout << duration << "\n";
 			file.close();
 		}
 		MPI_Barrier(MPI_COMM_WORLD);
@@ -260,7 +263,9 @@ int main(int argc, char** argv) {
 		cout << "ERROR: MPI implementation doesn't provide multi-thread support\n";
 	}
 	//select benchmarks
-	//cout << "started benchmark\n";
+	if (world_rank == 0) {
+		cout << "started benchmark with " << world_size << " machines\n";
+	}
     if (argc == 5) {
 		int second_arg = atoi(argv[2]);
 		int third_arg = atoi(argv[3]);
@@ -285,8 +290,8 @@ int main(int argc, char** argv) {
 				//simple dllama benchmark
 				add_nodes_benchmark(second_arg*10, third_arg);
 				add_edges_benchmark(second_arg, third_arg);
-				read_edges_benchmark(second_arg, third_arg);
-				merge_benchmark(second_arg, third_arg);
+				//read_edges_benchmark(second_arg, third_arg);
+				//merge_benchmark(second_arg, third_arg);
 				add_and_read_kronecker_graph(third_arg);
 				add_and_read_power_graph(third_arg);
 				break;
@@ -294,8 +299,8 @@ int main(int argc, char** argv) {
 				//dllama benchmark
 				add_nodes_benchmark(second_arg*10, third_arg);
 				add_edges_benchmark(second_arg, third_arg);
-				read_edges_benchmark(second_arg, third_arg);
-				merge_benchmark(second_arg, third_arg);
+				//read_edges_benchmark(second_arg, third_arg);
+				//merge_benchmark(second_arg, third_arg);
 				add_and_read_kronecker_graph(third_arg);
 				add_and_read_power_graph(third_arg);
 				add_and_read_kronecker_graph2(third_arg);

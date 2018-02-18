@@ -382,7 +382,7 @@ void snapshot_merger::merge_snapshots(int* rank_snapshots) {
 	received_num_vertices[world_rank] = dllama_number_of_vertices;
 	
 	DEBUG("Rank " << world_rank << " before max element");
-	int number_of_vertices = *max_element(received_num_vertices, received_num_vertices + world_size);
+	int number_of_vertices = *max_element(received_num_vertices, received_num_vertices + world_size) + 1;
 	DEBUG("Rank " << world_rank << "num vertices for new level 0: " << number_of_vertices);
 	
 	//metadata
@@ -403,7 +403,7 @@ void snapshot_merger::merge_snapshots(int* rank_snapshots) {
 		set<LL_DATA_TYPE> neighbours;
 		for (int r = 0; r < world_size; r++) {
 			//add all neighbours in edge table pointed to by chunk
-			if (vertex < received_num_vertices[r]) {
+			if (vertex <= received_num_vertices[r]) {
 				vector<LL_DATA_TYPE> new_neighbours = snapshots.get_neighbours_of_vertex(r, vertex);
 				neighbours.insert(new_neighbours.begin(), new_neighbours.end());
 			}
@@ -515,7 +515,7 @@ void snapshot_merger::merge_snapshots(int* rank_snapshots) {
 	high_resolution_clock::time_point t2 = high_resolution_clock::now();
 	auto duration = duration_cast<microseconds>(t2 - t1).count();
 	if (world_rank == 0) {
-		cout << duration << " ";
+		cout << duration << "\n";
 	}
 }
 
@@ -642,5 +642,7 @@ void snapshot_merger::merge_local_llama() {
 	delete[] rank_snapshots;
 	high_resolution_clock::time_point t2 = high_resolution_clock::now();
 	auto duration = duration_cast<microseconds>(t2 - t1).count();
-	cout << "Rank " << world_rank << " took " << duration << " microseconds to merge\n";
+	if (world_rank == 0) {
+		cout << duration << "\n";
+	}
 }
