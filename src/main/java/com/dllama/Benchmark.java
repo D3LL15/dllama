@@ -244,6 +244,9 @@ public class Benchmark
 		int numberOfNodes = 1024;
 		long startID = 0;
 		long endID = 0;
+
+		long[] nodeIds = new long[numberOfNodes];
+
 		org.neo4j.graphdb.Transaction tx = graphDb.beginTx();
 		try {
 			BufferedReader reader;
@@ -255,6 +258,7 @@ public class Benchmark
 			for (int num = 0; num < numberOfNodes; num++) {
 				nodes[num] = graphDb.createNode();
 				nodes[num].setProperty("num", num);
+				nodeIds[num] = nodes[num].getId();
 				/*if (nodes[num].getId() == 724) {
 					System.out.format("end node actual number = %d\n", num);
 				}*/
@@ -278,7 +282,7 @@ public class Benchmark
 			tx.close();
 		}
 
-		for (int j = 0; j < numIterations; j++) {
+		for (int j = 0; j < numIterations*5; j++) {
 
 			long t1 = System.nanoTime();
 			tx = graphDb.beginTx();
@@ -297,7 +301,8 @@ public class Benchmark
 					while (neighbours.hasNext()) {
 						Relationship r = neighbours.next();
 						Node endNode = r.getEndNode();
-						if (endNode.getId() == endID) {
+						//if (endNode.getId() == endID) {
+						if (endNode.getId() == nodeIds[692 + j]) {
 							//System.out.println("found node");
 							foundNode = true;
 							break;
