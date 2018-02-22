@@ -1,0 +1,12 @@
+
+dllama.exe:238996 terminated with signal 11 at PC=4344aa SP=7fff62183d10.  Backtrace:
+/home/js2072/dllama/dllama/dllama.exe[0x4344aa]
+/home/js2072/dllama/dllama/dllama.exe[0x434785]
+/home/js2072/dllama/dllama/dllama.exe[0x437a7f]
+/home/js2072/dllama/dllama/dllama.exe[0x439191]
+/home/js2072/dllama/dllama/dllama.exe[0x4398ad]
+/home/js2072/dllama/dllama/dllama.exe[0x456827]
+/home/js2072/dllama/dllama/dllama.exe[0x40601a]
+/home/js2072/dllama/dllama/dllama.exe[0x405950]
+/lib64/libc.so.6(__libc_start_main+0xf5)[0x2b030c7dcc05]
+/home/js2072/dllama/dllama/dllama.exe[0x405d2a]
