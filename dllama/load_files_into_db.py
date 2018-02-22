@@ -12,11 +12,14 @@ c.execute('''CREATE TABLE IF NOT EXISTS data
 
 #f = open('slurm-702000.out', 'r')
 output_files = [filename for filename in os.listdir('.') if filename.startswith("slurm-")]
+#output_files = [filename for filename in os.listdir('.') if filename.startswith("test_slurm")]
 
 for filename in output_files:
+	print(filename)
 	f = open(filename, 'r')
-	skipped_header = false
+	skipped_header = False
 	for line in f:
+		print(line)
 		if skipped_header:
 			if line == '':
 				break
@@ -24,11 +27,12 @@ for filename in output_files:
 			benchmark = words[0]
 			num_machines = words[1]
 			num_vertices = words[2]
-			for i in range(3, len(words)):
-				time_taken = words[3 + i]
+			for i in range(3, len(words) - 1):
+				time_taken = words[i]
+				print("outputting")
 				c.execute("INSERT INTO data VALUES (?,?,?,?)", (benchmark, num_machines, num_vertices, time_taken))
-		elif line == 'started benchmark':
-			skipped_header = true
+		elif line == 'started benchmark\n':
+			skipped_header = True
 	f.close()
 
 # Save (commit) the changes
