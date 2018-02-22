@@ -28,7 +28,7 @@
 #SBATCH -p skylake
 
 #! sbatch directives end here (put any additional directives above this line)
-#SBATCH --mem=2000
+#SBATCH --mem=4000
 #! Notes:
 #! Charging is determined by node number*walltime. Allocation is in entire nodes.
 #! The --ntasks value refers to the number of tasks to be launched by SLURM only. This
@@ -61,7 +61,7 @@ module load perl/5.20.0
 application="/home/js2072/dllama/dllama/dllama.exe"
 
 #! Run options for the application:
-options="0 10000 10 /local/"
+options="5 5000 10 /local/"
 
 #! Work directory (i.e. where the job will run):
 workdir=/home/js2072/dllama/dllama
