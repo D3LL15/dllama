@@ -25,6 +25,12 @@ namespace dllama_ns {
     #define DEBUG(x) 
     #define debug_enabled 0
 #endif
+
+#ifdef SIMPLE_DLLAMA
+    #define BENCHMARK_TYPE 1
+#else
+    #define BENCHMARK_TYPE 0
+#endif
     
 
     extern int world_size;

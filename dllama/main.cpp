@@ -24,7 +24,7 @@ string database_location;
 //100,000 nodes
 void add_nodes_benchmark(int num_nodes, int num_iterations) {
 	if (world_rank == 0) {
-		cout << "add nodes benchmark with " << world_size << " machines, microseconds to add " << num_nodes << " nodes:\n";
+		cout << BENCHMARK_TYPE << "add_nodes " << world_size << " " << num_nodes << " ";
 	}
 	MPI_Barrier(MPI_COMM_WORLD);
 	
@@ -38,7 +38,7 @@ void add_nodes_benchmark(int num_nodes, int num_iterations) {
 			high_resolution_clock::time_point t2 = high_resolution_clock::now();
 
 			auto duration = duration_cast<microseconds>(t2 - t1).count();
-			cout << duration << "\n";
+			cout << duration << " ";
 		}
 		MPI_Barrier(MPI_COMM_WORLD);
 		dllama_instance->delete_db();
@@ -59,7 +59,7 @@ void add_edges_benchmark(int num_nodes, int num_iterations) {
 	MPI_Barrier(MPI_COMM_WORLD);
 	
 	if (world_rank == 0) {
-		cout << "add edges benchmark with " << world_size << " machines, microseconds to add 100 edges each to " << num_nodes << " nodes:\n";
+		cout << BENCHMARK_TYPE << "add_edges " << world_size << " " << num_nodes << " ";
 	}
 	
 	for (int j = 0; j < num_iterations; j++) {
@@ -78,7 +78,7 @@ void add_edges_benchmark(int num_nodes, int num_iterations) {
 			my_dllama_instance->request_checkpoint();
 			high_resolution_clock::time_point t2 = high_resolution_clock::now();
 			auto duration = duration_cast<microseconds>(t2 - t1).count();
-			cout << duration << "\n";
+			cout << duration << " ";
 		}
 		MPI_Barrier(MPI_COMM_WORLD);
 		my_dllama_instance->delete_db();
@@ -96,7 +96,7 @@ void read_edges_benchmark(int num_nodes, int num_iterations) {
 	MPI_Barrier(MPI_COMM_WORLD);
 	
 	if (world_rank == 0) {
-		cout << "read edges benchmark with " << world_size << " machines, microseconds to read 100 edges from each of " << num_nodes << " nodes:\n";
+		cout << BENCHMARK_TYPE << "read_edges " << world_size << " " << num_nodes << " ";
 	}
 	
 	for (int j = 0; j < num_iterations; j++) {
@@ -120,7 +120,7 @@ void read_edges_benchmark(int num_nodes, int num_iterations) {
 			
 			high_resolution_clock::time_point t2 = high_resolution_clock::now();
 			auto duration = duration_cast<microseconds>(t2 - t1).count();
-			cout << duration << "\n";
+			cout << duration << " ";
 		}
 		MPI_Barrier(MPI_COMM_WORLD);
 		my_dllama_instance->delete_db();
@@ -139,7 +139,7 @@ void merge_benchmark(int num_nodes, int num_iterations) {
 	MPI_Barrier(MPI_COMM_WORLD);
 	
 	if (world_rank == 0) {
-		cout << "merge benchmark with " << world_size << " machines, microseconds to merge 10 checkpoints with 100 edges added to " << num_nodes << " nodes each checkpoint:\n";
+		cout << BENCHMARK_TYPE << "merge_benchmark " << world_size << " " << num_nodes << " ";
 	}
 	
 	for (int j = 0; j < num_iterations; j++) {
@@ -173,9 +173,9 @@ void merge_benchmark(int num_nodes, int num_iterations) {
 }
 
 void add_and_read_graph(string input_file, int num_nodes, int num_iterations) {
-	if (world_rank == 0) {
+	/*if (world_rank == 0) {
 		cout << "NB: interleaved results (time to load then time to read for each iteration)\n";
-	}
+	}*/
 	MPI_Barrier(MPI_COMM_WORLD);
 
 	for (int j = 0; j < num_iterations; j++) {
@@ -202,7 +202,7 @@ void add_and_read_graph(string input_file, int num_nodes, int num_iterations) {
 			
 			high_resolution_clock::time_point t2 = high_resolution_clock::now();
 			auto duration = duration_cast<microseconds>(t2 - t1).count();
-			cout << duration << "\n";
+			//cout << duration << ",";
 			
 			t1 = high_resolution_clock::now();
 			for (int i = 0; i < num_nodes; i++) {
@@ -210,7 +210,7 @@ void add_and_read_graph(string input_file, int num_nodes, int num_iterations) {
 			}
 			t2 = high_resolution_clock::now();
 			duration = duration_cast<microseconds>(t2 - t1).count();
-			cout << duration << "\n";
+			cout << duration << " ";
 			file.close();
 		}
 		MPI_Barrier(MPI_COMM_WORLD);
@@ -227,28 +227,28 @@ void add_and_read_graph(string input_file, int num_nodes, int num_iterations) {
 
 void add_and_read_kronecker_graph(int num_iterations) {
 	if (world_rank == 0) {
-		cout << "add kronecker graph benchmark with " << world_size << " machines. microseconds to add graph then read all edges (1024 nodes, 2655 edges):\n";
+		cout << BENCHMARK_TYPE <<"kronecker " << world_size << " 1024 ";
 	}
 	add_and_read_graph("kronecker_graph.net", 1024, num_iterations);
 }
 
 void add_and_read_power_graph(int num_iterations) {
 	if (world_rank == 0) {
-		cout << "add power graph benchmark with " << world_size << " machines. microseconds to add graph then read all edges (1000 nodes, 7196 edges):\n";
+		cout << BENCHMARK_TYPE <<"power " << world_size << " 1000 ";
 	}
 	add_and_read_graph("powerlaw.net", 1000, num_iterations);
 }
 
 void add_and_read_kronecker_graph2(int num_iterations) {
 	if (world_rank == 0) {
-		cout << "add kronecker graph benchmark with " << world_size << " machines. microseconds to add graph then read all edges (131072 nodes, 662499 edges):\n";
+		cout << BENCHMARK_TYPE <<"large_kronecker " << world_size << " 131072 ";
 	}
 	add_and_read_graph("krongraph2.net", 131072, num_iterations);
 }
 
 void add_and_read_power_graph2(int num_iterations) {
 	if (world_rank == 0) {
-		cout << "add power graph benchmark with " << world_size << " machines. microseconds to add graph then read all edges (50000 nodes, 581318 edges):\n";
+		cout << BENCHMARK_TYPE <<"large_power " << world_size << " 50000 ";
 	}
 	add_and_read_graph("powerlaw2.net", 50000, num_iterations);
 }
@@ -260,7 +260,7 @@ void breadth_first_search(int num_iterations) {
 	my_dllama_instance->load_net_graph("empty_graph.net");
 	MPI_Barrier(MPI_COMM_WORLD);
 	if (world_rank == 0) {
-		cout << "microseconds for breadth first search\n";
+		cout << BENCHMARK_TYPE << "breadth_first " << world_size << " 1024 ";
 		ifstream file(input_file);
 		if (!file.is_open()) {
 			cout << "cannot open graph net file\n";
@@ -318,7 +318,7 @@ void breadth_first_search(int num_iterations) {
 			
 			high_resolution_clock::time_point t2 = high_resolution_clock::now();
 			auto duration = duration_cast<microseconds>(t2 - t1).count();
-			cout << duration << "\n";
+			cout << duration << " ";
 			
 		}
 		MPI_Barrier(MPI_COMM_WORLD);
@@ -345,7 +345,7 @@ int main(int argc, char** argv) {
 	}
 	//select benchmarks
 	if (world_rank == 0) {
-		cout << "started benchmark with " << world_size << " machines\n";
+		cout << "started benchmark\n";
 	}
     if (argc == 5) {
 		int second_arg = atoi(argv[2]);

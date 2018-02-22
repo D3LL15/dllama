@@ -515,7 +515,7 @@ void snapshot_merger::merge_snapshots(int* rank_snapshots) {
 	high_resolution_clock::time_point t2 = high_resolution_clock::now();
 	auto duration = duration_cast<microseconds>(t2 - t1).count();
 	if (world_rank == 0) {
-		cout << duration << "\n";
+		cout << duration << " ";
 	}
 }
 
@@ -643,6 +643,6 @@ void snapshot_merger::merge_local_llama() {
 	high_resolution_clock::time_point t2 = high_resolution_clock::now();
 	auto duration = duration_cast<microseconds>(t2 - t1).count();
 	if (world_rank == 0) {
-		cout << duration << "\n";
+		cout << duration << " ";
 	}
 }
