@@ -61,7 +61,7 @@ module load perl/5.20.0
 application="/home/js2072/dllama/dllama/dllama.exe"
 
 #! Run options for the application:
-options="a 5000 20 /local/"
+options="2 1000 20 /local/"
 
 #! Work directory (i.e. where the job will run):
 workdir=/home/js2072/dllama/dllama
