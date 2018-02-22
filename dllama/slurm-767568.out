@@ -1,0 +1,43 @@
+Changed directory to /home/js2072/dllama/dllama.
+
+JobID: 767568
+======
+Time: Thu 22 Feb 18:50:39 GMT 2018
+Running on master node: cpu-e-58
+Current directory: /home/js2072/dllama/dllama
+
+Nodes allocated:
+================
+cpu-e-58 cpu-e-99 cpu-e-104 cpu-e-115 cpu-e-181 cpu-e-213 cpu-e-222 cpu-e-223 cpu-e-255 cpu-e-295
+
+numtasks=10, numnodes=10, mpi_tasks_per_node=1 (OMP_NUM_THREADS=1)
+
+Executing command:
+==================
+mpirun -ppn 1 -np 10 /home/js2072/dllama/dllama/dllama.exe 5 5000 20 /local/
+
+started benchmark
+0add_nodes 10 50000 283061 234586 240660 274604 252245 252124 273797 277222 134947 252241 205368 215931 190993 216216 271134 240939 246748 217076 227278 266112 
+0add_edges 10 5000 557921 498928 478214 563146 494264 509281 582500 575971 524324 548924 473100 563683 487821 601329 531368 606623 550196 552312 
+===================================================================================
+=   BAD TERMINATION OF ONE OF YOUR APPLICATION PROCESSES
+=   PID 154931 RUNNING AT cpu-e-58
+=   EXIT CODE: 9
+=   CLEANING UP REMAINING PROCESSES
+=   YOU CAN IGNORE THE BELOW CLEANUP MESSAGES
+===================================================================================
+slurmstepd: error: Exceeded step memory limit at some point.
+slurmstepd: error: Exceeded job memory limit at some point.
+srun: error: cpu-e-58: task 0: Out Of Memory
+
+===================================================================================
+=   BAD TERMINATION OF ONE OF YOUR APPLICATION PROCESSES
+=   PID 154931 RUNNING AT cpu-e-58
+=   EXIT CODE: 9
+=   CLEANING UP REMAINING PROCESSES
+=   YOU CAN IGNORE THE BELOW CLEANUP MESSAGES
+===================================================================================
+   Intel(R) MPI Library troubleshooting guide:
+      https://software.intel.com/node/561764
+===================================================================================
+slurmstepd: error: Exceeded job memory limit at some point.
