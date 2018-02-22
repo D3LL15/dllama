@@ -19,9 +19,9 @@ for filename in output_files:
 	f = open(filename, 'r')
 	skipped_header = False
 	for line in f:
-		print(line)
+		#print(line)
 		if skipped_header:
-			if line == '':
+			if line == '\n':
 				break
 			words = line.split(' ')
 			benchmark = words[0]
@@ -29,7 +29,6 @@ for filename in output_files:
 			num_vertices = words[2]
 			for i in range(3, len(words) - 1):
 				time_taken = words[i]
-				print("outputting")
 				c.execute("INSERT INTO data VALUES (?,?,?,?)", (benchmark, num_machines, num_vertices, time_taken))
 		elif line == 'started benchmark\n':
 			skipped_header = True
