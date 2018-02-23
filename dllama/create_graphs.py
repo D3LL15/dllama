@@ -17,14 +17,10 @@ for parameters in graph_parameters:
 	standard_deviations = []
 	for num_machines in range (1, 11):
 		args = (parameters[0], num_machines)
-		mean_time = 0.0
-		num_trials = 0
 		times = []
 		for row in c.execute('SELECT * FROM data WHERE benchmark = ? AND num_machines = ? ORDER BY benchmark', args):
 			times.append(row[3])
-			mean_time += row[3]
-			num_trials += 1
-		mean_time /= num_trials
+		mean_time = np.mean(times)
 		mean_times.append(mean_time)
 		standard_deviations.append(np.std(times))
 
@@ -40,38 +36,49 @@ for parameters in graph_parameters:
 	#plt.show()
 
 
+query_params = ['0read_edges', '0merge_benchmark', '0breadth_first', '0power', '0kronecker']
+means_dllama = []
+std_dllama = []
+for query_param in query_params:
+	times = []
+	args = (query_param, 1)
+	for row in c.execute('SELECT * FROM data WHERE benchmark = ? AND num_machines = ? ORDER BY benchmark', args):
+		times.append(row[3])
+	mean_time = np.mean(times)
+	means_dllama.append(mean_time)
+	std_dllama.append(np.std(times))
 
-n_groups = 5
 
-means_men = (20, 35, 30, 35, 27)
-std_men = (2, 3, 4, 1, 2)
 
-means_women = (25, 32, 34, 20, 25)
-std_women = (3, 5, 2, 3, 3)
+n_groups = 2
+
+#means_dllama = (20, 35, 30, 35, 27)
+#std_dllama = (2, 3, 4, 1, 2)
+
+means = [means_dllama[0], 200]
+stds = [std_dllama[0], 20]
 
 fig, ax = plt.subplots()
-
 index = np.arange(n_groups)
 bar_width = 0.35
-
 opacity = 0.4
 error_config = {'ecolor': '0.3'}
 
-rects1 = ax.bar(index, means_men, bar_width,
+rects1 = ax.barh(index, means, bar_width,
                 alpha=opacity, color='b',
-                yerr=std_men, error_kw=error_config,
-                label='Men')
+                xerr=stds, error_kw=error_config)
 
-rects2 = ax.bar(index + bar_width, means_women, bar_width,
-                alpha=opacity, color='r',
-                yerr=std_women, error_kw=error_config,
-                label='Women')
+#rects2 = ax.bar(index + bar_width, means_neo4j, bar_width,
+#                alpha=opacity, color='r',
+#                yerr=std_neo4j, error_kw=error_config,
+#                label='Neo4j')
 
-ax.set_xlabel('Group')
-ax.set_ylabel('Scores')
-ax.set_title('Scores by group and gender')
-ax.set_xticks(index + bar_width / 2)
-ax.set_xticklabels(('A', 'B', 'C', 'D', 'E'))
+ax.set_ylabel('Database')
+ax.set_xlabel('Time (microseconds)')
+ax.set_title('Time taken for each benchmark')
+ax.set_yticks(index)
+ax.set_yticklabels(('DLLAMA', 'Neo4j'))
+#ax.set_xticklabels(('Read edges', 'Breadth first', 'Power law', 'Kronecker'))
 ax.legend()
 
 fig.tight_layout()
