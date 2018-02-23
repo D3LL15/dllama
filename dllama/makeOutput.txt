@@ -1,1 +1,0 @@
-mpicxx -g -O3 -DNDEBUG -DEBUG_ENABLED -Wall -fpermissive -fopenmp -std=gnu++11 -DLL_PERSISTENCE -I. -I../llama/include main.cpp dllama_test.cpp dllama.cpp snapshot_merger.cpp snapshot_manager.cpp  -o dllama.exe
