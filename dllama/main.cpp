@@ -403,7 +403,12 @@ int main(int argc, char** argv) {
 				read_edges_benchmark(second_arg, third_arg);
 				merge_benchmark(second_arg, third_arg);
 				breadth_first_search(third_arg);
+                add_and_read_power_graph(third_arg);
+                add_and_read_kronecker_graph(third_arg);
 				break;
+            case 'c':
+                add_nodes_benchmark(second_arg*10, third_arg);
+                add_edges_benchmark(second_arg, third_arg);
 			default:
 				cout << "provide benchmark number, number of nodes, number of iterations, location to store database" << "\n";
 		}
