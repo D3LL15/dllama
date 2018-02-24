@@ -1,0 +1,21 @@
+Changed directory to /home/js2072/dllama/dllama.
+
+JobID: 789243
+======
+Time: Sat 24 Feb 15:58:05 GMT 2018
+Running on master node: cpu-e-327
+Current directory: /home/js2072/dllama/dllama
+
+Nodes allocated:
+================
+cpu-e-327
+
+numtasks=1, numnodes=1, mpi_tasks_per_node=1 (OMP_NUM_THREADS=1)
+
+Executing command:
+==================
+java -jar JavaBenchmark.jar dllama /local 20 5000
+
+neo4j_add_nodes 1 50000 1919060 826661 555549 270243 228830 229934 430958 243675 231844 491584 261692 206658 271189 381304 216402 262617 212216 294544 218146 197976 
+neo4j_add_edges 1 5000 4684078 3008296 3260657 5788273 2460817 2151311 2857656 2366760 2254926 2448470 31803384 2528445 2748390 2755813 11237307 4742644 3368882 /var/spool/slurm/slurmd/job789243/slurm_script: line 128: 177698 Killed                  java -jar JavaBenchmark.jar dllama /local 20 5000
+slurmstepd: error: Exceeded step memory limit at some point.

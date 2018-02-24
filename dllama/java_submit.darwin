@@ -18,7 +18,7 @@
 #! How many (MPI) tasks will there be in total? (<= nodes*16)
 #SBATCH --ntasks=1
 #! How much wallclock time will be required?
-#SBATCH --time=01:00:00
+#SBATCH --time=00:10:00
 #! What types of email messages do you wish to receive?
 #SBATCH --mail-type=FAIL
 #! Uncomment this to prevent the job from being requeued (e.g. if
@@ -59,13 +59,13 @@ module load java/jdk1.8.0_45
 #! Insert additional module load commands after this line if needed:
 
 #! Full path to application executable: 
-application="/home/js2072/dllama/dllama/dllama.exe"
+application="java -jar dllama/JavaBenchmark.jar"
 
 #! Run options for the application:
-options="c 5000 20 /local/"
+options="dllama /local 20 5000 6"
 
 #! Work directory (i.e. where the job will run):
-workdir=/home/js2072/dllama/dllama
+workdir=/home/js2072/dllama
 
 
 #! Are you using OpenMP (NB this is unrelated to OpenMPI)? If so increase this
@@ -89,11 +89,11 @@ export I_MPI_PIN_ORDER=scatter # Adjacent domains have minimal sharing of caches
 #! Uncomment one choice for CMD below (add mpirun/mpiexec options if necessary):
 
 #! Choose this for a MPI code (possibly using OpenMP) using Intel MPI.
-CMD="mpirun -ppn $mpi_tasks_per_node -np $np $application $options"
+#CMD="mpirun -ppn $mpi_tasks_per_node -np $np $application $options"
 
 #! Choose this for a pure shared-memory OpenMP parallel program on a single node:
 #! (OMP_NUM_THREADS threads will be created):
-#CMD="$application $options"
+CMD="$application $options"
 
 #! Choose this for a MPI code (possibly using OpenMP) using OpenMPI:
 #CMD="mpirun -npernode $mpi_tasks_per_node -np $np $application $options"

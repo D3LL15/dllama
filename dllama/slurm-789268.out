@@ -1,0 +1,19 @@
+Changed directory to /home/js2072/dllama.
+
+JobID: 789268
+======
+Time: Sat 24 Feb 16:47:19 GMT 2018
+Running on master node: cpu-e-215
+Current directory: /home/js2072/dllama
+
+Nodes allocated:
+================
+cpu-e-215
+
+numtasks=1, numnodes=1, mpi_tasks_per_node=1 (OMP_NUM_THREADS=1)
+
+Executing command:
+==================
+java -jar dllama/JavaBenchmark.jar dllama /local 20 5000 7
+
+neo4j_breadth_first 1 1024 43606 20208 1334 3677 719 653 1445 549 15962 2590 2044 1969 67 1572 60 1662 18773 181 465 1453 889 58 457 144 320 1868 1327 1311 53 1316 262 10822 1301 1334 63773 1520 409 829 817 113 811 1328 171 797 417 824 808 224 813 230 195 806 148 813 81 887 662 818 115 798 406 795 792 793 792 790 354 787 784 784 1807 886 826 824 842 880 127 142 94 126 69 527 326 516 137 612 48 463 399 100 159 806 355 81 333 416 97 715 159 797 

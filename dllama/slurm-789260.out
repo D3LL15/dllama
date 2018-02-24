@@ -1,0 +1,19 @@
+Changed directory to /home/js2072/dllama/dllama.
+
+JobID: 789260
+======
+Time: Sat 24 Feb 16:33:05 GMT 2018
+Running on master node: cpu-e-122
+Current directory: /home/js2072/dllama/dllama
+
+Nodes allocated:
+================
+cpu-e-122
+
+numtasks=1, numnodes=1, mpi_tasks_per_node=1 (OMP_NUM_THREADS=1)
+
+Executing command:
+==================
+java -jar JavaBenchmark.jar dllama /local 20 5000 4
+
+Please provide the directory containing the example graph files then the directory in which you would like to store the graph database then num nodes
