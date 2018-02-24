@@ -409,6 +409,7 @@ int main(int argc, char** argv) {
             case 'c':
                 add_nodes_benchmark(second_arg*10, third_arg);
                 add_edges_benchmark(second_arg, third_arg);
+                break;
 			default:
 				cout << "provide benchmark number, number of nodes, number of iterations, location to store database" << "\n";
 		}
