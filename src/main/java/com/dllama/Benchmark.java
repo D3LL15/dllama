@@ -364,21 +364,46 @@ public class Benchmark
 	{
 		//run clean compile then assembly:single
 
-		if (args.length == 4) {
+		if (args.length == 5) {
 			Benchmark benchmark = new Benchmark(args[1]);
 			int numIterations = Integer.parseInt(args[2]);
 			int numNodes = Integer.parseInt(args[3]);
-			benchmark.addNodes(numIterations, numNodes);
-			benchmark.addEdges(numIterations, numNodes);
-			benchmark.readEdges(numIterations, numNodes);
-			benchmark.addAndReadPowerGraph(args[0], numIterations);
-			benchmark.addAndReadKroneckerGraph(args[0], numIterations);
-			benchmark.breadthFirstSearch(args[0], numIterations);
+			switch (args[4].charAt(0)) {
+				case '1':
+					benchmark.addNodes(numIterations, numNodes);
+					benchmark.addEdges(numIterations, numNodes);
+					benchmark.readEdges(numIterations, numNodes);
+					benchmark.addAndReadPowerGraph(args[0], numIterations);
+					benchmark.addAndReadKroneckerGraph(args[0], numIterations);
+					benchmark.breadthFirstSearch(args[0], numIterations);
+					break;
+				case '2':
+					benchmark.addNodes(numIterations, numNodes);
+					break;
+				case '3':
+					benchmark.addEdges(numIterations, numNodes);
+					break;
+				case '4':
+					benchmark.readEdges(numIterations, numNodes);
+					break;
+				case '5':
+					benchmark.addAndReadPowerGraph(args[0], numIterations);
+					break;
+				case '6':
+					benchmark.addAndReadKroneckerGraph(args[0], numIterations);
+					break;
+				case '7':
+					benchmark.breadthFirstSearch(args[0], numIterations);
+					break;
+				default:
+					break;
+			}
+
 			benchmark.graphDb.shutdown();
 
 		} else {
 			System.out.println("Please provide the directory containing the example graph files then the directory" +
-					" in which you would like to store the graph database then num nodes");
+					" in which you would like to store the graph database then num nodes, then the benchmark you want");
 		}
 	}
 }
