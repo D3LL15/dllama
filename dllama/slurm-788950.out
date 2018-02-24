@@ -1,0 +1,21 @@
+Changed directory to /home/js2072/dllama/dllama.
+
+JobID: 788950
+======
+Time: Sat 24 Feb 14:49:03 GMT 2018
+Running on master node: cpu-e-169
+Current directory: /home/js2072/dllama/dllama
+
+Nodes allocated:
+================
+cpu-e-169
+
+numtasks=1, numnodes=1, mpi_tasks_per_node=1 (OMP_NUM_THREADS=1)
+
+Executing command:
+==================
+mpirun -ppn 1 -np 1 /home/js2072/dllama/dllama/simple_dllama.exe c 5000 20 /local/
+
+started benchmark
+1add_nodes 1 50000 44745 54917 56736 56088 55812 55161 55890 58230 57272 57131 50741 64876 56000 58175 56763 57070 56209 58141 57011 55765 
+1add_edges 1 5000 355063 352308 344033 357291 355856 354319 355043 354890 356057 348966 356057 355993 354319 352146 354064 355293 351994 354313 346189 352340 
