@@ -6,27 +6,41 @@ conn = sqlite3.connect('benchmark_data.db')
 
 c = conn.cursor()
 
-graph_parameters = [('0add_nodes', 'Time taken to add 50000 nodes', 'add_nodes.png'),
-					('0add_edges', 'Time taken to add 100 edges to 5000 nodes', 'add_edges.png')#,
+graph_parameters = [('0add_nodes', 'Time taken to add 50000 nodes', 'add_nodes.png', '1add_nodes'),
+					('0add_edges', 'Time taken to add 100 edges to 5000 nodes', 'add_edges.png', '1add_edges')#,
 					#('0power', 'Time taken to read all 7196 edges from a power-law graph with 1000 nodes', 'power.png'),
 					#('0kronecker', 'Time taken to read all 2655 edges from a kronecker graph with 1024 nodes', 'kronecker.png'),
 					]
 
 for parameters in graph_parameters:
-	mean_times = []
-	standard_deviations = []
+	dllama_mean_times = []
+	dllama_standard_deviations = []
+	simple_dllama_mean_times = []
+	simple_dllama_standard_deviations = []
+
 	for num_machines in range (1, 11):
 		args = (parameters[0], num_machines)
 		times = []
 		for row in c.execute('SELECT * FROM data WHERE benchmark = ? AND num_machines = ? ORDER BY benchmark', args):
 			times.append(row[3] / 1000.0)
 		mean_time = np.mean(times)
-		mean_times.append(mean_time)
-		standard_deviations.append(np.std(times))
+		dllama_mean_times.append(mean_time)
+		dllama_standard_deviations.append(np.std(times))
+
+		if parameters[0] == '0add_edges':
+			args = (parameters[3], num_machines)
+			times = []
+			for row in c.execute('SELECT * FROM data WHERE benchmark = ? AND num_machines = ? ORDER BY benchmark', args):
+				times.append(row[3] / 1000.0)
+			mean_time = np.mean(times)
+			simple_dllama_mean_times.append(mean_time)
+			simple_dllama_standard_deviations.append(np.std(times))
 
 	t = np.arange(1, 11, 1)
 	plt.figure()
-	plt.errorbar(t, mean_times, yerr=standard_deviations)
+	plt.errorbar(t, dllama_mean_times, yerr=dllama_standard_deviations)
+	if parameters[0] == '0add_edges':
+		plt.errorbar(t, simple_dllama_mean_times, yerr=simple_dllama_standard_deviations)
 
 	plt.xlabel('number of machines')
 	plt.ylabel('time (milliseconds)')
@@ -83,7 +97,7 @@ for param in parameters:
 	ax.set_yticks(index)
 	ax.set_yticklabels(('DLLAMA', 'Neo4j'))
 	#ax.set_xticklabels(('Read edges', 'Breadth first', 'Power law', 'Kronecker'))
-	ax.legend()
+	#ax.legend()
 
 	fig.tight_layout()
 	plt.title(param[1])
