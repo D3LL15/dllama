@@ -11,12 +11,12 @@ c.execute('''CREATE TABLE IF NOT EXISTS data
 
 
 #f = open('slurm-702000.out', 'r')
-output_files = [filename for filename in os.listdir('.') if filename.startswith("slurm-")]
+output_files = [filename for filename in os.listdir('output2/with prev') if filename.startswith("slurm-")]
 #output_files = [filename for filename in os.listdir('.') if filename.startswith("test_slurm")]
 
 for filename in output_files:
 	print(filename)
-	f = open(filename, 'r')
+	f = open('output2/with prev/' + filename, 'r')
 	skipped_header = False
 	for line in f:
 		#print(line)
