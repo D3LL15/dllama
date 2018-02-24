@@ -174,7 +174,10 @@ public class Benchmark
 				ResourceIterator<Node> readNodes = graphDb.getAllNodes().iterator();
 				while (readNodes.hasNext()) {
 					Node n = readNodes.next();
-					n.getRelationships().iterator();
+					Iterator<Relationship> edges = n.getRelationships().iterator();
+					while (edges.hasNext()) {
+						edges.next();
+					}
 				}
 				tx.success();
 			}
