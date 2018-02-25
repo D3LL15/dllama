@@ -16,4 +16,5 @@ Executing command:
 ==================
 java -jar dllama/JavaBenchmark.jar dllama /local 20 5000 6
 
+started benchmark
 neo4j_kronecker 1 1024 31333 19348 13586 1445 1459 45565 1888 4984 1839 1134 1286 1164 1323 1292 1455 1626 1536 1424 1994 1591 
