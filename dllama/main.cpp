@@ -137,11 +137,9 @@ void read_edges_benchmark(int num_nodes, int num_iterations) {
 //10000 nodes
 void merge_benchmark(int num_nodes, int num_iterations) {
 	MPI_Barrier(MPI_COMM_WORLD);
-	
-	for (int k = 0; k < 10; k++) {
-		int num_nodes_this_iter = num_nodes - k*(num_nodes/10);
+
 		if (world_rank == 0) {
-			cout << BENCHMARK_TYPE << "merge_benchmark " << world_size << " " << num_nodes_this_iter << " ";
+			cout << BENCHMARK_TYPE << "merge_benchmark " << world_size << " " << num_nodes << " ";
 		}
 
 		for (int j = 0; j < num_iterations; j++) {
@@ -149,9 +147,9 @@ void merge_benchmark(int num_nodes, int num_iterations) {
 			my_dllama_instance->load_net_graph("empty_graph.net");
 			MPI_Barrier(MPI_COMM_WORLD);
 			if (world_rank == 0) {
-				my_dllama_instance->add_nodes(num_nodes_this_iter);
+				my_dllama_instance->add_nodes(num_nodes);
 				for (int z = 0; z < 10; z++) {
-					for (int i = 1; i <= num_nodes_this_iter; i++) {
+					for (int i = 1; i <= num_nodes; i++) {
 						for (int k = 100*z; k < 100*(z+1); k++) {
 							my_dllama_instance->add_edge(i, k);
 						}
@@ -170,7 +168,6 @@ void merge_benchmark(int num_nodes, int num_iterations) {
 		if (world_rank == 0) {
 			cout << "\n";
 		}
-	}
 	
 	
 }

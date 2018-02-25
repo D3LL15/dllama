@@ -1,0 +1,36 @@
+Changed directory to /home/js2072/dllama/dllama.
+
+JobID: 796620
+======
+Time: Sun 25 Feb 19:12:56 GMT 2018
+Running on master node: cpu-e-241
+Current directory: /home/js2072/dllama/dllama
+
+Nodes allocated:
+================
+cpu-e-241
+
+numtasks=1, numnodes=1, mpi_tasks_per_node=1 (OMP_NUM_THREADS=1)
+
+Executing command:
+==================
+mpirun -ppn 1 -np 1 /home/js2072/dllama/dllama/dllama.exe 2 5000 20 /local/
+
+started benchmark
+0merge_benchmark 1 500 1188510 126056 124013 124708 124395 124593 124540 123837 124777 123987 124456 124753 124210 123914 123582 123755 123661 124233 124028 125122 
+0merge_benchmark 1 1000 273357 272858 258442 257240 257333 257885 258216 258164 258283 272237 258351 256936 273531 257474 255658 254688 256133 256750 256854 258111 
+0merge_benchmark 1 1500 407846 411107 411357 411147 411419 412471 411284 411904 451113 497301 408825 
+===================================================================================
+=   BAD TERMINATION OF ONE OF YOUR APPLICATION PROCESSES
+=   PID 238163 RUNNING AT cpu-e-241
+=   EXIT CODE: 9
+=   CLEANING UP REMAINING PROCESSES
+=   YOU CAN IGNORE THE BELOW CLEANUP MESSAGES
+===================================================================================
+srun: error: cpu-e-241: task 0: Out Of Memory
+slurmstepd: error: Exceeded job memory limit at some point.
+[mpiexec@cpu-e-241] HYDT_bscu_wait_for_completion (../../tools/bootstrap/utils/bscu_wait.c:151): one of the processes terminated badly; aborting
+[mpiexec@cpu-e-241] HYDT_bsci_wait_for_completion (../../tools/bootstrap/src/bsci_wait.c:36): launcher returned error waiting for completion
+[mpiexec@cpu-e-241] HYD_pmci_wait_for_completion (../../pm/pmiserv/pmiserv_pmci.c:521): launcher returned error waiting for completion
+[mpiexec@cpu-e-241] main (../../ui/mpich/mpiexec.c:1147): process manager error waiting for completion
+slurmstepd: error: Exceeded job memory limit at some point.
