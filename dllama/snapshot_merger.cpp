@@ -172,11 +172,7 @@ void snapshot_merger::handle_new_node_command(MPI_Status status) {
 	MPI_Recv(&num_new_nodes, 1, MPI_INT, status.MPI_SOURCE, NEW_NODE_COMMAND, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 	//check we are not currently checkpointing
 	
-	for (int i = 0; i < num_new_nodes; i++) {
-		//DEBUG("Rank " << world_rank << " about to add node");
-		node_t new_node_id = dllama_instance->force_add_node();
-		//DEBUG("Rank " << world_rank << " added node " << new_node_id);
-	}
+	dllama_instance->force_add_nodes(num_new_nodes);
 	
 	num_new_node_requests--;
 	if (num_new_node_requests == 0) {

@@ -21,7 +21,7 @@ namespace dllama_ns {
         void delete_edge(node_t src, edge_t edge);
         node_t add_nodes(int num_new_nodes);
         node_t add_node();
-        node_t force_add_node();
+        node_t force_add_nodes(int num_nodes);
         size_t out_degree(node_t node);
         void out_iter_begin(ll_edge_iterator& iter, node_t node);
         ITERATOR_DECL bool out_iter_has_next(ll_edge_iterator& iter);

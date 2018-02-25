@@ -204,9 +204,12 @@ node_t dllama::add_nodes(int num_new_nodes) {
 }
 
 //not for manual use
-node_t dllama::force_add_node() {
+node_t dllama::force_add_nodes(int num_nodes) {
 	checkpoint_lock.lock();
-	int result = graph->add_node();
+	int result;
+	for (int i = 0; i < num_nodes; i++) {
+		result = graph->add_node();
+	}
 	checkpoint_lock.unlock();
 	return result;
 }
