@@ -1,0 +1,23 @@
+Changed directory to /home/js2072/dllama/dllama.
+
+JobID: 788897
+======
+Time: Sat 24 Feb 13:21:04 GMT 2018
+Running on master node: cpu-e-282
+Current directory: /home/js2072/dllama/dllama
+
+Nodes allocated:
+================
+cpu-e-282 cpu-e-287 cpu-e-288
+
+numtasks=3, numnodes=3, mpi_tasks_per_node=1 (OMP_NUM_THREADS=1)
+
+Executing command:
+==================
+mpirun -ppn 1 -np 3 /home/js2072/dllama/dllama/simple_dllama.exe c 5000 20 /local/
+
+started benchmark
+1add_nodes 3 50000 129674 139836 128649 124867 143687 139835 129841 131711 122898 127851 129685 140717 121770 149447 143670 143695 127907 131461 139650 127711 
+1add_edges 3 5000 957245 1162237 slurmstepd: error: *** STEP 788897.0 ON cpu-e-282 CANCELLED AT 2018-02-24T13:31:24 DUE TO TIME LIMIT ***
+slurmstepd: error: *** JOB 788897 ON cpu-e-282 CANCELLED AT 2018-02-24T13:31:24 DUE TO TIME LIMIT ***
+srun: Job step aborted: Waiting up to 122 seconds for job step to finish.

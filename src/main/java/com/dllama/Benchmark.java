@@ -31,7 +31,7 @@ public class Benchmark
 	}
 
 	private void addNodes(int numIterations, int numNodes) {
-		System.out.format("microseconds to add %d nodes\n", numNodes * 10);
+		System.out.format("neo4j_add_nodes 1 %d ", numNodes * 10);
 		for (int j = 0; j < numIterations; j++) {
 			long t1 = System.nanoTime();
 			org.neo4j.graphdb.Transaction tx = graphDb.beginTx();
@@ -46,14 +46,14 @@ public class Benchmark
 			}
 			long t2 = System.nanoTime();
 			long duration = (t2 - t1)/1000;
-			System.out.println(duration);
+			System.out.format("%d ", duration);
 			deleteDB();
 		}
 		System.out.println("");
 	}
 
 	private void addEdges(int numIterations, int numNodes) {
-		System.out.format("microseconds to add 100 edges to %d nodes\n", numNodes);
+		System.out.format("neo4j_add_edges 1 %d ", numNodes);
 		//int numNodes = 10000;
 		for (int j = 0; j < numIterations; j++) {
 			long t1 = System.nanoTime();
@@ -77,14 +77,14 @@ public class Benchmark
 			}
 			long t2 = System.nanoTime();
 			long duration = (t2 - t1)/1000;
-			System.out.println(duration);
+			System.out.format("%d ", duration);
 			deleteDB();
 		}
 		System.out.println("");
 	}
 
 	private void readEdges(int numIterations, int numNodes) {
-		System.out.format("microseconds to read 100 edges from each of %d nodes\n", numNodes);
+		System.out.format("neo4j_read_edges 1 %d ", numNodes);
 		//int numNodes = 10000;
 
 		for (int j = 0; j < numIterations; j++) {
@@ -123,7 +123,7 @@ public class Benchmark
 
 				long t2 = System.nanoTime();
 				long duration = (t2 - t1) / 1000;
-				System.out.println(duration);
+				System.out.format("%d ", duration);
 				//deleteDB();
 				tx.success();
 			}
@@ -138,7 +138,6 @@ public class Benchmark
 
 	private void addAndReadGraph(int numberOfNodes, String fileName, int numIterations) {
 		for (int j = 0; j < numIterations; j++) {
-			long t1 = System.nanoTime();
 
 			org.neo4j.graphdb.Transaction tx = graphDb.beginTx();
 			try {
@@ -169,12 +168,16 @@ public class Benchmark
 				tx.close();
 			}
 
+			long t1 = System.nanoTime();
 			tx = graphDb.beginTx();
 			try {
 				ResourceIterator<Node> readNodes = graphDb.getAllNodes().iterator();
 				while (readNodes.hasNext()) {
 					Node n = readNodes.next();
-					n.getRelationships().iterator();
+					Iterator<Relationship> edges = n.getRelationships().iterator();
+					while (edges.hasNext()) {
+						edges.next();
+					}
 				}
 				tx.success();
 			}
@@ -183,29 +186,29 @@ public class Benchmark
 			}
 			long t2 = System.nanoTime();
 			long duration = (t2 - t1)/1000;
-			System.out.println(duration);
+			System.out.format("%d ", duration);
 			deleteDB();
 		}
 		System.out.println("");
 	}
 
 	private void addAndReadPowerGraph(String directory, int numIterations) {
-		System.out.println("microseconds to add power law graph then read all edges from each node");
+		System.out.print("neo4j_power 1 1000 ");
 		addAndReadGraph(1000, directory + "/powerlaw.net", numIterations);
 	}
 
 	private void addAndReadKroneckerGraph(String directory, int numIterations) {
-		System.out.println("microseconds to add kronecker graph then read all edges from each node");
+		System.out.print("neo4j_kronecker 1 1024 ");
 		addAndReadGraph(1024, directory + "/kronecker_graph.net", numIterations);
 	}
 
 	private void addAndReadPowerGraph2(String directory, int numIterations) {
-		System.out.println("microseconds to add power law graph then read all edges from each node");
+		System.out.print("neo4j_large_power 1 50000 ");
 		addAndReadGraph(50000, directory + "/powerlaw2.net", numIterations);
 	}
 
 	private void addAndReadKroneckerGraph2(String directory, int numIterations) {
-		System.out.println("microseconds to add kronecker graph then read all edges from each node");
+		System.out.print("neo4j_large_kronecker 1 131072 ");
 		addAndReadGraph(131072, directory + "/krongraph2.net", numIterations);
 	}
 
@@ -240,7 +243,7 @@ public class Benchmark
 	}
 
 	private void breadthFirstSearch(String directory, int numIterations) {
-		System.out.println("microseconds for breadth first search");
+		System.out.print("neo4j_breadth_first 1 1024 ");
 		int numberOfNodes = 1024;
 		long startID = 0;
 		long endID = 0;
@@ -350,7 +353,7 @@ public class Benchmark
 			}
 			long t2 = System.nanoTime();
 			long duration = (t2 - t1)/1000;
-			System.out.println(duration);
+			System.out.format("%d ", duration);
 
 		}
 		deleteDB();
@@ -361,21 +364,46 @@ public class Benchmark
 	{
 		//run clean compile then assembly:single
 
-		if (args.length == 4) {
+		if (args.length == 5) {
 			Benchmark benchmark = new Benchmark(args[1]);
 			int numIterations = Integer.parseInt(args[2]);
 			int numNodes = Integer.parseInt(args[3]);
-			benchmark.addNodes(numIterations, numNodes);
-			benchmark.addEdges(numIterations, numNodes);
-			benchmark.readEdges(numIterations, numNodes);
-			benchmark.addAndReadPowerGraph(args[0], numIterations);
-			benchmark.addAndReadKroneckerGraph(args[0], numIterations);
-			benchmark.breadthFirstSearch(args[0], numIterations);
+			switch (args[4].charAt(0)) {
+				case '1':
+					benchmark.addNodes(numIterations, numNodes);
+					benchmark.addEdges(numIterations, numNodes);
+					benchmark.readEdges(numIterations, numNodes);
+					benchmark.addAndReadPowerGraph(args[0], numIterations);
+					benchmark.addAndReadKroneckerGraph(args[0], numIterations);
+					benchmark.breadthFirstSearch(args[0], numIterations);
+					break;
+				case '2':
+					benchmark.addNodes(numIterations, numNodes);
+					break;
+				case '3':
+					benchmark.addEdges(numIterations, numNodes);
+					break;
+				case '4':
+					benchmark.readEdges(numIterations, numNodes);
+					break;
+				case '5':
+					benchmark.addAndReadPowerGraph(args[0], numIterations);
+					break;
+				case '6':
+					benchmark.addAndReadKroneckerGraph(args[0], numIterations);
+					break;
+				case '7':
+					benchmark.breadthFirstSearch(args[0], numIterations);
+					break;
+				default:
+					break;
+			}
+
 			benchmark.graphDb.shutdown();
 
 		} else {
 			System.out.println("Please provide the directory containing the example graph files then the directory" +
-					" in which you would like to store the graph database then num nodes");
+					" in which you would like to store the graph database then num nodes, then the benchmark you want");
 		}
 	}
 }

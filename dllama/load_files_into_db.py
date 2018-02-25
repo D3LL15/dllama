@@ -11,24 +11,50 @@ c.execute('''CREATE TABLE IF NOT EXISTS data
 
 
 #f = open('slurm-702000.out', 'r')
-output_files = [filename for filename in os.listdir('.') if filename.startswith("slurm-")]
+output_files = [filename for filename in os.listdir('output3/with prev') if filename.startswith("slurm-")]
+#output_files = [filename for filename in os.listdir('.') if filename.startswith("test_slurm")]
 
 for filename in output_files:
-	f = open(filename, 'r')
-	skipped_header = false
+	print(filename)
+	f = open('output3/with prev/' + filename, 'r')
+	#f = open('neo4j data/' + filename, 'r')
+	skipped_header = False
 	for line in f:
+		#print(line)
 		if skipped_header:
-			if line == '':
+			if line == '\n':
 				break
 			words = line.split(' ')
 			benchmark = words[0]
 			num_machines = words[1]
 			num_vertices = words[2]
-			for i in range(3, len(words)):
-				time_taken = words[3 + i]
+			for i in range(3, len(words) - 1):
+				time_taken = words[i]
 				c.execute("INSERT INTO data VALUES (?,?,?,?)", (benchmark, num_machines, num_vertices, time_taken))
-		elif line == 'started benchmark':
-			skipped_header = true
+		elif line == 'started benchmark\n':
+			skipped_header = True
+	f.close()
+
+output_files = [filename for filename in os.listdir('neo4j data') if filename.startswith("slurm-")]
+for filename in output_files:
+	print(filename)
+	f = open('neo4j data/' + filename, 'r')
+	#f = open('neo4j data/' + filename, 'r')
+	skipped_header = False
+	for line in f:
+		#print(line)
+		if skipped_header:
+			if line == '\n':
+				break
+			words = line.split(' ')
+			benchmark = words[0]
+			num_machines = words[1]
+			num_vertices = words[2]
+			for i in range(3, len(words) - 1):
+				time_taken = words[i]
+				c.execute("INSERT INTO data VALUES (?,?,?,?)", (benchmark, num_machines, num_vertices, time_taken))
+		elif line == 'started benchmark\n':
+			skipped_header = True
 	f.close()
 
 # Save (commit) the changes
