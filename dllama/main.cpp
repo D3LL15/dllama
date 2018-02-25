@@ -253,9 +253,7 @@ void add_and_read_power_graph2(int num_iterations) {
 	add_and_read_graph("powerlaw2.net", 50000, num_iterations);
 }
 
-void breadth_first_search(int num_iterations) {
-	int num_nodes = 1024;
-	string input_file = "kronecker_graph.net";
+void breadth_first_search(int num_iterations, int num_nodes, string input_file) {
 	dllama* my_dllama_instance = new dllama(database_location, false);
 	my_dllama_instance->load_net_graph("empty_graph.net");
 	MPI_Barrier(MPI_COMM_WORLD);
@@ -397,12 +395,12 @@ int main(int argc, char** argv) {
 				add_and_read_power_graph2(third_arg);
 				break;
 			case 'a':
-				breadth_first_search(third_arg);
+				breadth_first_search(third_arg, 1024, "kronecker_graph.net");
 				break;
 			case 'b':
 				read_edges_benchmark(second_arg, third_arg);
 				merge_benchmark(second_arg, third_arg);
-				breadth_first_search(third_arg);
+				breadth_first_search(third_arg, 1024, "kronecker_graph.net");
                 add_and_read_power_graph(third_arg);
                 add_and_read_kronecker_graph(third_arg);
 				break;
@@ -410,6 +408,9 @@ int main(int argc, char** argv) {
                 add_nodes_benchmark(second_arg*10, third_arg);
                 add_edges_benchmark(second_arg, third_arg);
                 break;
+			case 'd':
+				breadth_first_search(third_arg, 50000, "powerlaw2.net");
+				break;
 			default:
 				cout << "provide benchmark number, number of nodes, number of iterations, location to store database" << "\n";
 		}
