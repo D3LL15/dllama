@@ -58,8 +58,40 @@ for parameters in graph_parameters:
 	#plt.show()
 
 
+
+
+merge_mean_times = []
+merge_standard_deviations = []
+num_nodes = [500, 1000, 1500, 2000, 2500, 3000, 4000, 5000]
+
+for nn in num_nodes:
+	args = ('0merge_benchmark', nn)
+	times = []
+	for row in c.execute('SELECT * FROM data WHERE benchmark = ? AND num_vertices = ? ORDER BY num_vertices', args):
+		times.append(row[3] / 1000.0)
+	mean_time = np.mean(times)
+	merge_mean_times.append(mean_time)
+	merge_standard_deviations.append(np.std(times))
+
+plt.figure()
+plt.errorbar(num_nodes, merge_mean_times, yerr=merge_standard_deviations)
+
+plt.xlabel('number of nodes')
+plt.ylabel('time (milliseconds)')
+plt.title('Time taken to merge 10 snapshots, each with n nodes, each with 100 edges')
+plt.grid(True)
+xmin, xmax = plt.xlim()
+plt.xlim(0.0, xmax)
+plt.savefig('merge_times.png')
+#plt.show()
+
+
+
+
+
+
 parameters = [('0read_edges', 'Time taken to read all 100 edges from 5000 nodes', 'read_edges.png', 'neo4j_read_edges'), 
-				('0merge_benchmark', 'Time taken to merge snapshots', 'merge.png', 'neo4j_merge'), 
+				#('0merge_benchmark', 'Time taken to merge snapshots', 'merge.png', 'neo4j_merge'), 
 				('0breadth_first', 'Time taken to complete breadth first search on kronecker graph', 'breadth.png', 'neo4j_breadth_first'), 
 				('0power', 'Time taken to read all 7196 edges from a power-law graph with 1000 nodes', 'power.png', 'neo4j_power'), 
 				('0kronecker', 'Time taken to read all 2655 edges from a kronecker graph with 1024 nodes', 'kronecker.png', 'neo4j_kronecker')

@@ -11,12 +11,12 @@ c.execute('''CREATE TABLE IF NOT EXISTS data
 
 
 #f = open('slurm-702000.out', 'r')
-output_files = [filename for filename in os.listdir('output3/with prev') if filename.startswith("slurm-")]
+output_files = [filename for filename in os.listdir('output4/with prev') if filename.startswith("slurm-")]
 #output_files = [filename for filename in os.listdir('.') if filename.startswith("test_slurm")]
 
 for filename in output_files:
 	print(filename)
-	f = open('output3/with prev/' + filename, 'r')
+	f = open('output4/with prev/' + filename, 'r')
 	#f = open('neo4j data/' + filename, 'r')
 	skipped_header = False
 	for line in f:
