@@ -6,8 +6,10 @@ conn = sqlite3.connect('benchmark_data.db')
 
 c = conn.cursor()
 
-graph_parameters = [('0add_nodes', 'Time taken to add 50000 nodes', 'add_nodes.png', '1add_nodes', 'neo4j_add_nodes'),
-					('0add_edges', 'Time taken to add 100 edges to 5000 nodes', 'add_edges.png', '1add_edges', 'neo4j_add_edges')#,
+graph_dir = '/Users/bionicbug/Documents/Cambridge/3rdYear/Project/writeup/figs/'
+
+graph_parameters = [('0add_nodes', 'Time taken to add 50000 nodes', graph_dir + 'add_nodes.png', '1add_nodes', 'neo4j_add_nodes'),
+					('0add_edges', 'Time taken to add 100 edges to 5000 nodes', graph_dir + 'add_edges.png', '1add_edges', 'neo4j_add_edges')#,
 					#('0power', 'Time taken to read all 7196 edges from a power-law graph with 1000 nodes', 'power.png'),
 					#('0kronecker', 'Time taken to read all 2655 edges from a kronecker graph with 1024 nodes', 'kronecker.png'),
 					]
@@ -50,9 +52,14 @@ for parameters in graph_parameters:
 	neo4j_std[0] = np.std(times)
 	plt.errorbar(t, neo4j_mean_time, yerr=neo4j_std)
 
+	if parameters[0] == '0add_edges':
+		plt.legend(['DLLAMA', 'simple DLLAMA', 'Single machine Neo4j'])
+	else:
+		plt.legend(['DLLAMA', 'Single machine Neo4j'])
+
 	plt.xlabel('number of machines')
 	plt.ylabel('time (milliseconds)')
-	plt.title(parameters[1])
+	#plt.title(parameters[1])
 	plt.grid(True)
 	plt.savefig(parameters[2])
 	#plt.show()
@@ -78,11 +85,11 @@ plt.errorbar(num_nodes, merge_mean_times, yerr=merge_standard_deviations)
 
 plt.xlabel('number of nodes')
 plt.ylabel('time (milliseconds)')
-plt.title('Time taken to merge 10 snapshots, each with n nodes, each with 100 edges')
+#plt.title('Time taken to merge 10 snapshots, each with n nodes, each with 100 edges')
 plt.grid(True)
 xmin, xmax = plt.xlim()
 plt.xlim(0.0, xmax)
-plt.savefig('merge_times.png')
+plt.savefig(graph_dir + 'merge_times.png')
 #plt.show()
 
 
@@ -90,11 +97,11 @@ plt.savefig('merge_times.png')
 
 
 
-parameters = [('0read_edges', 'Time taken to read all 100 edges from 5000 nodes', 'read_edges.png', 'neo4j_read_edges'), 
+parameters = [('0read_edges', 'Time taken to read all 100 edges from 5000 nodes', graph_dir + 'read_edges.png', 'neo4j_read_edges'), 
 				#('0merge_benchmark', 'Time taken to merge snapshots', 'merge.png', 'neo4j_merge'), 
-				('0breadth_first', 'Time taken to complete breadth first search on kronecker graph', 'breadth.png', 'neo4j_breadth_first'), 
-				('0power', 'Time taken to read all 7196 edges from a power-law graph with 1000 nodes', 'power.png', 'neo4j_power'), 
-				('0kronecker', 'Time taken to read all 2655 edges from a kronecker graph with 1024 nodes', 'kronecker.png', 'neo4j_kronecker')
+				('0breadth_first', 'Time taken to complete breadth first search on kronecker graph', graph_dir + 'breadth.png', 'neo4j_breadth_first'), 
+				('0power', 'Time taken to read all 7196 edges from a power-law graph with 1000 nodes', graph_dir + 'power.png', 'neo4j_power'), 
+				('0kronecker', 'Time taken to read all 2655 edges from a kronecker graph with 1024 nodes', graph_dir + 'kronecker.png', 'neo4j_kronecker')
 				]
 
 for param in parameters:
@@ -147,14 +154,14 @@ for param in parameters:
 
 	ax.set_ylabel('Database')
 	ax.set_xlabel('Time (microseconds)')
-	ax.set_title('Time taken for each benchmark')
+	#ax.set_title('Time taken for each benchmark')
 	ax.set_yticks(index)
 	ax.set_yticklabels(('DLLAMA', 'Neo4j'))
 	#ax.set_xticklabels(('Read edges', 'Breadth first', 'Power law', 'Kronecker'))
 	#ax.legend()
 
 	fig.tight_layout()
-	plt.title(param[1])
+	#plt.title(param[1])
 	xmin, xmax = plt.xlim()
 	plt.xlim(0.0, xmax)
 

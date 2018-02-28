@@ -1,5 +1,0 @@
-started benchmark
-0add_nodes 2 10000 121705 72097 
-0add_edges 2 1000 184045 148035 
-0kronecker 2 1024 103 102 
-0power 2 1000 149 151 
