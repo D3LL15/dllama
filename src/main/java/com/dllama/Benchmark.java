@@ -56,15 +56,14 @@ public class Benchmark
 		System.out.format("neo4j_add_edges 1 %d ", numNodes);
 		//int numNodes = 10000;
 		for (int j = 0; j < numIterations; j++) {
-			long t1 = System.nanoTime();
+			long t1 = 0;
 			org.neo4j.graphdb.Transaction tx = graphDb.beginTx();
 			try {
 				Node[] nodes = new Node[numNodes];
 				for (int num = 0; num < numNodes; num++) {
 					nodes[num] = graphDb.createNode();
 					nodes[num].setProperty("num", num);
-				}
-
+				t1 = System.nanoTime();
 				for (int num = 0; num < numNodes; num++) {
 					for (int i = 0; i < 100; i++) {
 						Relationship relationship = nodes[num].createRelationshipTo(nodes[i], RelTypes.EDGE);
