@@ -63,6 +63,7 @@ public class Benchmark
 				for (int num = 0; num < numNodes; num++) {
 					nodes[num] = graphDb.createNode();
 					nodes[num].setProperty("num", num);
+				}
 				t1 = System.nanoTime();
 				for (int num = 0; num < numNodes; num++) {
 					for (int i = 0; i < 100; i++) {
@@ -71,7 +72,7 @@ public class Benchmark
 				}
 				tx.success();
 			}
-			finally {
+				finally {
 				tx.close();
 			}
 			long t2 = System.nanoTime();
@@ -242,8 +243,8 @@ public class Benchmark
 	}
 
 	private void breadthFirstSearch(String directory, int numIterations) {
-		System.out.print("neo4j_breadth_first 1 1024 ");
-		int numberOfNodes = 1024;
+		System.out.print("neo4j_breadth_first 1 50000 ");
+		int numberOfNodes = 50000;
 		long startID = 0;
 		long endID = 0;
 
@@ -252,7 +253,8 @@ public class Benchmark
 		org.neo4j.graphdb.Transaction tx = graphDb.beginTx();
 		try {
 			BufferedReader reader;
-			reader = new BufferedReader(new FileReader(directory + "/kronecker_graph.net"));
+			//reader = new BufferedReader(new FileReader(directory + "/kronecker_graph.net"));
+			reader = new BufferedReader(new FileReader(directory + "/powerlaw2.net"));
 			String line = reader.readLine();
 			String[] fileNodes;
 
