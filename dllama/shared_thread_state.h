@@ -29,7 +29,11 @@ namespace dllama_ns {
 #ifdef SIMPLE_DLLAMA
     #define BENCHMARK_TYPE 1
 #else
-    #define BENCHMARK_TYPE 0
+    #ifdef LLAMA_BENCHMARK
+        #define BENCHMARK_TYPE 2
+    #else
+        #define BENCHMARK_TYPE 0
+    #endif
 #endif
     
 

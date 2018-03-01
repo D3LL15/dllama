@@ -21,7 +21,7 @@ TARGETS    := $(patsubst %.cc,$(DIR)/%,$(SOURCES))
 
 .PHONY: all clean
 
-all: $(TARGETS)  dllama.exe simple_dllama.exe 
+all: $(TARGETS)  dllama.exe simple_dllama.exe llama.exe
 	#dllamatest.exe
 
 clean:
@@ -40,3 +40,5 @@ simple_dllama.exe : main.cpp dllama_test.cpp dllama_test.h simple_dllama.cpp dll
 dllamatest.exe : dllamatest.cpp dllama_test.cpp dllama_test.h dllama.cpp dllama.h snapshot_merger.cpp snapshot_merger.h shared_thread_state.h snapshot_manager.cpp snapshot_manager.h
 	$(CC) $(CFLAGS) -Igoogletestmaster/googletest/include dllamatest.cpp dllama_test.cpp dllama.cpp snapshot_merger.cpp snapshot_manager.cpp -Lgoogletestmaster/googlemock/gtest/ -lgtest $(LFLAGS) -o dllamatest.exe
 
+llama.exe : main.cpp dllama_test.cpp dllama_test.h llama_for_benchmark.cpp dllama.h snapshot_merger.cpp snapshot_merger.h shared_thread_state.h snapshot_manager.cpp snapshot_manager.h 
+	$(CC) $(CFLAGS) -DLLAMA_BENCHMARK main.cpp dllama_test.cpp llama_for_benchmark.cpp snapshot_merger.cpp snapshot_manager.cpp $(LFLAGS) -o llama.exe
