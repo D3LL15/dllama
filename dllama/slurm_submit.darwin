@@ -59,10 +59,10 @@ module load java/jdk1.8.0_45
 #! Insert additional module load commands after this line if needed:
 
 #! Full path to application executable: 
-application="/home/js2072/dllama/dllama/dllama.exe"
+application="/home/js2072/dllama/dllama/llama.exe"
 
 #! Run options for the application:
-options="2 1500 20 /local/"
+options="5 5000 20 /local/"
 
 #! Work directory (i.e. where the job will run):
 workdir=/home/js2072/dllama/dllama
