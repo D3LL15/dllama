@@ -14,9 +14,9 @@
 #! Which project should be charged:
 #SBATCH -A TJONES-SL3-CPU
 #! How many whole nodes should be allocated?
-#SBATCH --nodes=1
+#SBATCH --nodes=10
 #! How many (MPI) tasks will there be in total? (<= nodes*16)
-#SBATCH --ntasks=1
+#SBATCH --ntasks=10
 #! How much wallclock time will be required?
 #SBATCH --time=00:15:00
 #! What types of email messages do you wish to receive?
@@ -59,10 +59,10 @@ module load java/jdk1.8.0_45
 #! Insert additional module load commands after this line if needed:
 
 #! Full path to application executable: 
-application="/home/js2072/dllama/dllama/llama.exe"
+application="/home/js2072/dllama/dllama/dllama.exe"
 
 #! Run options for the application:
-options="a 5000 20 /local/"
+options="0 5000 20 /local/"
 
 #! Work directory (i.e. where the job will run):
 workdir=/home/js2072/dllama/dllama
