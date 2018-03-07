@@ -258,7 +258,7 @@ void breadth_first_search(int num_iterations, int num_nodes, string input_file) 
 	my_dllama_instance->load_net_graph("empty_graph.net");
 	MPI_Barrier(MPI_COMM_WORLD);
 	if (world_rank == 0) {
-		cout << BENCHMARK_TYPE << "breadth_first " << world_size << " 1024 ";
+		cout << BENCHMARK_TYPE << "breadth_first " << world_size << " " << num_nodes << " ";
 		ifstream file(input_file);
 		if (!file.is_open()) {
 			cout << "cannot open graph net file\n";
