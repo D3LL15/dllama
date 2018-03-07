@@ -8,8 +8,8 @@ c = conn.cursor()
 
 graph_dir = '/Users/bionicbug/Documents/Cambridge/3rdYear/Project/writeup/figs/'
 
-graph_parameters = [('0add_nodes', 'Time taken to add 50000 nodes', graph_dir + 'add_nodes.png', '1add_nodes', 'neo4j_add_nodes'),
-					('0add_edges', 'Time taken to add 100 edges to 5000 nodes', graph_dir + 'add_edges.png', '1add_edges', 'neo4j_add_edges')#,
+graph_parameters = [('0add_nodes', 'Time taken to add 50000 nodes', graph_dir + 'add_nodes.png', '1add_nodes', 'neo4j_add_nodes', '2add_nodes'),
+					('0add_edges', 'Time taken to add 100 edges to 5000 nodes', graph_dir + 'add_edges.png', '1add_edges', 'neo4j_add_edges', '2add_edges')#,
 					#('0power', 'Time taken to read all 7196 edges from a power-law graph with 1000 nodes', 'power.png'),
 					#('0kronecker', 'Time taken to read all 2655 edges from a kronecker graph with 1024 nodes', 'kronecker.png'),
 					]
@@ -52,10 +52,18 @@ for parameters in graph_parameters:
 	neo4j_std[0] = np.std(times)
 	plt.errorbar(t, neo4j_mean_time, yerr=neo4j_std)
 
+	times = []
+	for row in c.execute('SELECT * FROM data WHERE benchmark = ? ORDER BY benchmark', (parameters[5],)):
+		times.append(row[3] / 1000.0)
+	llama_mean_time = [np.mean(times)] * 10
+	llama_std = [0.0] * 10
+	llama_std[0] = np.std(times)
+	plt.errorbar(t, llama_mean_time, yerr=llama_std)
+
 	if parameters[0] == '0add_edges':
-		plt.legend(['DLLAMA', 'simple DLLAMA', 'Single machine Neo4j'])
+		plt.legend(['DLLAMA', 'Simple DLLAMA', 'Embedded Neo4j', 'LLAMA'])
 	else:
-		plt.legend(['DLLAMA', 'Single machine Neo4j'])
+		plt.legend(['DLLAMA', 'Embedded Neo4j', 'LLAMA'])
 
 	plt.xlabel('number of machines')
 	plt.ylabel('time (milliseconds)')
@@ -97,19 +105,20 @@ plt.savefig(graph_dir + 'merge_times.png')
 
 
 
-parameters = [('0read_edges', 'Time taken to read all 100 edges from 5000 nodes', graph_dir + 'read_edges.png', 'neo4j_read_edges'), 
+parameters = [('0read_edges', 'Time taken to read all 100 edges from 5000 nodes', graph_dir + 'read_edges.png', 'neo4j_read_edges', '2read_edges', 5000), 
 				#('0merge_benchmark', 'Time taken to merge snapshots', 'merge.png', 'neo4j_merge'), 
-				('0breadth_first', 'Time taken to complete breadth first search on kronecker graph', graph_dir + 'breadth.png', 'neo4j_breadth_first'), 
-				('0power', 'Time taken to read all 7196 edges from a power-law graph with 1000 nodes', graph_dir + 'power.png', 'neo4j_power'), 
-				('0kronecker', 'Time taken to read all 2655 edges from a kronecker graph with 1024 nodes', graph_dir + 'kronecker.png', 'neo4j_kronecker')
+				('0breadth_first', 'Time taken to complete breadth first search on power-law graph with 50000 nodes', graph_dir + 'breadth.png', 'neo4j_breadth_first', '2breadth_first', 50000), 
+				('0power', 'Time taken to read all 7196 edges from a power-law graph with 1000 nodes', graph_dir + 'power.png', 'neo4j_power', '2power', 1000), 
+				('0kronecker', 'Time taken to read all 2655 edges from a kronecker graph with 1024 nodes', graph_dir + 'kronecker.png', 'neo4j_kronecker', '2kronecker', 1024),
+				('0power', 'Time taken to read all edges from a power-law graph with 50000 nodes', graph_dir + 'power2.png', 'neo4j_power', '2power', 50000)
 				]
 
 for param in parameters:
 	means_dllama = []
 	std_dllama = []
 	times = []
-	args = (param[0], 1)
-	for row in c.execute('SELECT * FROM data WHERE benchmark = ? AND num_machines = ? ORDER BY benchmark', args):
+	args = (param[0], 1, param[5])
+	for row in c.execute('SELECT * FROM data WHERE benchmark = ? AND num_machines = ? AND num_vertices = ? ORDER BY benchmark', args):
 		times.append(row[3])
 	mean_time = np.mean(times)
 	means_dllama.append(mean_time)
@@ -118,24 +127,34 @@ for param in parameters:
 	if param[3] == 'neo4j_merge':
 		means_neo4j = [0.0]
 		std_neo4j = [0.0]
-		n_groups = 1
+		n_groups = 2
 	else:
 		means_neo4j = []
 		std_neo4j = []
 		times = []
-		args = (param[3], 1)
-		for row in c.execute('SELECT * FROM data WHERE benchmark = ? AND num_machines = ? ORDER BY benchmark', args):
+		args = (param[3], 1, param[5])
+		for row in c.execute('SELECT * FROM data WHERE benchmark = ? AND num_machines = ? AND num_vertices = ? ORDER BY benchmark', args):
 			times.append(row[3])
 		mean_time = np.mean(times)
 		means_neo4j.append(mean_time)
 		std_neo4j.append(np.std(times))
-		n_groups = 2
+		n_groups = 3
+
+	means_llama = []
+	std_llama = []
+	times = []
+	args = (param[4], 1, param[5])
+	for row in c.execute('SELECT * FROM data WHERE benchmark = ? AND num_machines = ? AND num_vertices = ? ORDER BY benchmark', args):
+		times.append(row[3])
+	mean_time = np.mean(times)
+	means_llama.append(mean_time)
+	std_llama.append(np.std(times))
 
 	#means_dllama = (20, 35, 30, 35, 27)
 	#std_dllama = (2, 3, 4, 1, 2)
 
-	means = [means_dllama[0], means_neo4j[0]]
-	stds = [std_dllama[0], std_neo4j[0]]
+	means = [means_dllama[0], means_neo4j[0], means_llama[0]]
+	stds = [std_dllama[0], std_neo4j[0], std_llama[0]]
 
 	fig, ax = plt.subplots()
 	index = np.arange(n_groups)
@@ -156,7 +175,7 @@ for param in parameters:
 	ax.set_xlabel('Time (microseconds)')
 	#ax.set_title('Time taken for each benchmark')
 	ax.set_yticks(index)
-	ax.set_yticklabels(('DLLAMA', 'Neo4j'))
+	ax.set_yticklabels(('DLLAMA', 'Neo4j', 'LLAMA'))
 	#ax.set_xticklabels(('Read edges', 'Breadth first', 'Power law', 'Kronecker'))
 	#ax.legend()
 
