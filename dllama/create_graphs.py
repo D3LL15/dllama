@@ -20,7 +20,7 @@ for parameters in graph_parameters:
 	simple_dllama_mean_times = []
 	simple_dllama_standard_deviations = []
 
-	for num_machines in range (1, 11):
+	for num_machines in [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 15]: #range (1, 11):
 		args = (parameters[0], num_machines)
 		times = []
 		for row in c.execute('SELECT * FROM data WHERE benchmark = ? AND num_machines = ? ORDER BY benchmark', args):
@@ -38,7 +38,7 @@ for parameters in graph_parameters:
 			simple_dllama_mean_times.append(mean_time)
 			simple_dllama_standard_deviations.append(np.std(times))
 
-	t = np.arange(1, 11, 1)
+	t = np.array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 15]) #np.arange(1, 11, 1)
 	plt.figure()
 	plt.errorbar(t, dllama_mean_times, yerr=dllama_standard_deviations)
 	if parameters[0] == '0add_edges':
@@ -47,16 +47,16 @@ for parameters in graph_parameters:
 	times = []
 	for row in c.execute('SELECT * FROM data WHERE benchmark = ? ORDER BY benchmark', (parameters[4],)):
 		times.append(row[3] / 1000.0)
-	neo4j_mean_time = [np.mean(times)] * 10
-	neo4j_std = [0.0] * 10
+	neo4j_mean_time = [np.mean(times)] * 11
+	neo4j_std = [0.0] * 11
 	neo4j_std[0] = np.std(times)
 	plt.errorbar(t, neo4j_mean_time, yerr=neo4j_std)
 
 	times = []
 	for row in c.execute('SELECT * FROM data WHERE benchmark = ? ORDER BY benchmark', (parameters[5],)):
 		times.append(row[3] / 1000.0)
-	llama_mean_time = [np.mean(times)] * 10
-	llama_std = [0.0] * 10
+	llama_mean_time = [np.mean(times)] * 11
+	llama_std = [0.0] * 11
 	llama_std[0] = np.std(times)
 	plt.errorbar(t, llama_mean_time, yerr=llama_std)
 

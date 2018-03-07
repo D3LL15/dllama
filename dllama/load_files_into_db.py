@@ -41,57 +41,7 @@ c.execute("DELETE FROM data WHERE benchmark = ?", ('0add_nodes',))
 load_data_from_dir('neo4j data')
 load_data_from_dir('output5/add nodes')
 load_data_from_dir('output5/with prev')
-
-'''
-#f = open('slurm-702000.out', 'r')
-output_files = [filename for filename in os.listdir('output4/with prev') if filename.startswith("slurm-")]
-#output_files = [filename for filename in os.listdir('.') if filename.startswith("test_slurm")]
-
-for filename in output_files:
-	print(filename)
-	f = open('output4/with prev/' + filename, 'r')
-	#f = open('neo4j data/' + filename, 'r')
-	skipped_header = False
-	for line in f:
-		#print(line)
-		if skipped_header:
-			if line == '\n':
-				break
-			words = line.split(' ')
-			benchmark = words[0]
-			num_machines = words[1]
-			num_vertices = words[2]
-			for i in range(3, len(words) - 1):
-				time_taken = words[i]
-				c.execute("INSERT INTO data VALUES (?,?,?,?)", (benchmark, num_machines, num_vertices, time_taken))
-		elif line == 'started benchmark\n':
-			skipped_header = True
-	f.close()
-
-c.execute("DELETE FROM data WHERE benchmark = ?", ('0add_nodes',))
-
-output_files = [filename for filename in os.listdir('neo4j data') if filename.startswith("slurm-")]
-for filename in output_files:
-	print(filename)
-	f = open('neo4j data/' + filename, 'r')
-	#f = open('neo4j data/' + filename, 'r')
-	skipped_header = False
-	for line in f:
-		#print(line)
-		if skipped_header:
-			if line == '\n':
-				break
-			words = line.split(' ')
-			benchmark = words[0]
-			num_machines = words[1]
-			num_vertices = words[2]
-			for i in range(3, len(words) - 1):
-				time_taken = words[i]
-				c.execute("INSERT INTO data VALUES (?,?,?,?)", (benchmark, num_machines, num_vertices, time_taken))
-		elif line == 'started benchmark\n':
-			skipped_header = True
-	f.close()
-'''
+load_data_from_dir('output6')
 
 # Save (commit) the changes
 conn.commit()
