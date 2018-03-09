@@ -20,7 +20,8 @@ using namespace std;
 namespace dllama_ns {
 	int world_size;
 	int world_rank;
-	bool merge_starting;
+	shared_thread_state* sstate;
+	/*bool merge_starting;
 	mutex merge_starting_lock;
 	mutex merge_lock;
 	mutex ro_graph_lock;
@@ -36,10 +37,10 @@ namespace dllama_ns {
 	mutex new_node_ack_stack_lock;
 	int num_acks;
 	mutex num_acks_lock;
-	condition_variable num_acks_condition;
+	condition_variable num_acks_condition;*/
 
 	void start_mpi_listener() {
-		snapshot_merger_instance->start_snapshot_listener();
+		sstate->snapshot_merger_instance->start_snapshot_listener();
 	}
 }
 
@@ -49,14 +50,7 @@ dllama::dllama(string database_location, bool initialise_mpi) {
 	this->database_location = database_location;
 	handling_mpi = initialise_mpi;
 	
-	dllama_instance = this;
-	merge_starting = 0;
-	current_snapshot_level = 0;
-	dllama_number_of_vertices = 0;
-	self_adding_node = 0;
-	num_new_node_requests = 0;
-	
-	snapshot_merger_instance = new snapshot_merger(database_location); //
+	sstate = new shared_thread_state(this, database_location);
 	
 	DEBUG("world size: " << world_size);
 	
@@ -71,8 +65,8 @@ dllama::dllama(string database_location, bool initialise_mpi) {
 	database->set_num_threads(1);
 	graph = database->graph();
 	
-	current_snapshot_level = graph->num_levels();
-	dllama_number_of_vertices = graph->max_nodes() - 1;
+	sstate->current_snapshot_level = graph->num_levels();
+	sstate->dllama_number_of_vertices = graph->max_nodes() - 1;
 }
 
 dllama::~dllama() {
@@ -90,8 +84,8 @@ void dllama::load_net_graph(string net_graph) {
 	ll_loader_config loader_config;
 	loader->load_direct(graph, net_graph.c_str(), &loader_config);
 	
-	current_snapshot_level = graph->num_levels();
-	dllama_number_of_vertices = graph->max_nodes() - 1;
+	sstate->current_snapshot_level = graph->num_levels();
+	sstate->dllama_number_of_vertices = graph->max_nodes() - 1;
 	DEBUG("num levels " << graph->num_levels());
 	DEBUG("num vertices " << graph->max_nodes());
 }
@@ -130,12 +124,12 @@ node_t dllama::add_nodes(int num_new_nodes) {
 
 //not for manual use
 node_t dllama::force_add_nodes(int num_nodes) {
-	checkpoint_lock.lock();
+	sstate->checkpoint_lock.lock();
 	int result;
 	for (int i = 0; i < num_nodes; i++) {
 		result = graph->add_node();
 	}
-	checkpoint_lock.unlock();
+	sstate->checkpoint_lock.unlock();
 	return result;
 }
 
@@ -157,14 +151,14 @@ void dllama::auto_checkpoint() {
 void dllama::checkpoint() {
 	//DEBUG("current number of levels before checkpoint: " << graph->num_levels());
 	graph->checkpoint();
-	dllama_number_of_vertices = graph->max_nodes() - 1;
-	current_snapshot_level = graph->num_levels();
+	sstate->dllama_number_of_vertices = graph->max_nodes() - 1;
+	sstate->current_snapshot_level = graph->num_levels();
 }
 
 //asynchronous
 void dllama::start_merge() {
 	DEBUG("Rank " << world_rank << " manually starting merge");
-	snapshot_merger_instance->merge_local_llama();
+	sstate->snapshot_merger_instance->merge_local_llama();
 	refresh_ro_graph();
 
 }

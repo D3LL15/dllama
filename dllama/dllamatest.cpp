@@ -43,16 +43,8 @@ namespace {
 		// Objects declared here can be used by all tests in the test case for Foo.
 	};
 
-	// Tests that the Foo::Bar() method does Abc.
-
-	TEST_F(DllamaTest, MethodBarDoesAbc) {
+	TEST_F(DllamaTest, EmptyTest) {
 		EXPECT_EQ(0, 3 - 3);
-	}
-
-	// Tests that Foo does Xyz.
-
-	TEST_F(DllamaTest, DoesXyz) {
-		// Exercises the Xyz feature of Foo.
 	}
 	
 	TEST_F(DllamaTest, KronGraphTest) {

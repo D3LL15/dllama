@@ -7,6 +7,8 @@
       <in>dllamatest.cpp</in>
       <in>llama-pagerank.cc</in>
       <in>main.cpp</in>
+      <in>shared_state.cpp</in>
+      <in>shared_state.h</in>
       <in>simple_dllama.cpp</in>
       <in>simple_dllama.h</in>
       <in>snapshot_manager.cpp</in>
@@ -85,6 +87,10 @@
             <pElem>/usr/local/include</pElem>
           </incDir>
         </ccTool>
+      </item>
+      <item path="shared_state.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="shared_state.h" ex="false" tool="3" flavor2="0">
       </item>
       <item path="simple_dllama.cpp" ex="false" tool="1" flavor2="0">
       </item>

@@ -227,7 +227,7 @@ vector<LL_DATA_TYPE> snapshot_manager::get_neighbours_of_vertex(int rank, node_t
 					}
 				}
 			}
-		}		
+		}
 	}
 	return neighbours;
 }

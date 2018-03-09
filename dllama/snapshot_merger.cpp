@@ -74,10 +74,10 @@ void snapshot_merger::handle_snapshot_message(MPI_Status status) {
 
 void snapshot_merger::handle_merge_request(int source) {
 	//stop main thread writing snapshots
-	merge_starting_lock.lock();
-	bool merge_had_started = merge_starting;
-	merge_starting = 1;
-	merge_starting_lock.unlock();
+	sstate->merge_starting_lock.lock();
+	bool merge_had_started = sstate->merge_starting;
+	sstate->merge_starting = 1;
+	sstate->merge_starting_lock.unlock();
 	DEBUG("Rank " << world_rank << " received merge request");
 	int expected_level;
 	if (source != world_rank) {
@@ -90,10 +90,10 @@ void snapshot_merger::handle_merge_request(int source) {
 
 	//broadcast start merge request if this is the first merge request you have heard
 	if (!merge_had_started) {
-		merge_lock.lock();
+		sstate->merge_lock.lock();
 		for (int i = 0; i < world_size; i++) {
 			if (i != world_rank) {
-				MPI_Send(&current_snapshot_level, 1, MPI_INT, i, START_MERGE_REQUEST, MPI_COMM_WORLD);
+				MPI_Send(&sstate->current_snapshot_level, 1, MPI_INT, i, START_MERGE_REQUEST, MPI_COMM_WORLD);
 			}
 		}
 	}
@@ -111,15 +111,15 @@ void snapshot_merger::handle_merge_request(int source) {
 	if (received_all_snapshots) {
 		DEBUG("Rank " << world_rank << " received merge requests from all other hosts");
 
-		received_snapshot_levels[world_rank] = current_snapshot_level - 2;
+		received_snapshot_levels[world_rank] = sstate->current_snapshot_level - 2;
 		merge_snapshots(received_snapshot_levels);
 		
 		//tell main thread to stop reading
-		ro_graph_lock.lock();
+		sstate->ro_graph_lock.lock();
 		
 		//reset main thread llama to use new level 0 snapshot, while retaining in memory deltas, then flush deltas to new snapshot later
-		dllama_instance->refresh_ro_graph();
-		ro_graph_lock.unlock();
+		sstate->dllama_instance->refresh_ro_graph();
+		sstate->ro_graph_lock.unlock();
 
 		//clean up after merge
 		//setting expected snapshot level to -1 means we have to hear from that host before merging
@@ -132,10 +132,10 @@ void snapshot_merger::handle_merge_request(int source) {
 		expected_snapshot_levels[world_rank] = 0;
 
 		//allow main thread to continue writing snapshots
-		merge_lock.unlock();
-		merge_starting_lock.lock();
-		merge_starting = 0;
-		merge_starting_lock.unlock();
+		sstate->merge_lock.unlock();
+		sstate->merge_starting_lock.lock();
+		sstate->merge_starting = 0;
+		sstate->merge_starting_lock.unlock();
 	}
 }
 
@@ -150,19 +150,19 @@ void snapshot_merger::handle_new_node_request(MPI_Status status) {
 	int num_new_nodes;
 	MPI_Recv(&num_new_nodes, 1, MPI_INT, status.MPI_SOURCE, NEW_NODE_REQUEST, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 	DEBUG("Rank " << world_rank << " completed mpi recv");
-	if (num_new_node_requests == 0) {
-		num_new_node_requests_lock.lock();
+	if (sstate->num_new_node_requests == 0) {
+		sstate->num_new_node_requests_lock.lock();
 	}
-	num_new_node_requests++;
+	sstate->num_new_node_requests++;
 	DEBUG("Rank " << world_rank << " handling new node request midpoint");
-	new_node_ack_stack_lock.lock();
-	if (self_adding_node && status.MPI_SOURCE < world_rank) {
-		new_node_ack_stack.push(status.MPI_SOURCE);
+	sstate->new_node_ack_stack_lock.lock();
+	if (sstate->self_adding_node && status.MPI_SOURCE < world_rank) {
+		sstate->new_node_ack_stack.push(status.MPI_SOURCE);
 	} else {
 		int zero = 0;
 		MPI_Send(&zero, 1, MPI_INT, status.MPI_SOURCE, NEW_NODE_ACK, MPI_COMM_WORLD);
 	}
-	new_node_ack_stack_lock.unlock();
+	sstate->new_node_ack_stack_lock.unlock();
 	DEBUG("Rank " << world_rank << " done handling new node request");
 }
 
@@ -172,18 +172,18 @@ void snapshot_merger::handle_new_node_command(MPI_Status status) {
 	MPI_Recv(&num_new_nodes, 1, MPI_INT, status.MPI_SOURCE, NEW_NODE_COMMAND, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 	//check we are not currently checkpointing
 	
-	dllama_instance->force_add_nodes(num_new_nodes);
+	sstate->dllama_instance->force_add_nodes(num_new_nodes);
 	
-	num_new_node_requests--;
-	if (num_new_node_requests == 0) {
-		num_new_node_requests_lock.unlock();
+	sstate->num_new_node_requests--;
+	if (sstate->num_new_node_requests == 0) {
+		sstate->num_new_node_requests_lock.unlock();
 	}
 }
 
 void snapshot_merger::handle_new_edge(MPI_Status status) {
 	node_t edge[2];
 	MPI_Recv(&edge, 2, MPI_INT, status.MPI_SOURCE, NEW_EDGE, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-	dllama_instance->force_add_edge(edge[0], edge[1]);
+	sstate->dllama_instance->force_add_edge(edge[0], edge[1]);
 	DEBUG("Rank " << world_rank << " added edge " << edge[0] << " to " << edge[1]);
 }
 
@@ -191,10 +191,10 @@ void snapshot_merger::handle_new_node_ack(MPI_Status status) {
 	int ack;
 	MPI_Recv(&ack, 1, MPI_INT, status.MPI_SOURCE, NEW_NODE_ACK, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 	{
-		lock_guard<mutex> lk(num_acks_lock);
-		num_acks++;
+		lock_guard<mutex> lk(sstate->num_acks_lock);
+		sstate->num_acks++;
 	}
-	num_acks_condition.notify_all();
+	sstate->num_acks_condition.notify_all();
 }
 
 void snapshot_merger::start_snapshot_listener() {
@@ -375,7 +375,7 @@ void snapshot_merger::merge_snapshots(int* rank_snapshots) {
 	oss << database_location << "db" << world_rank << "/new_level0.dat";
 	string output_file_name = oss.str();
 	
-	received_num_vertices[world_rank] = dllama_number_of_vertices;
+	received_num_vertices[world_rank] = sstate->dllama_number_of_vertices;
 	
 	DEBUG("Rank " << world_rank << " before max element");
 	int number_of_vertices = *max_element(received_num_vertices, received_num_vertices + world_size) + 1;
@@ -449,7 +449,6 @@ void snapshot_merger::merge_snapshots(int* rank_snapshots) {
 		for (vector<LL_DATA_TYPE>::iterator edges = edge_table.begin(); edges != edge_table.end(); ++edges) {
 			file.write((char*) (&(*edges)), sizeof(LL_DATA_TYPE));
 		}
-		//std::copy(edge_table.begin(), edge_table.end(), std::ostream_iterator<LL_DATA_TYPE>(file));
 		
 		//vertex chunks
 		int position = file.tellp();
@@ -498,12 +497,7 @@ void snapshot_merger::merge_snapshots(int* rank_snapshots) {
 		file.seekp(0);
 		file.write((char*)(&new_meta), sizeof(dll_level_meta));
 		
-		//may not be necessary
-		/*file.seekp(position);
-		char end_of_file_bytes[file_size - position];
-		file.write(end_of_file_bytes, file_size - position);*/
-		
-		//DEBUG("written file size is " << file.tellp());
+		DEBUG("written file size is " << file.tellp());
 		
 		file.close();
 	} else cout << "Rank " << world_rank << " unable to open output file\n";
@@ -523,7 +517,7 @@ void snapshot_merger::merge_local_llama() {
 	string output_file_name = oss.str();
 	
 	DEBUG("Rank " << world_rank << " before max element");
-	int number_of_vertices = dllama_number_of_vertices;
+	int number_of_vertices = sstate->dllama_number_of_vertices;
 	DEBUG("Rank " << world_rank << "num vertices for new level 0: " << number_of_vertices);
 	
 	//metadata
@@ -537,7 +531,7 @@ void snapshot_merger::merge_local_llama() {
 
 	//edge table
 	int* rank_snapshots = new int[world_size]();
-	rank_snapshots[world_rank] = current_snapshot_level - 2;
+	rank_snapshots[world_rank] = sstate->current_snapshot_level - 2;
 	snapshot_manager* snapshots = new snapshot_manager(rank_snapshots, true, database_location);
 
 	vector<LL_DATA_TYPE> edge_table;

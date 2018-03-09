@@ -20,7 +20,8 @@ using namespace std;
 namespace dllama_ns {
 	int world_size;
 	int world_rank;
-	bool merge_starting;
+	shared_thread_state* sstate;
+	/*bool merge_starting;
 	mutex merge_starting_lock;
 	mutex merge_lock;
 	mutex ro_graph_lock;
@@ -36,10 +37,10 @@ namespace dllama_ns {
 	mutex new_node_ack_stack_lock;
 	int num_acks;
 	mutex num_acks_lock;
-	condition_variable num_acks_condition;
+	condition_variable num_acks_condition;*/
 
 	void start_mpi_listener() {
-		snapshot_merger_instance->start_snapshot_listener();
+		sstate->snapshot_merger_instance->start_snapshot_listener();
 	}
 }
 
@@ -60,14 +61,8 @@ dllama::dllama(string database_location, bool initialise_mpi) {
 	}
 	handling_mpi = initialise_mpi;
 	
-	dllama_instance = this;
-	merge_starting = 0;
-	current_snapshot_level = 0;
-	dllama_number_of_vertices = 0;
-	self_adding_node = 0;
-	num_new_node_requests = 0;
-	
-	snapshot_merger_instance = new snapshot_merger(database_location); //
+	sstate = new shared_thread_state(this, database_location);
+
 	mpi_listener = new thread(start_mpi_listener);
 	
 	DEBUG("Rank " << world_rank << " main and mpi_listener threads now execute concurrently...");
@@ -87,8 +82,8 @@ dllama::dllama(string database_location, bool initialise_mpi) {
 	database->set_num_threads(1);
 	graph = database->graph();
 	
-	current_snapshot_level = graph->num_levels();
-	dllama_number_of_vertices = graph->max_nodes() - 1;
+	sstate->current_snapshot_level = graph->num_levels();
+	sstate->dllama_number_of_vertices = graph->max_nodes() - 1;
 }
 
 dllama::~dllama() {
@@ -108,8 +103,8 @@ void dllama::load_net_graph(string net_graph) {
 	ll_loader_config loader_config;
 	loader->load_direct(graph, net_graph.c_str(), &loader_config);
 	
-	current_snapshot_level = graph->num_levels();
-	dllama_number_of_vertices = graph->max_nodes() - 1;
+	sstate->current_snapshot_level = graph->num_levels();
+	sstate->dllama_number_of_vertices = graph->max_nodes() - 1;
 	DEBUG("num levels " << graph->num_levels());
 	DEBUG("num vertices " << graph->max_nodes());
 }
@@ -128,9 +123,9 @@ edge_t dllama::add_edge(node_t src, node_t tgt) {
 }
 
 edge_t dllama::force_add_edge(node_t src, node_t tgt) {
-	checkpoint_lock.lock();
+	sstate->checkpoint_lock.lock();
 	edge_t result =  graph->add_edge(src, tgt);
-	checkpoint_lock.unlock();
+	sstate->checkpoint_lock.unlock();
 	return result;
 }
 
@@ -153,9 +148,9 @@ node_t dllama::add_nodes(int num_new_nodes) {
 		return 0;
 	}
 	//ensure that we are not already adding a node
-	num_new_node_requests_lock.lock();
-	self_adding_node = 1;
-	num_new_node_requests_lock.unlock();
+	sstate->num_new_node_requests_lock.lock();
+	sstate->self_adding_node = 1;
+	sstate->num_new_node_requests_lock.unlock();
 	
 	//int new_node_id = graph->max_nodes();
 	DEBUG("Rank " << world_rank << " adding nodes");
@@ -167,9 +162,9 @@ node_t dllama::add_nodes(int num_new_nodes) {
 	}
 
 	//wait for them to acknowledge that you can add a node
-	unique_lock<mutex> lk(num_acks_lock);
-	num_acks_condition.wait(lk, []{return num_acks == (world_size - 1);});
-	num_acks = 0;
+	unique_lock<mutex> lk(sstate->num_acks_lock);
+	sstate->num_acks_condition.wait(lk, []{return sstate->num_acks == (world_size - 1);});
+	sstate->num_acks = 0;
 	lk.unlock();
 	
 	//adjust the new node id in case it changed in the previous phase
@@ -190,27 +185,27 @@ node_t dllama::add_nodes(int num_new_nodes) {
 	new_node_id = new_node_id + 1 - num_new_nodes;
 	
 	//ack all the requests on the stack
-	new_node_ack_stack_lock.lock();
-	self_adding_node = 0;
+	sstate->new_node_ack_stack_lock.lock();
+	sstate->self_adding_node = 0;
 	int one = 1;
-	while (!new_node_ack_stack.empty()) {
+	while (!sstate->new_node_ack_stack.empty()) {
 		DEBUG("Rank " << world_rank << "sending ack to rank " << new_node_ack_stack.top());
-		MPI_Send(&one, 1, MPI_INT, new_node_ack_stack.top(), NEW_NODE_ACK, MPI_COMM_WORLD);
-		new_node_ack_stack.pop();
+		MPI_Send(&one, 1, MPI_INT, sstate->new_node_ack_stack.top(), NEW_NODE_ACK, MPI_COMM_WORLD);
+		sstate->new_node_ack_stack.pop();
 	}
-	new_node_ack_stack_lock.unlock();
+	sstate->new_node_ack_stack_lock.unlock();
 	
 	return new_node_id;
 }
 
 //not for manual use
 node_t dllama::force_add_nodes(int num_nodes) {
-	checkpoint_lock.lock();
+	sstate->checkpoint_lock.lock();
 	int result;
 	for (int i = 0; i < num_nodes; i++) {
 		result = graph->add_node();
 	}
-	checkpoint_lock.unlock();
+	sstate->checkpoint_lock.unlock();
 	return result;
 }
 
@@ -227,36 +222,36 @@ void dllama::request_checkpoint() {
 void dllama::auto_checkpoint() {
 	//TODO: have this be called automatically
 	//check if merge occurring before writing new file, also prevent the other thread sending a merge request before we are done sending our snapshot
-	merge_starting_lock.lock();
-	if (!merge_starting) {
+	sstate->merge_starting_lock.lock();
+	if (!sstate->merge_starting) {
 		checkpoint();
 	}
-	merge_starting_lock.unlock();
+	sstate->merge_starting_lock.unlock();
 }
 
 void dllama::checkpoint() {
 	//DEBUG("current number of levels before checkpoint: " << graph->num_levels());
 	//the checkpoint lock ensures that dllama_number_of_vertices is only the number of vertices in snapshots, not in the writable llama
-	checkpoint_lock.lock();
+	sstate->checkpoint_lock.lock();
 	graph->checkpoint();
-	dllama_number_of_vertices = graph->max_nodes() - 1;
-	checkpoint_lock.unlock();
-	current_snapshot_level = graph->num_levels();
+	sstate->dllama_number_of_vertices = graph->max_nodes() - 1;
+	sstate->checkpoint_lock.unlock();
+	sstate->current_snapshot_level = graph->num_levels();
 }
 
 //asynchronous
 void dllama::start_merge() {
 	DEBUG("Rank " << world_rank << " manually starting merge");
-	merge_starting_lock.lock();
-	merge_starting = 1;
-	merge_starting_lock.unlock();
-	merge_lock.lock();
-	snapshot_merger_instance->merge_local_llama();
+	sstate->merge_starting_lock.lock();
+	sstate->merge_starting = 1;
+	sstate->merge_starting_lock.unlock();
+	sstate->merge_lock.lock();
+	sstate->snapshot_merger_instance->merge_local_llama();
 	refresh_ro_graph();
-	merge_lock.unlock();
-	merge_starting_lock.lock();
-	merge_starting = 1;
-	merge_starting_lock.unlock();
+	sstate->merge_lock.unlock();
+	sstate->merge_starting_lock.lock();
+	sstate->merge_starting = 1;
+	sstate->merge_starting_lock.unlock();
 }
 
 //TODO: make these private

@@ -31,14 +31,14 @@ clean:
 $(DIR)/%: %.cc
 	@echo CC $@ >&2
 	$(CC) $(CFLAGS) -o $@ $< $(LFLAGS)
-dllama.exe : main.cpp dllama_test.cpp dllama_test.h dllama.cpp dllama.h snapshot_merger.cpp snapshot_merger.h shared_thread_state.h snapshot_manager.cpp snapshot_manager.h
-	$(CC) $(CFLAGS) main.cpp dllama_test.cpp dllama.cpp snapshot_merger.cpp snapshot_manager.cpp $(LFLAGS) -o dllama.exe
+dllama.exe : main.cpp dllama_test.cpp dllama_test.h dllama.cpp dllama.h snapshot_merger.cpp snapshot_merger.h shared_thread_state.cpp shared_thread_state.h snapshot_manager.cpp snapshot_manager.h
+	$(CC) $(CFLAGS) main.cpp dllama_test.cpp dllama.cpp snapshot_merger.cpp shared_thread_state.cpp snapshot_manager.cpp $(LFLAGS) -o dllama.exe
 
-simple_dllama.exe : main.cpp dllama_test.cpp dllama_test.h simple_dllama.cpp dllama.h snapshot_merger.cpp snapshot_merger.h shared_thread_state.h snapshot_manager.cpp snapshot_manager.h 
-	$(CC) $(CFLAGS) -DSIMPLE_DLLAMA main.cpp dllama_test.cpp simple_dllama.cpp snapshot_merger.cpp snapshot_manager.cpp $(LFLAGS) -o simple_dllama.exe
+simple_dllama.exe : main.cpp dllama_test.cpp dllama_test.h simple_dllama.cpp dllama.h snapshot_merger.cpp snapshot_merger.h shared_thread_state.cpp shared_thread_state.h snapshot_manager.cpp snapshot_manager.h 
+	$(CC) $(CFLAGS) -DSIMPLE_DLLAMA main.cpp dllama_test.cpp simple_dllama.cpp snapshot_merger.cpp shared_thread_state.cpp snapshot_manager.cpp $(LFLAGS) -o simple_dllama.exe
 
-dllamatest.exe : dllamatest.cpp dllama_test.cpp dllama_test.h dllama.cpp dllama.h snapshot_merger.cpp snapshot_merger.h shared_thread_state.h snapshot_manager.cpp snapshot_manager.h
-	$(CC) $(CFLAGS) -Igoogletestmaster/googletest/include dllamatest.cpp dllama_test.cpp dllama.cpp snapshot_merger.cpp snapshot_manager.cpp -Lgoogletestmaster/googlemock/gtest/ -lgtest $(LFLAGS) -o dllamatest.exe
+dllamatest.exe : dllamatest.cpp dllama_test.cpp dllama_test.h dllama.cpp dllama.h snapshot_merger.cpp snapshot_merger.h shared_thread_state.cpp shared_thread_state.h snapshot_manager.cpp snapshot_manager.h
+	$(CC) $(CFLAGS) -Igoogletestmaster/googletest/include dllamatest.cpp dllama_test.cpp dllama.cpp snapshot_merger.cpp shared_thread_state.cpp snapshot_manager.cpp -Lgoogletestmaster/googlemock/gtest/ -lgtest $(LFLAGS) -o dllamatest.exe
 
-llama.exe : main.cpp dllama_test.cpp dllama_test.h llama_for_benchmark.cpp dllama.h snapshot_merger.cpp snapshot_merger.h shared_thread_state.h snapshot_manager.cpp snapshot_manager.h 
-	$(CC) $(CFLAGS) -DLLAMA_BENCHMARK main.cpp dllama_test.cpp llama_for_benchmark.cpp snapshot_merger.cpp snapshot_manager.cpp $(LFLAGS) -o llama.exe
+llama.exe : main.cpp dllama_test.cpp dllama_test.h llama_for_benchmark.cpp dllama.h snapshot_merger.cpp snapshot_merger.h shared_thread_state.cpp shared_thread_state.h snapshot_manager.cpp snapshot_manager.h 
+	$(CC) $(CFLAGS) -DLLAMA_BENCHMARK main.cpp dllama_test.cpp llama_for_benchmark.cpp snapshot_merger.cpp shared_thread_state.cpp snapshot_manager.cpp $(LFLAGS) -o llama.exe
