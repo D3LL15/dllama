@@ -21,23 +21,6 @@ namespace dllama_ns {
 	int world_size;
 	int world_rank;
 	shared_thread_state* sstate;
-	/*bool merge_starting;
-	mutex merge_starting_lock;
-	mutex merge_lock;
-	mutex ro_graph_lock;
-	mutex checkpoint_lock;
-	int current_snapshot_level;
-	unsigned int dllama_number_of_vertices;
-	dllama* dllama_instance;
-	snapshot_merger* snapshot_merger_instance;
-	stack<int> new_node_ack_stack;
-	bool self_adding_node;
-	mutex num_new_node_requests_lock;
-	int num_new_node_requests;
-	mutex new_node_ack_stack_lock;
-	int num_acks;
-	mutex num_acks_lock;
-	condition_variable num_acks_condition;*/
 
 	void start_mpi_listener() {
 		sstate->snapshot_merger_instance->start_snapshot_listener();
@@ -196,11 +179,6 @@ void dllama::add_random_edge() {
 
 void dllama::refresh_ro_graph() {
 	DEBUG("refreshing ro graph");
-	//char* database_directory = (char*) alloca(20);
-	ostringstream oss;
-	oss << database_location << "db" << world_rank;
-	//strcpy(database_directory, oss.str().c_str());
-	const char* database_directory = oss.str().c_str();
 	
 	database->reset_storage();
 	ll_persistent_storage* new_storage = database->storage();
