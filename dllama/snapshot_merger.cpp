@@ -369,9 +369,6 @@ std::ostream& operator<<(std::ostream& out, const ll_persistent_chunk& h) {
 void snapshot_merger::merge_snapshots_helper(int* rank_snapshots, bool local_only) {
 	DEBUG("Rank " << world_rank << " starting merge");
 	high_resolution_clock::time_point t1 = high_resolution_clock::now();
-	ostringstream oss;
-	oss << database_location << "db" << world_rank << "/new_level0.dat";
-	string output_file_name = oss.str();
 	
 	received_num_vertices[world_rank] = sstate->dllama_number_of_vertices;
 	
@@ -433,6 +430,19 @@ void snapshot_merger::merge_snapshots_helper(int* rank_snapshots, bool local_onl
 	DEBUG("new output file size should be: " << file_size);
 	
 	//write to file	
+	write_merged_snapshot(edge_table, vertex_table, new_meta);
+	
+	high_resolution_clock::time_point t2 = high_resolution_clock::now();
+	auto duration = duration_cast<microseconds>(t2 - t1).count();
+	if (world_rank == 0) {
+		cout << duration << " ";
+	}
+}
+
+void snapshot_merger::write_merged_snapshot(vector<LL_DATA_TYPE> edge_table, vector<ll_mlcsr_core__begin_t> vertex_table, dll_level_meta new_meta) {
+	ostringstream oss;
+	oss << database_location << "db" << world_rank << "/new_level0.dat";
+	string output_file_name = oss.str();
 	ofstream file(output_file_name, ios::out | ios::binary | ios::ate);
 	if (file.is_open()) {
 		
@@ -493,12 +503,6 @@ void snapshot_merger::merge_snapshots_helper(int* rank_snapshots, bool local_onl
 		
 		file.close();
 	} else cout << "Rank " << world_rank << " unable to open output file\n";
-	
-	high_resolution_clock::time_point t2 = high_resolution_clock::now();
-	auto duration = duration_cast<microseconds>(t2 - t1).count();
-	if (world_rank == 0) {
-		cout << duration << " ";
-	}
 }
 
 void snapshot_merger::merge_snapshots(int* rank_snapshots) {

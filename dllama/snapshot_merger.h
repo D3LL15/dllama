@@ -7,32 +7,7 @@
 #include "llama.h"
 
 namespace dllama_ns {
-    class snapshot_merger {
-    public:
-        snapshot_merger(std::string database_location);
-        virtual ~snapshot_merger();
-        void read_snapshots(std::string input_file_name = "db0/csr__out__0.dat");
-        void read_second_snapshot();
-        void start_snapshot_listener();
-        void merge_snapshots(int* rank_snapshots);
-        void begin_merge();
-        void merge_local_llama();
-    private:
-    protected:
-        void handle_snapshot_message(MPI_Status status);
-        void handle_merge_request(int source);
-        void handle_new_node_request(MPI_Status status);
-        void handle_new_node_command(MPI_Status status);
-        void handle_new_edge(MPI_Status status);
-        void handle_new_node_ack(MPI_Status status);
-        void merge_snapshots_helper(int* rank_snapshots, bool local_only);
-        int* received_snapshot_levels;
-        int* expected_snapshot_levels;
-        int* received_num_vertices;
-        std::mutex listener_lock;
-        std::string database_location;
-    };
-
+    
     /**
      * The metadata for each level
      */
@@ -58,6 +33,34 @@ namespace dllama_ns {
     } dll_header_t;
 
     //we also use ll_persistent_chunk for each item in indirection table (level, length and offset)
+    
+    class snapshot_merger {
+    public:
+        snapshot_merger(std::string database_location);
+        virtual ~snapshot_merger();
+        void read_snapshots(std::string input_file_name = "db0/csr__out__0.dat");
+        void read_second_snapshot();
+        void start_snapshot_listener();
+        void merge_snapshots(int* rank_snapshots);
+        void begin_merge();
+        void merge_local_llama();
+    private:
+    protected:
+        void handle_snapshot_message(MPI_Status status);
+        void handle_merge_request(int source);
+        void handle_new_node_request(MPI_Status status);
+        void handle_new_node_command(MPI_Status status);
+        void handle_new_edge(MPI_Status status);
+        void handle_new_node_ack(MPI_Status status);
+        void merge_snapshots_helper(int* rank_snapshots, bool local_only);
+        void write_merged_snapshot(std::vector<LL_DATA_TYPE> edge_table, std::vector<ll_mlcsr_core__begin_t> vertex_table, dll_level_meta new_meta);
+        int* received_snapshot_levels;
+        int* expected_snapshot_levels;
+        int* received_num_vertices;
+        std::mutex listener_lock;
+        std::string database_location;
+    };
+
 }
 
 
