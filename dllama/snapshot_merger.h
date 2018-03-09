@@ -25,6 +25,7 @@ namespace dllama_ns {
         void handle_new_node_command(MPI_Status status);
         void handle_new_edge(MPI_Status status);
         void handle_new_node_ack(MPI_Status status);
+        void merge_snapshots_helper(int* rank_snapshots, bool local_only);
         int* received_snapshot_levels;
         int* expected_snapshot_levels;
         int* received_num_vertices;
