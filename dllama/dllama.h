@@ -10,8 +10,6 @@
 
 namespace dllama_ns {
 
-    void start_mpi_listener();
-
     class dllama : public graph_database {
     public:
         dllama(std::string database_location, bool initialise_mpi = true);

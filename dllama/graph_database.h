@@ -9,6 +9,8 @@
 #include "llama.h"
 
 namespace dllama_ns {
+    
+    void start_mpi_listener();
 
     class graph_database {
     public:

@@ -16,16 +16,6 @@
 
 using namespace std;
 
-namespace dllama_ns {
-	int world_size;
-	int world_rank;
-	shared_thread_state* sstate;
-
-	void start_mpi_listener() {
-		sstate->snapshot_merger_instance->start_snapshot_listener();
-	}
-}
-
 using namespace dllama_ns;
 
 dllama::dllama(string database_location, bool initialise_mpi) {
