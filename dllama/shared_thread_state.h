@@ -3,7 +3,7 @@
 
 #include <mutex>
 #include <stack>
-#include "dllama.h"
+#include "graph_database.h"
 #include "snapshot_merger.h"
 #include <condition_variable>
 #include <string>
@@ -40,30 +40,6 @@ namespace dllama_ns {
     extern int world_size;
     extern int world_rank;
 
-    /*extern bool merge_starting;
-    extern std::mutex merge_starting_lock;
-    extern std::mutex merge_lock;
-    extern std::mutex ro_graph_lock;
-    extern std::mutex checkpoint_lock;
-
-    extern int current_snapshot_level;
-
-    extern dllama* dllama_instance;
-    extern snapshot_merger* snapshot_merger_instance;
-
-    //protected by merge lock and merge starting lock
-    extern unsigned int dllama_number_of_vertices;
-
-    extern std::stack<int> new_node_ack_stack;
-    extern bool self_adding_node;
-    extern std::mutex num_new_node_requests_lock;
-    extern int num_new_node_requests;
-    extern std::mutex new_node_ack_stack_lock;
-    
-    extern int num_acks;
-    extern std::mutex num_acks_lock;
-    extern std::condition_variable num_acks_condition;*/
-
     class shared_thread_state {
         public:
 
@@ -76,7 +52,7 @@ namespace dllama_ns {
             int current_snapshot_level;
             unsigned int dllama_number_of_vertices; //protected by merge lock and merge starting lock
 
-            dllama* dllama_instance;
+            graph_database* dllama_instance;
             snapshot_merger* snapshot_merger_instance;
 
             std::stack<int> new_node_ack_stack;
@@ -89,12 +65,10 @@ namespace dllama_ns {
             std::mutex num_acks_lock;
             std::condition_variable num_acks_condition;
             
-            shared_thread_state(dllama* d, std::string database_location);
+            shared_thread_state(graph_database* d, std::string database_location);
     };
     
     extern shared_thread_state* sstate;
 }
-
-
 
 #endif /* SHARED_THREAD_STATE_H */

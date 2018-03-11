@@ -1,18 +1,19 @@
-#ifndef SIMPLE_DLLAMA_H
-#define SIMPLE_DLLAMA_H
+#ifndef LLAMA_FOR_BENCHMARK_H
+#define LLAMA_FOR_BENCHMARK_H
 
 #include <thread>
 #include <vector>
+#include <string>
 
 #include "llama.h"
 #include "graph_database.h"
 
 namespace dllama_ns {
 
-    class simple_dllama : public graph_database {
+    class llama_for_benchmark : public graph_database {
     public:
-        simple_dllama(std::string database_location, bool initialise_mpi = true);
-        virtual ~simple_dllama();
+        llama_for_benchmark(std::string database_location, bool initialise_mpi = true);
+        virtual ~llama_for_benchmark();
         void load_net_graph(std::string net_graph);
         edge_t add_edge(node_t src, node_t tgt);
         edge_t force_add_edge(node_t src, node_t tgt);
@@ -39,4 +40,5 @@ namespace dllama_ns {
 }
 
 
-#endif /* SIMPLE_DLLAMA_H */
+#endif /* LLAMA_FOR_BENCHMARK_H */
+

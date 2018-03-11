@@ -3,7 +3,7 @@
 
 namespace dllama_ns {
 	
-	shared_thread_state::shared_thread_state(dllama* d, std::string database_location) {
+	shared_thread_state::shared_thread_state(graph_database* d, std::string database_location) {
 		merge_starting = 0;
 		current_snapshot_level = 0;
 		dllama_number_of_vertices = 0;

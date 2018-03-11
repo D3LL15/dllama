@@ -1,4 +1,4 @@
-#include "dllama.h"
+#include "llama_for_benchmark.h"
 
 #include <cstdlib>
 #include <iostream>
@@ -29,7 +29,7 @@ namespace dllama_ns {
 
 using namespace dllama_ns;
 
-dllama::dllama(string database_location, bool initialise_mpi) {
+llama_for_benchmark::llama_for_benchmark(string database_location, bool initialise_mpi) {
 	this->database_location = database_location;
 	handling_mpi = initialise_mpi;
 	
@@ -52,11 +52,11 @@ dllama::dllama(string database_location, bool initialise_mpi) {
 	sstate->dllama_number_of_vertices = graph->max_nodes() - 1;
 }
 
-dllama::~dllama() {
+llama_for_benchmark::~llama_for_benchmark() {
 	//noop
 }
 
-void dllama::load_net_graph(string net_graph) {
+void llama_for_benchmark::load_net_graph(string net_graph) {
 	ll_file_loaders loaders;
 	ll_file_loader* loader = loaders.loader_for(net_graph.c_str());
 	if (loader == NULL) {
@@ -73,30 +73,30 @@ void dllama::load_net_graph(string net_graph) {
 	DEBUG("num vertices " << graph->max_nodes());
 }
 
-edge_t dllama::add_edge(node_t src, node_t tgt) {
+edge_t llama_for_benchmark::add_edge(node_t src, node_t tgt) {
 	edge_t result = graph->add_edge(src, tgt);
 	return result;
 }
 
-edge_t dllama::force_add_edge(node_t src, node_t tgt) {
+edge_t llama_for_benchmark::force_add_edge(node_t src, node_t tgt) {
 	edge_t result = graph->add_edge(src, tgt);
 	return result;
 }
 
 //currently LLAMA does not support deletions properly, so this method also does not
-void dllama::delete_edge(node_t src, edge_t edge) {
+void llama_for_benchmark::delete_edge(node_t src, edge_t edge) {
 	graph->delete_edge(src, edge);
 }
 
-node_t dllama::max_nodes() {
+node_t llama_for_benchmark::max_nodes() {
 	return graph->max_nodes();
 }
 
-node_t dllama::add_node() {
+node_t llama_for_benchmark::add_node() {
 	return add_nodes(1);
 }
 
-node_t dllama::add_nodes(int num_new_nodes) {
+node_t llama_for_benchmark::add_nodes(int num_new_nodes) {
 	if (num_new_nodes <= 0) {
 		cout << "invalid number of nodes added: " << num_new_nodes << "\n";
 		return 0;
@@ -106,7 +106,7 @@ node_t dllama::add_nodes(int num_new_nodes) {
 }
 
 //not for manual use
-node_t dllama::force_add_nodes(int num_nodes) {
+node_t llama_for_benchmark::force_add_nodes(int num_nodes) {
 	sstate->checkpoint_lock.lock();
 	int result;
 	for (int i = 0; i < num_nodes; i++) {
@@ -116,22 +116,22 @@ node_t dllama::force_add_nodes(int num_nodes) {
 	return result;
 }
 
-size_t dllama::out_degree(node_t node) {
+size_t llama_for_benchmark::out_degree(node_t node) {
 	size_t result = graph->out_degree(node);
 	return result;
 }
 
-void dllama::request_checkpoint() {
+void llama_for_benchmark::request_checkpoint() {
 	checkpoint();
 }
 
 //call after a certain amount of updates
-void dllama::auto_checkpoint() {
+void llama_for_benchmark::auto_checkpoint() {
 	//TODO: have this be called automatically
 	checkpoint();
 }
 
-void dllama::checkpoint() {
+void llama_for_benchmark::checkpoint() {
 	//DEBUG("current number of levels before checkpoint: " << graph->num_levels());
 	graph->checkpoint();
 	sstate->dllama_number_of_vertices = graph->max_nodes() - 1;
@@ -139,7 +139,7 @@ void dllama::checkpoint() {
 }
 
 //asynchronous
-void dllama::start_merge() {
+void llama_for_benchmark::start_merge() {
 	DEBUG("Rank " << world_rank << " manually starting merge");
 	sstate->snapshot_merger_instance->merge_local_llama();
 	refresh_ro_graph();
@@ -147,19 +147,19 @@ void dllama::start_merge() {
 }
 
 //TODO: make these private
-void dllama::out_iter_begin(ll_edge_iterator& iter, node_t node) {
+void llama_for_benchmark::out_iter_begin(ll_edge_iterator& iter, node_t node) {
 	graph->out_iter_begin(iter, node);
 }
 
-ITERATOR_DECL bool dllama::out_iter_has_next(ll_edge_iterator& iter) {
+ITERATOR_DECL bool llama_for_benchmark::out_iter_has_next(ll_edge_iterator& iter) {
 	return graph->out_iter_has_next(iter);
 }
 
-ITERATOR_DECL edge_t dllama::out_iter_next(ll_edge_iterator& iter) {
+ITERATOR_DECL edge_t llama_for_benchmark::out_iter_next(ll_edge_iterator& iter) {
 	return graph->out_iter_next(iter);
 }
 
-vector<node_t> dllama::get_neighbours_of_vertex(node_t vertex) {
+vector<node_t> llama_for_benchmark::get_neighbours_of_vertex(node_t vertex) {
 	ll_edge_iterator iter;
 	out_iter_begin(iter, vertex);
 	vector<node_t> result;
@@ -170,14 +170,14 @@ vector<node_t> dllama::get_neighbours_of_vertex(node_t vertex) {
 	return result;
 }
 
-void dllama::add_random_edge() {
+void llama_for_benchmark::add_random_edge() {
 	node_t src = graph->pick_random_node();
 	node_t tgt = graph->pick_random_node();
 	add_edge(src, tgt);
 	DEBUG("added edge from " << src << " to " << tgt);
 }
 
-void dllama::refresh_ro_graph() {
+void llama_for_benchmark::refresh_ro_graph() {
 	DEBUG("refreshing ro graph");
 	
 	database->reset_storage();
@@ -185,7 +185,7 @@ void dllama::refresh_ro_graph() {
 	graph->refresh_ro_graph(database, new_storage, world_rank, database_location);
 }
 
-void dllama::delete_db() {
+void llama_for_benchmark::delete_db() {
 	for (unsigned int i = 0; i < graph->num_levels() - 1; i++) {
 		ostringstream oss;
 		oss << database_location << "db" << world_rank << "/csr__out__" << i << ".dat";
@@ -195,6 +195,6 @@ void dllama::delete_db() {
 	}
 }
 
-void dllama::shutdown() {
+void llama_for_benchmark::shutdown() {
 	//noop
 }
