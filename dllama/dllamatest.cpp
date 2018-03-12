@@ -17,16 +17,16 @@ namespace {
 
 	// The fixture for testing class Foo.
 
-	class DllamaTest : public ::testing::Test {
+	class IntegrationTest : public ::testing::Test {
 	protected:
 		// You can remove any or all of the following functions if its body
 		// is empty.
 
-		DllamaTest() {
+		IntegrationTest() {
 			// You can do set-up work for each test here.
 		}
 
-		virtual ~DllamaTest() {
+		virtual ~IntegrationTest() {
 			// You can do clean-up work that doesn't throw exceptions here.
 		}
 
@@ -46,7 +46,7 @@ namespace {
 		// Objects declared here can be used by all tests in the test case for Foo.
 	};
 
-	TEST_F(DllamaTest, GoogleTestTest) {
+	TEST_F(IntegrationTest, GoogleTestTest) {
 		EXPECT_EQ(0, 3 - 3);
 		EXPECT_NE(0, 2);
 		EXPECT_TRUE(1==1);
@@ -109,19 +109,19 @@ namespace {
 		sleep(1);
 	}
 	
-	TEST_F(DllamaTest, DLLAMAKronGraphTest) {
+	TEST_F(IntegrationTest, DLLAMAKronGraphTest) {
 		MPI_Barrier(MPI_COMM_WORLD);
 		dllama* my_dllama_instance = new dllama("database/", false);
 		krongraph_test(my_dllama_instance, false);
 	}
 	
-	TEST_F(DllamaTest, SimpleDLLAMAKronGraphTest) {
+	TEST_F(IntegrationTest, SimpleDLLAMAKronGraphTest) {
 		MPI_Barrier(MPI_COMM_WORLD);
 		simple_dllama* my_dllama_instance = new simple_dllama("database/", false);
 		krongraph_test(my_dllama_instance, false);
 	}
 	
-	TEST_F(DllamaTest, LLAMAKronGraphTest) {
+	TEST_F(IntegrationTest, LLAMAKronGraphTest) {
 		MPI_Barrier(MPI_COMM_WORLD);
 		llama_for_benchmark* my_dllama_instance = new llama_for_benchmark("database/", false);
 		krongraph_test(my_dllama_instance, true);
@@ -187,19 +187,19 @@ namespace {
 		sleep(1);
 	}
 	
-	TEST_F(DllamaTest, DLLAMAFullTest) {
+	TEST_F(IntegrationTest, DLLAMAFullTest) {
 		MPI_Barrier(MPI_COMM_WORLD);
 		dllama* dllama_instance = new dllama("database/", false);
 		full_test(dllama_instance, false);
 	}
 	
-	TEST_F(DllamaTest, SimpleDLLAMAFullTest) {
+	TEST_F(IntegrationTest, SimpleDLLAMAFullTest) {
 		MPI_Barrier(MPI_COMM_WORLD);
 		simple_dllama* dllama_instance = new simple_dllama("database/", false);
 		full_test(dllama_instance, false);
 	}
 	
-	TEST_F(DllamaTest, LLAMAFullTest) {
+	TEST_F(IntegrationTest, LLAMAFullTest) {
 		MPI_Barrier(MPI_COMM_WORLD);
 		llama_for_benchmark* dllama_instance = new llama_for_benchmark("database/", false);
 		full_test(dllama_instance, true);

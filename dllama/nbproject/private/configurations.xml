@@ -338,6 +338,7 @@
         <df name="rejected">
         </df>
       </df>
+      <in>database_tests.cpp</in>
       <in>dllama.cpp</in>
       <in>dllama.h</in>
       <in>dllama_test.cpp</in>
@@ -350,6 +351,7 @@
       <in>llama_for_benchmark.cpp</in>
       <in>llama_for_benchmark.h</in>
       <in>main.cpp</in>
+      <in>merge_tests.cpp</in>
       <in>shared_state.h</in>
       <in>shared_thread_state.cpp</in>
       <in>shared_thread_state.h</in>
