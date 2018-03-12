@@ -91,7 +91,10 @@ node_t llama_for_benchmark::add_nodes(int num_new_nodes) {
 		cout << "invalid number of nodes added: " << num_new_nodes << "\n";
 		return 0;
 	}
-	int result = graph->add_node();
+	int result;
+	for (int i = 0; i < num_new_nodes; i++) {
+		result = graph->add_node();
+	}
 	return result;
 }
 

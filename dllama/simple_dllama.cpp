@@ -78,7 +78,7 @@ void simple_dllama::load_net_graph(string net_graph) {
 }
 
 edge_t simple_dllama::add_edge(node_t src, node_t tgt) {
-	node_t edge[2];
+	int edge[2];
 	edge[0] = src;
 	edge[1] = tgt;
 	for (int i = 0; i < world_size; i++) {
@@ -215,7 +215,7 @@ void simple_dllama::start_merge() {
 	refresh_ro_graph();
 	sstate->merge_lock.unlock();
 	sstate->merge_starting_lock.lock();
-	sstate->merge_starting = 1;
+	sstate->merge_starting = 0;
 	sstate->merge_starting_lock.unlock();
 }
 

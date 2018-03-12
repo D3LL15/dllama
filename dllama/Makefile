@@ -23,13 +23,13 @@ clean:
 	rm -f *.exe
 
 dllama.exe : main.cpp $(SHARED_CLASSES)
-	$(CC) $(CFLAGS) main.cpp $(SHARED_BODIES) $(LFLAGS) -o dllama.exe
+	$(CC) $(CFLAGS) -DBENCHMARKING_FLAG main.cpp $(SHARED_BODIES) $(LFLAGS) -o dllama.exe
 
 simple_dllama.exe : main.cpp $(SHARED_CLASSES)
-	$(CC) $(CFLAGS) -DSIMPLE_DLLAMA main.cpp $(SHARED_BODIES) $(LFLAGS) -o simple_dllama.exe
+	$(CC) $(CFLAGS) -DSIMPLE_DLLAMA -DBENCHMARKING_FLAG main.cpp $(SHARED_BODIES) $(LFLAGS) -o simple_dllama.exe
 
 dllamatest.exe : dllamatest.cpp $(SHARED_CLASSES)
 	$(CC) $(CFLAGS) -Igoogletestmaster/googletest/include dllamatest.cpp $(SHARED_BODIES) -Lgoogletestmaster/googlemock/gtest/ -lgtest $(LFLAGS) -o dllamatest.exe
 
 llama.exe : main.cpp $(SHARED_CLASSES)
-	$(CC) $(CFLAGS) -DLLAMA_BENCHMARK main.cpp $(SHARED_BODIES) $(LFLAGS) -o llama.exe
+	$(CC) $(CFLAGS) -DLLAMA_BENCHMARK -DBENCHMARKING_FLAG main.cpp $(SHARED_BODIES) $(LFLAGS) -o llama.exe

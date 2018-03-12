@@ -23,9 +23,21 @@ using namespace dllama_ns;
 
 snapshot_merger::snapshot_merger(string database_location) {
 	this->database_location = database_location;
+	
+	received_snapshot_levels = new int[world_size]();
+	expected_snapshot_levels = new int[world_size];
+	received_num_vertices = new int[world_size]();
+	for (int i = 0; i < world_size; i++) {
+		expected_snapshot_levels[i] = -1;
+	}
+	//don't need to hear from yourself
+	expected_snapshot_levels[world_rank] = 0;
 }
 
 snapshot_merger::~snapshot_merger() {
+	delete[] received_snapshot_levels;
+	delete[] expected_snapshot_levels;
+	delete[] received_num_vertices;
 }
 
 void snapshot_merger::handle_snapshot_message(MPI_Status status) {
@@ -179,7 +191,7 @@ void snapshot_merger::handle_new_node_command(MPI_Status status) {
 }
 
 void snapshot_merger::handle_new_edge(MPI_Status status) {
-	node_t edge[2];
+	int edge[2];
 	MPI_Recv(&edge, 2, MPI_INT, status.MPI_SOURCE, NEW_EDGE, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 	sstate->dllama_instance->force_add_edge(edge[0], edge[1]);
 	DEBUG("Rank " << world_rank << " added edge " << edge[0] << " to " << edge[1]);
@@ -197,15 +209,6 @@ void snapshot_merger::handle_new_node_ack(MPI_Status status) {
 
 void snapshot_merger::start_snapshot_listener() {
 	DEBUG("Rank " << world_rank << " mpi_listener running");
-
-	received_snapshot_levels = new int[world_size]();
-	expected_snapshot_levels = new int[world_size];
-	received_num_vertices = new int[world_size]();
-	for (int i = 0; i < world_size; i++) {
-		expected_snapshot_levels[i] = -1;
-	}
-	//don't need to hear from yourself
-	expected_snapshot_levels[world_rank] = 0;
 
 	MPI_Status status;
 	bool running = true;
@@ -428,13 +431,13 @@ void snapshot_merger::merge_snapshots_helper(int* rank_snapshots, bool local_onl
 	DEBUG("num_indirection_entries " << num_indirection_entries);
 	DEBUG("num_indirection_table_chunks " << num_indirection_table_chunks);
 	DEBUG("new output file size should be: " << file_size);
-	
+
 	//write to file	
 	write_merged_snapshot(edge_table, vertex_table, new_meta);
-	
+
 	high_resolution_clock::time_point t2 = high_resolution_clock::now();
 	auto duration = duration_cast<microseconds>(t2 - t1).count();
-	if (world_rank == 0) {
+	if (world_rank == 0 && BENCHMARKING) {
 		cout << duration << " ";
 	}
 }

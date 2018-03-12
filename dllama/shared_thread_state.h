@@ -27,6 +27,12 @@ namespace dllama_ns {
     #define debug_enabled 0
 #endif
 
+#ifdef BENCHMARKING_FLAG
+    #define BENCHMARKING 1
+#else
+    #define BENCHMARKING 0
+#endif
+
 #ifdef SIMPLE_DLLAMA
     #define BENCHMARK_TYPE 1
 #else
