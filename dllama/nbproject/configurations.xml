@@ -2,13 +2,17 @@
 <configurationDescriptor version="100">
   <logicalFolder name="root" displayName="root" projectFiles="true" kind="ROOT">
     <df root="." name="0">
+      <in>database_tests.cpp</in>
       <in>dllama.cpp</in>
       <in>dllama_test.cpp</in>
       <in>dllamatest.cpp</in>
+      <in>graph_database.cpp</in>
       <in>llama-pagerank.cc</in>
+      <in>llama_for_benchmark.h</in>
       <in>main.cpp</in>
+      <in>merge_tests.cpp</in>
+      <in>shared_thread_state.cpp</in>
       <in>simple_dllama.cpp</in>
-      <in>simple_dllama.h</in>
       <in>snapshot_manager.cpp</in>
       <in>snapshot_merger.cpp</in>
     </df>
@@ -59,6 +63,8 @@
           <preBuildCommand></preBuildCommand>
         </preBuild>
       </makefileType>
+      <item path="database_tests.cpp" ex="false" tool="1" flavor2="0">
+      </item>
       <item path="dllama.cpp" ex="false" tool="1" flavor2="8">
         <ccTool flags="0">
           <incDir>
@@ -73,11 +79,15 @@
           </incDir>
         </ccTool>
       </item>
-      <item path="dllamatest.cpp" ex="false" tool="1" flavor2="0">
+      <item path="dllamatest.cpp" ex="false" tool="1" flavor2="4">
+      </item>
+      <item path="graph_database.cpp" ex="false" tool="1" flavor2="4">
       </item>
       <item path="llama-pagerank.cc" ex="false" tool="1" flavor2="8">
         <ccTool flags="0">
         </ccTool>
+      </item>
+      <item path="llama_for_benchmark.h" ex="false" tool="3" flavor2="0">
       </item>
       <item path="main.cpp" ex="false" tool="1" flavor2="8">
         <ccTool flags="0">
@@ -86,9 +96,16 @@
           </incDir>
         </ccTool>
       </item>
-      <item path="simple_dllama.cpp" ex="false" tool="1" flavor2="0">
+      <item path="merge_tests.cpp" ex="false" tool="1" flavor2="0">
       </item>
-      <item path="simple_dllama.h" ex="false" tool="3" flavor2="0">
+      <item path="shared_thread_state.cpp" ex="false" tool="1" flavor2="8">
+        <ccTool flags="0">
+          <incDir>
+            <pElem>/usr/local/include</pElem>
+          </incDir>
+        </ccTool>
+      </item>
+      <item path="simple_dllama.cpp" ex="false" tool="1" flavor2="4">
       </item>
       <item path="snapshot_manager.cpp" ex="false" tool="1" flavor2="8">
         <ccTool flags="0">

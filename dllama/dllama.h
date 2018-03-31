@@ -6,12 +6,11 @@
 #include <string>
 
 #include "llama.h"
+#include "graph_database.h"
 
 namespace dllama_ns {
 
-    void start_mpi_listener();
-
-    class dllama {
+    class dllama : public graph_database {
     public:
         dllama(std::string database_location, bool initialise_mpi = true);
         virtual ~dllama();
@@ -35,14 +34,8 @@ namespace dllama_ns {
         void delete_db();
         node_t max_nodes();
         void shutdown();
-    private:
-        std::thread* mpi_listener;
     protected:
         void checkpoint();
-        ll_writable_graph* graph;
-        ll_database* database;
-        bool handling_mpi;
-        std::string database_location;
     };
 }
 

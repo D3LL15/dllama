@@ -2,14 +2,16 @@
 <configurationDescriptor version="100">
   <logicalFolder name="root" displayName="root" projectFiles="true" kind="ROOT">
     <df root="." name="0">
-      <df name="db0">
-      </df>
-      <df name="db1">
-        <df name="rank0">
+      <df name="database">
+        <df name="db0">
         </df>
-      </df>
-      <df name="db2">
-        <df name="rank0">
+        <df name="db1">
+          <df name="rank0">
+          </df>
+        </df>
+        <df name="db2">
+          <df name="rank0">
+          </df>
         </df>
       </df>
       <df name="googletestmaster">
@@ -302,14 +304,56 @@
           </df>
         </df>
       </df>
+      <df name="neo4j data">
+        <df name="rejected">
+        </df>
+      </df>
+      <df name="output1">
+        <df name="rejected">
+        </df>
+      </df>
+      <df name="output2">
+        <df name="with prev">
+        </df>
+      </df>
+      <df name="output3">
+        <df name="rejected">
+        </df>
+        <df name="with prev">
+        </df>
+      </df>
+      <df name="output4">
+        <df name="rejected">
+        </df>
+        <df name="with prev">
+        </df>
+      </df>
+      <df name="output5">
+        <df name="add nodes">
+        </df>
+        <df name="with prev">
+        </df>
+      </df>
+      <df name="output6">
+        <df name="rejected">
+        </df>
+      </df>
+      <in>database_tests.cpp</in>
       <in>dllama.cpp</in>
       <in>dllama.h</in>
       <in>dllama_test.cpp</in>
       <in>dllama_test.h</in>
       <in>dllamatest.cpp</in>
       <in>file_sender.cpp</in>
+      <in>graph_database.cpp</in>
+      <in>graph_database.h</in>
       <in>llama-pagerank.cc</in>
+      <in>llama_for_benchmark.cpp</in>
+      <in>llama_for_benchmark.h</in>
       <in>main.cpp</in>
+      <in>merge_tests.cpp</in>
+      <in>shared_state.h</in>
+      <in>shared_thread_state.cpp</in>
       <in>shared_thread_state.h</in>
       <in>simple_dllama.cpp</in>
       <in>simple_dllama.h</in>

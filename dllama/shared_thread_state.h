@@ -3,9 +3,10 @@
 
 #include <mutex>
 #include <stack>
-#include "dllama.h"
+#include "graph_database.h"
 #include "snapshot_merger.h"
 #include <condition_variable>
+#include <string>
 
 namespace dllama_ns {
     #define SINGLE_MACHINE 1
@@ -26,6 +27,12 @@ namespace dllama_ns {
     #define debug_enabled 0
 #endif
 
+#ifdef BENCHMARKING_FLAG
+    #define BENCHMARKING 1
+#else
+    #define BENCHMARKING 0
+#endif
+
 #ifdef SIMPLE_DLLAMA
     #define BENCHMARK_TYPE 1
 #else
@@ -36,35 +43,38 @@ namespace dllama_ns {
     #endif
 #endif
     
-
     extern int world_size;
     extern int world_rank;
 
-    extern bool merge_starting;
-    extern std::mutex merge_starting_lock;
-    extern std::mutex merge_lock;
-    extern std::mutex ro_graph_lock;
-    extern std::mutex checkpoint_lock;
+    class shared_thread_state {
+        public:
 
-    extern int current_snapshot_level;
+            bool merge_starting;
+            std::mutex merge_starting_lock;
+            std::mutex merge_lock;
+            std::mutex ro_graph_lock;
+            std::mutex checkpoint_lock;
 
-    extern dllama* dllama_instance;
-    extern snapshot_merger* snapshot_merger_instance;
+            int current_snapshot_level;
+            unsigned int dllama_number_of_vertices; //protected by merge lock and merge starting lock
 
-    //protected by merge lock and merge starting lock
-    extern unsigned int dllama_number_of_vertices;
+            graph_database* dllama_instance;
+            snapshot_merger* snapshot_merger_instance;
 
-    extern std::stack<int> new_node_ack_stack;
-    extern bool self_adding_node;
-    extern std::mutex num_new_node_requests_lock;
-    extern int num_new_node_requests;
-    extern std::mutex new_node_ack_stack_lock;
+            std::stack<int> new_node_ack_stack;
+            bool self_adding_node;
+            std::mutex num_new_node_requests_lock;
+            int num_new_node_requests;
+            std::mutex new_node_ack_stack_lock;
+
+            int num_acks;
+            std::mutex num_acks_lock;
+            std::condition_variable num_acks_condition;
+            
+            shared_thread_state(graph_database* d, std::string database_location);
+    };
     
-    extern int num_acks;
-    extern std::mutex num_acks_lock;
-    extern std::condition_variable num_acks_condition;
+    extern shared_thread_state* sstate;
 }
-
-
 
 #endif /* SHARED_THREAD_STATE_H */

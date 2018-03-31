@@ -12,6 +12,9 @@
 
 #include "dllama_test.h"
 #include "dllama.h"
+#include "simple_dllama.h"
+#include "llama_for_benchmark.h"
+#include "graph_database.h"
 #include "snapshot_merger.h"
 #include "shared_thread_state.h"
 
@@ -21,7 +24,18 @@ using namespace dllama_ns;
 
 string database_location;
 
-//100,000 nodes
+graph_database* get_dllama_instance() {
+	graph_database* my_dllama_instance;
+	if (BENCHMARK_TYPE == 0) {
+		my_dllama_instance = new dllama(database_location, false);
+	} else if (BENCHMARK_TYPE == 1) {
+		my_dllama_instance = new simple_dllama(database_location, false);
+	} else {
+		my_dllama_instance = new llama_for_benchmark(database_location, false);
+	}
+	return my_dllama_instance;
+}
+
 void add_nodes_benchmark(int num_nodes, int num_iterations) {
 	if (world_rank == 0) {
 		cout << BENCHMARK_TYPE << "add_nodes " << world_size << " " << num_nodes << " ";
@@ -29,7 +43,7 @@ void add_nodes_benchmark(int num_nodes, int num_iterations) {
 	MPI_Barrier(MPI_COMM_WORLD);
 	
 	for (int j = 0; j < num_iterations; j++) {
-		dllama* dllama_instance = new dllama(database_location, false);
+		graph_database* dllama_instance = get_dllama_instance();
 		dllama_instance->load_net_graph("empty_graph.net");
 		if (world_rank == 0) {
 			high_resolution_clock::time_point t1 = high_resolution_clock::now();
@@ -44,17 +58,13 @@ void add_nodes_benchmark(int num_nodes, int num_iterations) {
 		dllama_instance->delete_db();
 		dllama_instance->shutdown();
 		delete dllama_instance;
-		
-		//dllama_instance->load_net_graph("empty_graph.net");
 		MPI_Barrier(MPI_COMM_WORLD);
 	}
 	if (world_rank == 0) {
 		cout << "\n";
 	}
-	//dllama_instance->shutdown();
 }
 
-//10000 nodes
 void add_edges_benchmark(int num_nodes, int num_iterations) {
 	MPI_Barrier(MPI_COMM_WORLD);
 	
@@ -64,7 +74,7 @@ void add_edges_benchmark(int num_nodes, int num_iterations) {
 	
 	for (int j = 0; j < num_iterations; j++) {
 		MPI_Barrier(MPI_COMM_WORLD);
-		dllama* my_dllama_instance = new dllama(database_location, false);
+		graph_database* my_dllama_instance = get_dllama_instance();
 		my_dllama_instance->load_net_graph("empty_graph.net");
 		if (world_rank == 0) {
 			my_dllama_instance->add_nodes(num_nodes);
@@ -89,7 +99,6 @@ void add_edges_benchmark(int num_nodes, int num_iterations) {
 	if (world_rank == 0) {
 		cout << "\n";
 	}
-	
 }
 
 void read_edges_benchmark(int num_nodes, int num_iterations) {
@@ -101,7 +110,7 @@ void read_edges_benchmark(int num_nodes, int num_iterations) {
 	
 	for (int j = 0; j < num_iterations; j++) {
 		MPI_Barrier(MPI_COMM_WORLD);
-		dllama* my_dllama_instance = new dllama(database_location, false);
+		graph_database* my_dllama_instance = get_dllama_instance();
 		my_dllama_instance->load_net_graph("empty_graph.net");
 		if (world_rank == 0) {
 			my_dllama_instance->add_nodes(num_nodes);
@@ -126,60 +135,52 @@ void read_edges_benchmark(int num_nodes, int num_iterations) {
 		my_dllama_instance->delete_db();
 		my_dllama_instance->shutdown();
 		delete my_dllama_instance;
-		
 	}
 	if (world_rank == 0) {
 		cout << "\n";
 	}
-	
 }
 
-//10000 nodes
 void merge_benchmark(int num_nodes, int num_iterations) {
 	MPI_Barrier(MPI_COMM_WORLD);
 
-		if (world_rank == 0) {
-			cout << BENCHMARK_TYPE << "merge_benchmark " << world_size << " " << num_nodes << " ";
-		}
+	if (world_rank == 0) {
+		cout << BENCHMARK_TYPE << "merge_benchmark " << world_size << " " << num_nodes << " ";
+	}
 
-		for (int j = 0; j < num_iterations; j++) {
-			dllama* my_dllama_instance = new dllama(database_location, false);
-			my_dllama_instance->load_net_graph("empty_graph.net");
-			MPI_Barrier(MPI_COMM_WORLD);
-			if (world_rank == 0) {
-				my_dllama_instance->add_nodes(num_nodes);
-				for (int z = 0; z < 10; z++) {
-					for (int i = 1; i <= num_nodes; i++) {
-						for (int k = 100*z; k < 100*(z+1); k++) {
-							my_dllama_instance->add_edge(i, k);
-						}
+	for (int j = 0; j < num_iterations; j++) {
+		graph_database* my_dllama_instance = get_dllama_instance();
+		my_dllama_instance->load_net_graph("empty_graph.net");
+		MPI_Barrier(MPI_COMM_WORLD);
+		if (world_rank == 0) {
+			my_dllama_instance->add_nodes(num_nodes);
+			for (int z = 0; z < 10; z++) {
+				for (int i = 1; i <= num_nodes; i++) {
+					for (int k = 100*z; k < 100*(z+1); k++) {
+						my_dllama_instance->add_edge(i, k);
 					}
-					my_dllama_instance->request_checkpoint();
 				}
-				my_dllama_instance->start_merge();
+				my_dllama_instance->request_checkpoint();
 			}
-			sleep(10);
+			my_dllama_instance->start_merge();
+		}
+		sleep(10);
 
-			MPI_Barrier(MPI_COMM_WORLD);
-			my_dllama_instance->delete_db();
-			my_dllama_instance->shutdown();
-			delete my_dllama_instance;
-		}
-		if (world_rank == 0) {
-			cout << "\n";
-		}
-	
-	
+		MPI_Barrier(MPI_COMM_WORLD);
+		my_dllama_instance->delete_db();
+		my_dllama_instance->shutdown();
+		delete my_dllama_instance;
+	}
+	if (world_rank == 0) {
+		cout << "\n";
+	}
 }
 
 void add_and_read_graph(string input_file, int num_nodes, int num_iterations) {
-	/*if (world_rank == 0) {
-		cout << "NB: interleaved results (time to load then time to read for each iteration)\n";
-	}*/
 	MPI_Barrier(MPI_COMM_WORLD);
 
 	for (int j = 0; j < num_iterations; j++) {
-		dllama* my_dllama_instance = new dllama(database_location, false);
+		graph_database* my_dllama_instance = get_dllama_instance();
 		my_dllama_instance->load_net_graph("empty_graph.net");
 		MPI_Barrier(MPI_COMM_WORLD);
 		if (world_rank == 0) {
@@ -198,11 +199,9 @@ void add_and_read_graph(string input_file, int num_nodes, int num_iterations) {
 				my_dllama_instance->add_edge(from, to);
 			}
 			my_dllama_instance->request_checkpoint();
-			//my_dllama_instance->load_net_graph("kronecker_graph.net");
 			
 			high_resolution_clock::time_point t2 = high_resolution_clock::now();
 			auto duration = duration_cast<microseconds>(t2 - t1).count();
-			//cout << duration << ",";
 			
 			t1 = high_resolution_clock::now();
 			for (int i = 0; i < num_nodes; i++) {
@@ -221,8 +220,6 @@ void add_and_read_graph(string input_file, int num_nodes, int num_iterations) {
 	if (world_rank == 0) {
 		cout << "\n";
 	}
-	
-	//my_dllama_instance->shutdown();
 }
 
 void add_and_read_kronecker_graph(int num_iterations) {
@@ -254,7 +251,7 @@ void add_and_read_power_graph2(int num_iterations) {
 }
 
 void breadth_first_search(int num_iterations, int num_nodes, string input_file) {
-	dllama* my_dllama_instance = new dllama(database_location, false);
+	graph_database* my_dllama_instance = get_dllama_instance();
 	my_dllama_instance->load_net_graph("empty_graph.net");
 	MPI_Barrier(MPI_COMM_WORLD);
 	if (world_rank == 0) {
@@ -317,7 +314,6 @@ void breadth_first_search(int num_iterations, int num_nodes, string input_file) 
 			high_resolution_clock::time_point t2 = high_resolution_clock::now();
 			auto duration = duration_cast<microseconds>(t2 - t1).count();
 			cout << duration << " ";
-			
 		}
 		MPI_Barrier(MPI_COMM_WORLD);
 		
@@ -369,8 +365,6 @@ int main(int argc, char** argv) {
 				//simple dllama benchmark
 				add_nodes_benchmark(second_arg*10, third_arg);
 				add_edges_benchmark(second_arg, third_arg);
-				//read_edges_benchmark(second_arg, third_arg);
-				//merge_benchmark(second_arg, third_arg);
 				add_and_read_kronecker_graph(third_arg);
 				add_and_read_power_graph(third_arg);
 				break;
@@ -378,8 +372,6 @@ int main(int argc, char** argv) {
 				//dllama benchmark
 				add_nodes_benchmark(second_arg*10, third_arg);
 				add_edges_benchmark(second_arg, third_arg);
-				//read_edges_benchmark(second_arg, third_arg);
-				//merge_benchmark(second_arg, third_arg);
 				add_and_read_kronecker_graph(third_arg);
 				add_and_read_power_graph(third_arg);
 				add_and_read_kronecker_graph2(third_arg);

@@ -23,9 +23,21 @@ using namespace dllama_ns;
 
 snapshot_merger::snapshot_merger(string database_location) {
 	this->database_location = database_location;
+	
+	received_snapshot_levels = new int[world_size]();
+	expected_snapshot_levels = new int[world_size];
+	received_num_vertices = new int[world_size]();
+	for (int i = 0; i < world_size; i++) {
+		expected_snapshot_levels[i] = -1;
+	}
+	//don't need to hear from yourself
+	expected_snapshot_levels[world_rank] = 0;
 }
 
 snapshot_merger::~snapshot_merger() {
+	delete[] received_snapshot_levels;
+	delete[] expected_snapshot_levels;
+	delete[] received_num_vertices;
 }
 
 void snapshot_merger::handle_snapshot_message(MPI_Status status) {
@@ -74,10 +86,10 @@ void snapshot_merger::handle_snapshot_message(MPI_Status status) {
 
 void snapshot_merger::handle_merge_request(int source) {
 	//stop main thread writing snapshots
-	merge_starting_lock.lock();
-	bool merge_had_started = merge_starting;
-	merge_starting = 1;
-	merge_starting_lock.unlock();
+	sstate->merge_starting_lock.lock();
+	bool merge_had_started = sstate->merge_starting;
+	sstate->merge_starting = 1;
+	sstate->merge_starting_lock.unlock();
 	DEBUG("Rank " << world_rank << " received merge request");
 	int expected_level;
 	if (source != world_rank) {
@@ -86,14 +98,12 @@ void snapshot_merger::handle_merge_request(int source) {
 		expected_level = 2;
 	}
 
-	//send latest snapshot file if incomplete (only applies with multiple levels per file) may also require modifying snapshot level arrays
-
 	//broadcast start merge request if this is the first merge request you have heard
 	if (!merge_had_started) {
-		merge_lock.lock();
+		sstate->merge_lock.lock();
 		for (int i = 0; i < world_size; i++) {
 			if (i != world_rank) {
-				MPI_Send(&current_snapshot_level, 1, MPI_INT, i, START_MERGE_REQUEST, MPI_COMM_WORLD);
+				MPI_Send(&sstate->current_snapshot_level, 1, MPI_INT, i, START_MERGE_REQUEST, MPI_COMM_WORLD);
 			}
 		}
 	}
@@ -111,15 +121,15 @@ void snapshot_merger::handle_merge_request(int source) {
 	if (received_all_snapshots) {
 		DEBUG("Rank " << world_rank << " received merge requests from all other hosts");
 
-		received_snapshot_levels[world_rank] = current_snapshot_level - 2;
+		received_snapshot_levels[world_rank] = sstate->current_snapshot_level - 2;
 		merge_snapshots(received_snapshot_levels);
 		
 		//tell main thread to stop reading
-		ro_graph_lock.lock();
+		sstate->ro_graph_lock.lock();
 		
 		//reset main thread llama to use new level 0 snapshot, while retaining in memory deltas, then flush deltas to new snapshot later
-		dllama_instance->refresh_ro_graph();
-		ro_graph_lock.unlock();
+		sstate->dllama_instance->refresh_ro_graph();
+		sstate->ro_graph_lock.unlock();
 
 		//clean up after merge
 		//setting expected snapshot level to -1 means we have to hear from that host before merging
@@ -132,10 +142,10 @@ void snapshot_merger::handle_merge_request(int source) {
 		expected_snapshot_levels[world_rank] = 0;
 
 		//allow main thread to continue writing snapshots
-		merge_lock.unlock();
-		merge_starting_lock.lock();
-		merge_starting = 0;
-		merge_starting_lock.unlock();
+		sstate->merge_lock.unlock();
+		sstate->merge_starting_lock.lock();
+		sstate->merge_starting = 0;
+		sstate->merge_starting_lock.unlock();
 	}
 }
 
@@ -150,19 +160,19 @@ void snapshot_merger::handle_new_node_request(MPI_Status status) {
 	int num_new_nodes;
 	MPI_Recv(&num_new_nodes, 1, MPI_INT, status.MPI_SOURCE, NEW_NODE_REQUEST, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 	DEBUG("Rank " << world_rank << " completed mpi recv");
-	if (num_new_node_requests == 0) {
-		num_new_node_requests_lock.lock();
+	if (sstate->num_new_node_requests == 0) {
+		sstate->num_new_node_requests_lock.lock();
 	}
-	num_new_node_requests++;
+	sstate->num_new_node_requests++;
 	DEBUG("Rank " << world_rank << " handling new node request midpoint");
-	new_node_ack_stack_lock.lock();
-	if (self_adding_node && status.MPI_SOURCE < world_rank) {
-		new_node_ack_stack.push(status.MPI_SOURCE);
+	sstate->new_node_ack_stack_lock.lock();
+	if (sstate->self_adding_node && status.MPI_SOURCE < world_rank) {
+		sstate->new_node_ack_stack.push(status.MPI_SOURCE);
 	} else {
 		int zero = 0;
 		MPI_Send(&zero, 1, MPI_INT, status.MPI_SOURCE, NEW_NODE_ACK, MPI_COMM_WORLD);
 	}
-	new_node_ack_stack_lock.unlock();
+	sstate->new_node_ack_stack_lock.unlock();
 	DEBUG("Rank " << world_rank << " done handling new node request");
 }
 
@@ -172,18 +182,18 @@ void snapshot_merger::handle_new_node_command(MPI_Status status) {
 	MPI_Recv(&num_new_nodes, 1, MPI_INT, status.MPI_SOURCE, NEW_NODE_COMMAND, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 	//check we are not currently checkpointing
 	
-	dllama_instance->force_add_nodes(num_new_nodes);
+	sstate->dllama_instance->force_add_nodes(num_new_nodes);
 	
-	num_new_node_requests--;
-	if (num_new_node_requests == 0) {
-		num_new_node_requests_lock.unlock();
+	sstate->num_new_node_requests--;
+	if (sstate->num_new_node_requests == 0) {
+		sstate->num_new_node_requests_lock.unlock();
 	}
 }
 
 void snapshot_merger::handle_new_edge(MPI_Status status) {
-	node_t edge[2];
+	int edge[2];
 	MPI_Recv(&edge, 2, MPI_INT, status.MPI_SOURCE, NEW_EDGE, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-	dllama_instance->force_add_edge(edge[0], edge[1]);
+	sstate->dllama_instance->force_add_edge(edge[0], edge[1]);
 	DEBUG("Rank " << world_rank << " added edge " << edge[0] << " to " << edge[1]);
 }
 
@@ -191,23 +201,14 @@ void snapshot_merger::handle_new_node_ack(MPI_Status status) {
 	int ack;
 	MPI_Recv(&ack, 1, MPI_INT, status.MPI_SOURCE, NEW_NODE_ACK, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 	{
-		lock_guard<mutex> lk(num_acks_lock);
-		num_acks++;
+		lock_guard<mutex> lk(sstate->num_acks_lock);
+		sstate->num_acks++;
 	}
-	num_acks_condition.notify_all();
+	sstate->num_acks_condition.notify_all();
 }
 
 void snapshot_merger::start_snapshot_listener() {
 	DEBUG("Rank " << world_rank << " mpi_listener running");
-
-	received_snapshot_levels = new int[world_size]();
-	expected_snapshot_levels = new int[world_size];
-	received_num_vertices = new int[world_size]();
-	for (int i = 0; i < world_size; i++) {
-		expected_snapshot_levels[i] = -1;
-	}
-	//don't need to hear from yourself
-	expected_snapshot_levels[world_rank] = 0;
 
 	MPI_Status status;
 	bool running = true;
@@ -368,14 +369,11 @@ std::ostream& operator<<(std::ostream& out, const ll_persistent_chunk& h) {
     return out.write((char*) (&h), sizeof(ll_persistent_chunk));
 }
 
-void snapshot_merger::merge_snapshots(int* rank_snapshots) {
+void snapshot_merger::merge_snapshots_helper(int* rank_snapshots, bool local_only) {
 	DEBUG("Rank " << world_rank << " starting merge");
 	high_resolution_clock::time_point t1 = high_resolution_clock::now();
-	ostringstream oss;
-	oss << database_location << "db" << world_rank << "/new_level0.dat";
-	string output_file_name = oss.str();
 	
-	received_num_vertices[world_rank] = dllama_number_of_vertices;
+	received_num_vertices[world_rank] = sstate->dllama_number_of_vertices;
 	
 	DEBUG("Rank " << world_rank << " before max element");
 	int number_of_vertices = *max_element(received_num_vertices, received_num_vertices + world_size) + 1;
@@ -397,11 +395,16 @@ void snapshot_merger::merge_snapshots(int* rank_snapshots) {
 	vector<ll_mlcsr_core__begin_t> vertex_table;
 	for (int vertex = 0; vertex < number_of_vertices; vertex++) {
 		set<LL_DATA_TYPE> neighbours;
-		for (int r = 0; r < world_size; r++) {
-			//add all neighbours in edge table pointed to by chunk
-			if (vertex <= received_num_vertices[r]) {
-				vector<LL_DATA_TYPE> new_neighbours = snapshots.get_neighbours_of_vertex(r, vertex);
-				neighbours.insert(new_neighbours.begin(), new_neighbours.end());
+		if (local_only) {
+			vector<LL_DATA_TYPE> new_neighbours = snapshots.get_neighbours_of_vertex(world_rank, vertex);
+			neighbours.insert(new_neighbours.begin(), new_neighbours.end());
+		} else {
+			for (int r = 0; r < world_size; r++) {
+				//add all neighbours in edge table pointed to by chunk
+				if (vertex <= received_num_vertices[r]) {
+					vector<LL_DATA_TYPE> new_neighbours = snapshots.get_neighbours_of_vertex(r, vertex);
+					neighbours.insert(new_neighbours.begin(), new_neighbours.end());
+				}
 			}
 		}
 		//add edges from level 0 if the vertex existed in level 0
@@ -410,172 +413,39 @@ void snapshot_merger::merge_snapshots(int* rank_snapshots) {
 
 		ll_mlcsr_core__begin_t vertex_table_entry;
 		vertex_table_entry.adj_list_start = edge_table.size();
-
-		/*if (debug_enabled) {
-			cout << "neighbours of vertex " << vertex << ": ";
-			for (set<LL_DATA_TYPE>::iterator neighbour = neighbours.begin(); neighbour != neighbours.end(); ++neighbour) {
-				cout << *neighbour;
-			}
-			cout << "\n";
-		}*/
-		edge_table.insert(edge_table.end(), neighbours.begin(), neighbours.end()); //TODO: could just write this directly to file
+		
+		edge_table.insert(edge_table.end(), neighbours.begin(), neighbours.end()); //could just write this directly to file
 		vertex_table_entry.degree = neighbours.size();
 		vertex_table_entry.level_length = vertex_table_entry.degree; // level is 0 anyway
 		vertex_table.push_back(vertex_table_entry);
 	}
-	/*cout << "edge table: ";
-	for (vector<LL_DATA_TYPE>::iterator edges = edge_table.begin(); edges != edge_table.end(); ++edges) {
-		cout << *edges << " ";
-	}
-	cout << "\n";*/
-			
+	
 	int num_edge_table_chunks = ((edge_table.size() * sizeof(LL_DATA_TYPE)) + LL_BLOCK_SIZE - 1) / LL_BLOCK_SIZE;
-	DEBUG("num_edge_table_chunks " << num_edge_table_chunks);
 	int num_vertex_chunks = (new_meta.lm_vt_size * sizeof(ll_mlcsr_core__begin_t) + LL_BLOCK_SIZE - 1) / LL_BLOCK_SIZE;
-	DEBUG("num_vertex_chunks " << num_vertex_chunks);
 	int num_indirection_entries = (new_meta.lm_vt_size + LL_ENTRIES_PER_PAGE - 1) / LL_ENTRIES_PER_PAGE;
-	DEBUG("num_indirection_entries " << num_indirection_entries);
 	int num_indirection_table_chunks = ((num_indirection_entries * sizeof(ll_persistent_chunk)) + sizeof(dll_header_t) + LL_BLOCK_SIZE - 1) / LL_BLOCK_SIZE;
-	DEBUG("num_indirection_table_chunks " << num_indirection_table_chunks);
 	int file_size = LL_BLOCK_SIZE + (num_edge_table_chunks + num_indirection_table_chunks + num_vertex_chunks) * LL_BLOCK_SIZE;
+	
+	DEBUG("num_edge_table_chunks " << num_edge_table_chunks);
+	DEBUG("num_vertex_chunks " << num_vertex_chunks);
+	DEBUG("num_indirection_entries " << num_indirection_entries);
+	DEBUG("num_indirection_table_chunks " << num_indirection_table_chunks);
 	DEBUG("new output file size should be: " << file_size);
-	
+
 	//write to file	
-	ofstream file(output_file_name, ios::out | ios::binary | ios::ate);
-	if (file.is_open()) {
-		
-		//edge table
-		file.seekp(LL_BLOCK_SIZE);
-		for (vector<LL_DATA_TYPE>::iterator edges = edge_table.begin(); edges != edge_table.end(); ++edges) {
-			file.write((char*) (&(*edges)), sizeof(LL_DATA_TYPE));
-		}
-		//std::copy(edge_table.begin(), edge_table.end(), std::ostream_iterator<LL_DATA_TYPE>(file));
-		
-		//vertex chunks
-		int position = file.tellp();
-		DEBUG("edge table finished at: " << position);
-		if (position % LL_BLOCK_SIZE != 0) {
-			position = ((position / LL_BLOCK_SIZE) + 1) * LL_BLOCK_SIZE;
-			file.seekp(position);
-		}
-		DEBUG("writing the vertex chunks at position " << position);
-		int vertex_chunks_position = position;
-		std::copy(vertex_table.begin(), vertex_table.end(), std::ostream_iterator<ll_mlcsr_core__begin_t>(file));
-		
-		//header
-		dll_header_t header;
-		header.h_et_size = edge_table.size();
-		ll_large_persistent_chunk et_chunk;
-		et_chunk.pc_level = 0;
-		et_chunk.pc_length = header.h_et_size * sizeof(LL_DATA_TYPE);
-		et_chunk.pc_offset = LL_BLOCK_SIZE;
-		header.h_et_chunk = et_chunk;
-		position = file.tellp();
-		if (position % LL_BLOCK_SIZE != 0) {
-			position = ((position / LL_BLOCK_SIZE) + 1) * LL_BLOCK_SIZE;
-			file.seekp(position);
-		}
-		new_meta.lm_header_offset = position;
-		DEBUG("writing the header at position " << position);
-		file.write((char*)(&header), sizeof(dll_header_t));
-		
-		//indirection table
-		new_meta.lm_vt_offset = file.tellp();
-		vector<ll_persistent_chunk> indirection_table;
-		for (unsigned i = 0; i < new_meta.lm_vt_partitions; ++i) {
-			ll_persistent_chunk vertex_table_chunk;
-			vertex_table_chunk.pc_level = 0;
-			vertex_table_chunk.pc_length = LL_ENTRIES_PER_PAGE * sizeof(ll_mlcsr_core__begin_t);
-			vertex_table_chunk.pc_offset = vertex_chunks_position + i * vertex_table_chunk.pc_length;
-			indirection_table.push_back(vertex_table_chunk);
-		}
-		DEBUG("writing the indirection table at position " << new_meta.lm_vt_offset);
-		std::copy(indirection_table.begin(), indirection_table.end(), std::ostream_iterator<ll_persistent_chunk>(file));
-		
-		position = file.tellp();
-		DEBUG("finished at position " << position);
-		//metadata
-		file.seekp(0);
-		file.write((char*)(&new_meta), sizeof(dll_level_meta));
-		
-		//may not be necessary
-		/*file.seekp(position);
-		char end_of_file_bytes[file_size - position];
-		file.write(end_of_file_bytes, file_size - position);*/
-		
-		//DEBUG("written file size is " << file.tellp());
-		
-		file.close();
-	} else cout << "Rank " << world_rank << " unable to open output file\n";
-	
+	write_merged_snapshot(edge_table, vertex_table, new_meta);
+
 	high_resolution_clock::time_point t2 = high_resolution_clock::now();
 	auto duration = duration_cast<microseconds>(t2 - t1).count();
-	if (world_rank == 0) {
+	if (world_rank == 0 && BENCHMARKING) {
 		cout << duration << " ";
 	}
 }
 
-void snapshot_merger::merge_local_llama() {
-	DEBUG("Rank " << world_rank << " starting merge");
-	high_resolution_clock::time_point t1 = high_resolution_clock::now();
+void snapshot_merger::write_merged_snapshot(vector<LL_DATA_TYPE> edge_table, vector<ll_mlcsr_core__begin_t> vertex_table, dll_level_meta new_meta) {
 	ostringstream oss;
 	oss << database_location << "db" << world_rank << "/new_level0.dat";
 	string output_file_name = oss.str();
-	
-	DEBUG("Rank " << world_rank << " before max element");
-	int number_of_vertices = dllama_number_of_vertices;
-	DEBUG("Rank " << world_rank << "num vertices for new level 0: " << number_of_vertices);
-	
-	//metadata
-	dll_level_meta new_meta;
-	new_meta.lm_level = 0;
-	new_meta.lm_sub_level = 0;
-	new_meta.lm_header_size = 32;
-	new_meta.lm_base_level = 0;
-	new_meta.lm_vt_partitions = (number_of_vertices + LL_ENTRIES_PER_PAGE - 1) / LL_ENTRIES_PER_PAGE;
-	new_meta.lm_vt_size = number_of_vertices;
-
-	//edge table
-	int* rank_snapshots = new int[world_size]();
-	rank_snapshots[world_rank] = current_snapshot_level - 2;
-	snapshot_manager* snapshots = new snapshot_manager(rank_snapshots, true, database_location);
-
-	vector<LL_DATA_TYPE> edge_table;
-	vector<ll_mlcsr_core__begin_t> vertex_table;
-	for (int vertex = 0; vertex < number_of_vertices; vertex++) {
-		//vector<LL_DATA_TYPE> neighbours = snapshots.get_neighbours_of_vertex(world_rank, vertex);
-		vector<LL_DATA_TYPE> neighbours = snapshots->get_neighbours_of_vertex(world_rank, vertex);
-		ll_mlcsr_core__begin_t vertex_table_entry;
-		vertex_table_entry.adj_list_start = edge_table.size();
-		
-		//add edges from level 0 if the vertex existed in level 0
-		vector<LL_DATA_TYPE> new_neighbours = snapshots->get_level_0_neighbours_of_vertex(vertex);
-		
-		edge_table.insert(edge_table.end(), neighbours.begin(), neighbours.end());
-		edge_table.insert(edge_table.end(), new_neighbours.begin(), new_neighbours.end());
-		
-		vertex_table_entry.degree = neighbours.size() + new_neighbours.size();
-		vertex_table_entry.level_length = vertex_table_entry.degree; // level is 0 anyway
-		vertex_table.push_back(vertex_table_entry);
-	}
-	/*cout << "edge table: ";
-	for (vector<LL_DATA_TYPE>::iterator edges = edge_table.begin(); edges != edge_table.end(); ++edges) {
-		cout << *edges << " ";
-	}
-	cout << "\n";*/
-			
-	int num_edge_table_chunks = ((edge_table.size() * sizeof(LL_DATA_TYPE)) + LL_BLOCK_SIZE - 1) / LL_BLOCK_SIZE;
-	DEBUG("num_edge_table_chunks " << num_edge_table_chunks);
-	int num_vertex_chunks = (new_meta.lm_vt_size * sizeof(ll_mlcsr_core__begin_t) + LL_BLOCK_SIZE - 1) / LL_BLOCK_SIZE;
-	DEBUG("num_vertex_chunks " << num_vertex_chunks);
-	int num_indirection_entries = (new_meta.lm_vt_size + LL_ENTRIES_PER_PAGE - 1) / LL_ENTRIES_PER_PAGE;
-	DEBUG("num_indirection_entries " << num_indirection_entries);
-	int num_indirection_table_chunks = ((num_indirection_entries * sizeof(ll_persistent_chunk)) + sizeof(dll_header_t) + LL_BLOCK_SIZE - 1) / LL_BLOCK_SIZE;
-	DEBUG("num_indirection_table_chunks " << num_indirection_table_chunks);
-	int file_size = LL_BLOCK_SIZE + (num_edge_table_chunks + num_indirection_table_chunks + num_vertex_chunks) * LL_BLOCK_SIZE;
-	DEBUG("new output file size should be: " << file_size);
-	
-	//write to file	
 	ofstream file(output_file_name, ios::out | ios::binary | ios::ate);
 	if (file.is_open()) {
 		
@@ -632,13 +502,19 @@ void snapshot_merger::merge_local_llama() {
 		file.seekp(0);
 		file.write((char*)(&new_meta), sizeof(dll_level_meta));
 		
+		DEBUG("written file size is " << file.tellp());
+		
 		file.close();
 	} else cout << "Rank " << world_rank << " unable to open output file\n";
-	delete snapshots;
+}
+
+void snapshot_merger::merge_snapshots(int* rank_snapshots) {
+	merge_snapshots_helper(rank_snapshots, false);
+}
+
+void snapshot_merger::merge_local_llama() {
+	int* rank_snapshots = new int[world_size]();
+	rank_snapshots[world_rank] = sstate->current_snapshot_level - 2;
+	merge_snapshots_helper(rank_snapshots, true);
 	delete[] rank_snapshots;
-	high_resolution_clock::time_point t2 = high_resolution_clock::now();
-	auto duration = duration_cast<microseconds>(t2 - t1).count();
-	if (world_rank == 0) {
-		cout << duration << " ";
-	}
 }
