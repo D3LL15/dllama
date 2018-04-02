@@ -20,6 +20,8 @@ for parameters in graph_parameters:
 	simple_dllama_mean_times = []
 	simple_dllama_standard_deviations = []
 
+	print parameters[0]
+
 	for num_machines in [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 15]: #range (1, 11):
 		args = (parameters[0], num_machines)
 		times = []
@@ -37,6 +39,9 @@ for parameters in graph_parameters:
 			mean_time = np.mean(times)
 			simple_dllama_mean_times.append(mean_time)
 			simple_dllama_standard_deviations.append(np.std(times))
+
+	print "dllama mean times"
+	print dllama_mean_times
 
 	t = np.array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 15]) #np.arange(1, 11, 1)
 	plt.figure()
@@ -85,6 +90,8 @@ for parameters in graph_parameters:
 	neo4j_std = [0.0]
 	neo4j_std[0] = np.std(times)
 	plt.errorbar([1], neo4j_mean_time, yerr=neo4j_std, fmt='x', label='Embedded Neo4j', color='green')
+	print "neo4j mean time"
+	print neo4j_mean_time
 
 	times = []
 	for row in c.execute('SELECT * FROM data WHERE benchmark = ? ORDER BY benchmark', (parameters[5],)):
@@ -93,9 +100,9 @@ for parameters in graph_parameters:
 	llama_std = [0.0]
 	llama_std[0] = np.std(times)
 	plt.errorbar([1], llama_mean_time, yerr=llama_std, fmt='x', label='LLAMA', color='orange')
+	print "llama mean time"
+	print llama_mean_time
 
-
-	print parameters[0]
 	for i in range(0, 11):
 		test_mean = neo4j_mean_time[0] - dllama_mean_times[i]
 		test_std = math.sqrt(pow(neo4j_std[0], 2) + pow(dllama_standard_deviations[i], 2))
