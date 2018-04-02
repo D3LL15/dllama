@@ -1,6 +1,8 @@
 import sqlite3
 import matplotlib.pyplot as plt
 import numpy as np
+import math
+import scipy.stats as st
 
 conn = sqlite3.connect('benchmark_data.db')
 
@@ -92,6 +94,16 @@ for parameters in graph_parameters:
 	llama_std[0] = np.std(times)
 	plt.errorbar([1], llama_mean_time, yerr=llama_std, fmt='x', label='LLAMA', color='orange')
 
+
+	print parameters[0]
+	for i in range(0, 11):
+		test_mean = neo4j_mean_time[0] - dllama_mean_times[i]
+		test_std = math.sqrt(pow(neo4j_std[0], 2) + pow(dllama_standard_deviations[i], 2))
+		z_score = -test_mean / test_std
+		print st.norm.cdf(z_score)
+	print '\n'
+
+
 	plt.ylim(ymin=0)
 	plt.xlim(xmin=0)
 	plt.legend()
@@ -151,6 +163,7 @@ for param in parameters:
 	std_dllama = []
 	times = []
 	args = (param[0], 1, param[5])
+	print param[0]
 	for row in c.execute('SELECT * FROM data WHERE benchmark = ? AND num_machines = ? AND num_vertices = ? ORDER BY benchmark', args):
 		times.append(row[3])
 	mean_time = np.mean(times)
@@ -182,6 +195,25 @@ for param in parameters:
 	mean_time = np.mean(times)
 	means_llama.append(mean_time)
 	std_llama.append(np.std(times))
+	
+
+	test_mean = means_neo4j[0] - means_dllama[0]
+	test_std = math.sqrt(pow(std_neo4j[0], 2) + pow(std_dllama[0], 2))
+	z_score = -test_mean / test_std
+	print st.norm.cdf(z_score)
+	print ' '
+
+	test_mean = means_dllama[0] - means_llama[0]
+	test_std = math.sqrt(pow(std_dllama[0], 2) + pow(std_llama[0], 2))
+	z_score = -test_mean / test_std
+	print st.norm.cdf(z_score)
+	print ' '
+
+	print means_dllama[0]
+	print means_llama[0]
+	print means_neo4j[0]
+
+	print '\n'
 
 	#means_dllama = (20, 35, 30, 35, 27)
 	#std_dllama = (2, 3, 4, 1, 2)
