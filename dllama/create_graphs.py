@@ -172,7 +172,7 @@ for param in parameters:
 	args = (param[0], 1, param[5])
 	print param[0]
 	for row in c.execute('SELECT * FROM data WHERE benchmark = ? AND num_machines = ? AND num_vertices = ? ORDER BY benchmark', args):
-		times.append(row[3])
+		times.append(row[3] / 1000.0)
 	mean_time = np.mean(times)
 	means_dllama.append(mean_time)
 	std_dllama.append(np.std(times))
@@ -187,7 +187,7 @@ for param in parameters:
 		times = []
 		args = (param[3], 1, param[5])
 		for row in c.execute('SELECT * FROM data WHERE benchmark = ? AND num_machines = ? AND num_vertices = ? ORDER BY benchmark', args):
-			times.append(row[3])
+			times.append(row[3] / 1000.0)
 		mean_time = np.mean(times)
 		means_neo4j.append(mean_time)
 		std_neo4j.append(np.std(times))
@@ -198,7 +198,7 @@ for param in parameters:
 	times = []
 	args = (param[4], 1, param[5])
 	for row in c.execute('SELECT * FROM data WHERE benchmark = ? AND num_machines = ? AND num_vertices = ? ORDER BY benchmark', args):
-		times.append(row[3])
+		times.append(row[3] / 1000.0)
 	mean_time = np.mean(times)
 	means_llama.append(mean_time)
 	std_llama.append(np.std(times))
@@ -225,8 +225,8 @@ for param in parameters:
 	#means_dllama = (20, 35, 30, 35, 27)
 	#std_dllama = (2, 3, 4, 1, 2)
 
-	means = [means_dllama[0], means_neo4j[0], means_llama[0]]
-	stds = [std_dllama[0], std_neo4j[0], std_llama[0]]
+	means = [means_neo4j[0], means_dllama[0], means_llama[0]]
+	stds = [std_neo4j[0], std_dllama[0], std_llama[0]]
 
 	fig, ax = plt.subplots()
 	index = np.arange(n_groups)
@@ -234,27 +234,27 @@ for param in parameters:
 	opacity = 0.4
 	error_config = {'ecolor': '0.3'}
 
-	rects1 = ax.barh(index, means, bar_width,
+	rects1 = ax.bar(index, means, bar_width,
 	                alpha=opacity, color='b',
-	                xerr=stds, error_kw=error_config)
+	                yerr=stds, error_kw=error_config)
 
 	#rects2 = ax.bar(index + bar_width, means_neo4j, bar_width,
 	#                alpha=opacity, color='r',
 	#                yerr=std_neo4j, error_kw=error_config,
 	#                label='Neo4j')
 
-	ax.set_ylabel('Database')
-	ax.set_xlabel('Time (microseconds)')
+	ax.set_xlabel('Database')
+	ax.set_ylabel('Time (milliseconds)')
 	#ax.set_title('Time taken for each benchmark')
-	ax.set_yticks(index)
-	ax.set_yticklabels(('DLLAMA', 'Neo4j', 'LLAMA'))
+	ax.set_xticks(index)
+	ax.set_xticklabels(('Neo4j', 'DLLAMA', 'LLAMA'))
 	#ax.set_xticklabels(('Read edges', 'Breadth first', 'Power law', 'Kronecker'))
 	#ax.legend()
 
 	fig.tight_layout()
 	#plt.title(param[1])
-	xmin, xmax = plt.xlim()
-	plt.xlim(0.0, xmax)
+	ymin, ymax = plt.ylim()
+	plt.ylim(0.0, ymax)
 
 	plt.savefig(param[2])
 
