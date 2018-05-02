@@ -1,8 +1,11 @@
 import sqlite3
+import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
 import math
 import scipy.stats as st
+
+matplotlib.rcParams.update({'errorbar.capsize': 2})
 
 conn = sqlite3.connect('benchmark_data.db')
 
@@ -10,8 +13,8 @@ c = conn.cursor()
 
 graph_dir = '/Users/bionicbug/Documents/Cambridge/3rdYear/Project/writeup/figs/'
 
-graph_parameters = [('0add_nodes', 'Time taken to add 50000 nodes', graph_dir + 'add_nodes.png', '1add_nodes', 'neo4j_add_nodes', '2add_nodes'),
-					('0add_edges', 'Time taken to add 100 edges to 5000 nodes', graph_dir + 'add_edges.png', '1add_edges', 'neo4j_add_edges', '2add_edges')#,
+graph_parameters = [('0add_nodes', 'Time taken to add 50000 nodes', graph_dir + 'add_nodes.eps', '1add_nodes', 'neo4j_add_nodes', '2add_nodes'),
+					('0add_edges', 'Time taken to add 100 edges to 5000 nodes', graph_dir + 'add_edges.eps', '1add_edges', 'neo4j_add_edges', '2add_edges')#,
 					]
 
 for parameters in graph_parameters:
@@ -119,7 +122,7 @@ for parameters in graph_parameters:
 	plt.ylabel('time (milliseconds)')
 	#plt.title(parameters[1])
 	plt.grid(True)
-	plt.savefig(parameters[2])
+	plt.savefig(parameters[2], format="eps")
 	#plt.show()
 
 
@@ -150,7 +153,7 @@ plt.ylabel('time (milliseconds)')
 plt.grid(True)
 plt.ylim(ymin=0)
 plt.xlim(xmin=0)
-plt.savefig(graph_dir + 'merge_times.png')
+plt.savefig(graph_dir + 'merge_times.eps', format="eps")
 #plt.show()
 
 
@@ -158,11 +161,11 @@ plt.savefig(graph_dir + 'merge_times.png')
 
 
 
-parameters = [('0read_edges', 'Time taken to read all 100 edges from 5000 nodes', graph_dir + 'read_edges.png', 'neo4j_read_edges', '2read_edges', 5000), 
-				('0breadth_first', 'Time taken to complete breadth first search on power-law graph with 50000 nodes', graph_dir + 'breadth.png', 'neo4j_breadth_first', '2breadth_first', 50000), 
-				('0power', 'Time taken to read all 7196 edges from a power-law graph with 1000 nodes', graph_dir + 'power.png', 'neo4j_power', '2power', 1000), 
-				('0kronecker', 'Time taken to read all 2655 edges from a kronecker graph with 1024 nodes', graph_dir + 'kronecker.png', 'neo4j_kronecker', '2kronecker', 1024),
-				('0power', 'Time taken to read all edges from a power-law graph with 50000 nodes', graph_dir + 'power2.png', 'neo4j_power', '2power', 50000)
+parameters = [('0read_edges', 'Time taken to read all 100 edges from 5000 nodes', graph_dir + 'read_edges.eps', 'neo4j_read_edges', '2read_edges', 5000), 
+				('0breadth_first', 'Time taken to complete breadth first search on power-law graph with 50000 nodes', graph_dir + 'breadth.eps', 'neo4j_breadth_first', '2breadth_first', 50000), 
+				('0power', 'Time taken to read all 7196 edges from a power-law graph with 1000 nodes', graph_dir + 'power.eps', 'neo4j_power', '2power', 1000), 
+				('0kronecker', 'Time taken to read all 2655 edges from a kronecker graph with 1024 nodes', graph_dir + 'kronecker.eps', 'neo4j_kronecker', '2kronecker', 1024),
+				('0power', 'Time taken to read all edges from a power-law graph with 50000 nodes', graph_dir + 'power2.eps', 'neo4j_power', '2power', 50000)
 				]
 
 for param in parameters:
@@ -235,7 +238,7 @@ for param in parameters:
 	error_config = {'ecolor': '0.3'}
 
 	rects1 = ax.bar(index, means, bar_width,
-	                alpha=opacity, color='b',
+	                alpha=opacity, color="cyan",
 	                yerr=stds, error_kw=error_config)
 
 	#rects2 = ax.bar(index + bar_width, means_neo4j, bar_width,

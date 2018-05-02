@@ -152,7 +152,6 @@ node_t dllama::add_nodes(int num_new_nodes) {
 	return new_node_id;
 }
 
-//not for manual use
 node_t dllama::force_add_nodes(int num_nodes) {
 	sstate->checkpoint_lock.lock();
 	int result;
@@ -178,7 +177,6 @@ void dllama::request_checkpoint() {
 
 //call after a certain amount of updates
 void dllama::auto_checkpoint() {
-	//TODO: have this be called automatically
 	//check if merge occurring before writing new file, also prevent the other thread sending a merge request before we are done sending our snapshot
 	sstate->merge_starting_lock.lock();
 	if (!sstate->merge_starting) {
@@ -188,7 +186,7 @@ void dllama::auto_checkpoint() {
 }
 
 void dllama::checkpoint() {
-	//DEBUG("current number of levels before checkpoint: " << graph->num_levels());
+	DEBUG("current number of levels before checkpoint: " << graph->num_levels());
 	//the checkpoint lock ensures that dllama_number_of_vertices is only the number of vertices in snapshots, not in the writable llama
 	sstate->checkpoint_lock.lock();
 	graph->checkpoint();
@@ -242,7 +240,6 @@ void dllama::start_merge() {
 	sstate->snapshot_merger_instance->begin_merge();
 }
 
-//TODO: make these private
 void dllama::out_iter_begin(ll_edge_iterator& iter, node_t node) {
 	graph->out_iter_begin(iter, node);
 }
