@@ -1,18 +1,18 @@
 #include <cstdlib>
 #include <iostream>
 
-#include "dllama_test.h"
+#include "llama_test.h"
 
 using namespace std;
 using namespace dllama_ns;
 
-dllama_test::dllama_test() {
+llama_test::llama_test() {
 }
 
-dllama_test::~dllama_test() {
+llama_test::~llama_test() {
 }
 
-void dllama_test::full_test() {
+void llama_test::full_test() {
 	cout << "starting test\n";
 
 	//open database
@@ -55,7 +55,7 @@ void dllama_test::full_test() {
 
 }
 
-void dllama_test::test_llama_init() {
+void llama_test::test_llama_init() {
 	cout << "starting test\n";
 
 	//open database
@@ -82,7 +82,7 @@ void dllama_test::test_llama_init() {
 	cout << "num levels " << graph->num_levels() << "\n";
 }
 
-void dllama_test::test_llama_add_edges() {
+void llama_test::test_llama_add_edges() {
 	char* database_directory = (char*) alloca(16);
 	strcpy(database_directory, "db");
 
@@ -107,7 +107,7 @@ void dllama_test::test_llama_add_edges() {
 	cout << "num levels " << graph->num_levels() << "\n";
 }
 
-void dllama_test::test_llama_print_neighbours() {
+void llama_test::test_llama_print_neighbours() {
 	char* database_directory = (char*) alloca(16);
 	strcpy(database_directory, "db");
 
@@ -126,7 +126,7 @@ void dllama_test::test_llama_print_neighbours() {
 	graph->checkpoint();
 }
 
-void dllama_test::read_db() {
+void llama_test::read_db() {
 
 }
 

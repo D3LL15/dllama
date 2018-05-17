@@ -1,13 +1,13 @@
-#ifndef DLLAMA_TEST_H
-#define DLLAMA_TEST_H
+#ifndef LLAMA_TEST_H
+#define LLAMA_TEST_H
 
 #include "llama.h"
 
 namespace dllama_ns {
     class dllama_test {
     public:
-        dllama_test();
-        virtual ~dllama_test();
+        llama_test();
+        virtual ~llama_test();
         void test_llama_init();
         void test_llama_add_edges();
         void test_llama_print_neighbours();
@@ -21,5 +21,5 @@ namespace dllama_ns {
 }
 
 
-#endif /* DLLAMA_TEST_H */
+#endif /* LLAMA_TEST_H */
 
